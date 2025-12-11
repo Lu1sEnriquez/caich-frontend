@@ -1,0 +1,124 @@
+@if (isOpen()) {
+<div class="modal-overlay">
+  <div class="modal-content">
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <h2>💳 Pagos Pendientes</h2>
+      <button class="btn-close" (click)="closeModal()" title="Cerrar">&times;</button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="modal-body">
+      <!-- Filtros -->
+      <div class="filters-section">
+        <div class="search-input">
+          <input
+            type="text"
+            placeholder="Buscar por concepto, folio o paciente..."
+            [value]="searchText()"
+            (input)="searchText.set($event.target.value)"
+            class="input-field"
+          />
+        </div>
+
+        <div class="filter-buttons">
+          <button
+            [class.active]="filterStatus() === 'all'"
+            (click)="filterStatus.set('all')"
+            class="filter-btn"
+          >
+            Todos
+          </button>
+          <button
+            [class.active]="filterStatus() === 'pendiente'"
+            (click)="filterStatus.set('pendiente')"
+            class="filter-btn"
+          >
+            Pendientes
+          </button>
+          <button
+            [class.active]="filterStatus() === 'pagado'"
+            (click)="filterStatus.set('pagado')"
+            class="filter-btn"
+          >
+            Pagados
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabla de Pagos -->
+      <div class="payments-table">
+        @if (filteredPayments().length > 0) {
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Folio</th>
+                <th>Concepto</th>
+                <th>Monto</th>
+                <th>Vencimiento</th>
+                <th>Días</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (pago of filteredPayments(); track pago.id) {
+              <tr [class]="'payment-row ' + getUrgencyClass(diasHastaVencimiento(pago.fechaVencimiento))">
+                <td><strong>{{ pago.folio }}</strong></td>
+                <td>{{ pago.concepto }}</td>
+                <td>{{ formatMonto(pago.monto) }}</td>
+                <td>{{ formatDate(pago.fechaVencimiento) }}</td>
+                <td>
+                  <span class="dias-badge" [class]="getUrgencyClass(diasHastaVencimiento(pago.fechaVencimiento))">
+                    {{ diasHastaVencimiento(pago.fechaVencimiento) }} días
+                  </span>
+                </td>
+                <td>
+                  <app-badge [status]="getStatusBadge(pago.estado)">
+                    {{ getStatusText(pago.estado) }}
+                  </app-badge>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        } @else {
+        <div class="no-payments">
+          <p>{{ searchText() ? 'No se encontraron pagos con esos criterios.' : 'No hay pagos para este mes.' }}</p>
+        </div>
+        }
+      </div>
+
+      <!-- Resumen -->
+      @if (filteredPayments().length > 0) {
+      <div class="payments-summary">
+        <div class="summary-item">
+          <p>
+            Mostrando
+            <strong>{{ filteredPayments().length }}</strong>
+            de
+            <strong>{{ payments().length }}</strong>
+            pagos
+          </p>
+        </div>
+        @if (filterStatus() === 'all' || filterStatus() === 'pendiente') {
+        <div class="summary-item total">
+          <p>
+            Total Pendiente:
+            <strong>{{ formatMonto(totalPendiente()) }}</strong>
+          </p>
+        </div>
+        }
+      </div>
+      }
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="modal-footer">
+      <app-button variant="primary" (click)="irAPagos()">Ir a Pagos</app-button>
+      <app-button variant="secondary" (click)="closeModal()">Cerrar</app-button>
+    </div>
+  </div>
+</div>
+}

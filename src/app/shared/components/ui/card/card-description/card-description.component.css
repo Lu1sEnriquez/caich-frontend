@@ -1,0 +1,5 @@
+.card-description {
+  font-size: 14px;
+  color: var(--color-muted-foreground);
+  margin: var(--space-xs) 0 0;
+}

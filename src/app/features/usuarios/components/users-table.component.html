@@ -1,0 +1,280 @@
+<div class="users-container">
+  <div class="users-header">
+    <h1>Gestión de usuarios</h1>
+    <div class="header-actions">
+      <app-input
+        placeholder="Buscar usuario por nombre, email o rol"
+        [(value)]="searchQuery"
+        [prefixIcon]="true"
+      >
+        <span prefix>🔍</span>
+      </app-input>
+      <app-button variant="primary" (clicked)="openNewUserDialog()"> Nuevo usuario </app-button>
+    </div>
+  </div>
+
+  <app-card [padding]="'none'">
+    <!-- Filters -->
+    <div class="filters-bar">
+      <div class="filter-tabs">
+        <button
+          class="filter-tab"
+          [class.active]="selectedFilter() === 'Todos'"
+          (click)="setFilter('Todos')"
+        >
+          Todos
+        </button>
+        <button
+          class="filter-tab"
+          [class.active]="selectedFilter() === UserRole.PACIENTE"
+          (click)="setFilter(UserRole.PACIENTE)"
+        >
+          Pacientes
+        </button>
+        <button
+          class="filter-tab"
+          [class.active]="selectedFilter() === UserRole.ALUMNO"
+          (click)="setFilter(UserRole.ALUMNO)"
+        >
+          Alumnos
+        </button>
+        <button
+          class="filter-tab"
+          [class.active]="selectedFilter() === UserRole.TERAPEUTA"
+          (click)="setFilter(UserRole.TERAPEUTA)"
+        >
+          Terapeutas
+        </button>
+        <button
+          class="filter-tab"
+          [class.active]="selectedFilter() === UserRole.ADMINISTRADOR"
+          (click)="setFilter(UserRole.ADMINISTRADOR)"
+        >
+          Administradores
+        </button>
+      </div>
+      <div class="filter-actions">
+        <app-button variant="outline" size="sm" (clicked)="openExportModal()"
+          >Exportar CSV</app-button
+        >
+      </div>
+      @if (showExportModal()) {
+      <app-export-options-modal
+        [availableFields]="exportFields"
+        (confirm)="onExportConfirmed($event)"
+        (cancel)="showExportModal.set(false)"
+      />
+      }
+    </div>
+
+    <!-- Loading State -->
+    @if (usersResource.isLoading()) {
+    <div class="loading-container">
+      <p>Cargando usuarios...</p>
+    </div>
+    }
+    <!-- Empty State -->
+    @else if (filteredUsers().length === 0) {
+    <div class="empty-container">
+      <p>No se encontraron usuarios</p>
+    </div>
+    }
+    <!-- Table -->
+    @else {
+    <div class="table-container">
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Rol</th>
+            <th>Correo</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of filteredUsers(); track user.id) {
+          <tr>
+            <td>
+              <div class="user-cell">
+                <app-avatar [src]="user.foto || ''" [name]="user.nombreCompleto" size="sm" />
+                <div class="user-info">
+                  <strong>{{ user.nombreCompleto }}</strong>
+                  <span class="user-id">ID {{ user.id }}</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <app-badge variant="secondary">{{ user.rol }}</app-badge>
+            </td>
+            <td class="email-cell">{{ user.email }}</td>
+            <td>
+              <app-badge [status]="user.estado">{{ user.estado }}</app-badge>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <app-button variant="ghost" size="sm" (clicked)="viewUser(user)"> Ver </app-button>
+                <app-button variant="ghost" size="sm" (clicked)="editUser(user)">
+                  Editar
+                </app-button>
+              </div>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    }
+
+    <!-- Stats -->
+    <div class="table-footer">
+      <div class="stats">
+        <div class="stat-item">
+          <span class="stat-label">Usuarios totales</span>
+          <span class="stat-value">{{ stats().total }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Activos</span>
+          <span class="stat-value">{{ stats().activos }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Suspendidos</span>
+          <span class="stat-value">{{ stats().suspendidos }}</span>
+        </div>
+      </div>
+    </div>
+  </app-card>
+
+  <!-- User Form Dialog -->
+  @if (showUserDialog()) {
+  <div class="dialog-overlay" (click)="closeUserDialog()">
+    <div class="dialog" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <h2>{{ editingUser() ? 'Editar usuario' : 'Crear nuevo usuario' }}</h2>
+        <button class="close-button" (click)="closeUserDialog()">✕</button>
+      </div>
+      <div class="dialog-content">
+        <form class="user-form">
+          <div class="form-row">
+            <div class="form-field">
+              <label>Nombre completo *</label>
+              <input
+                type="text"
+                class="select-input"
+                placeholder="Escribe el nombre completo"
+                [(ngModel)]="userFormData().nombreCompleto"
+                name="nombreCompleto"
+                required
+              />
+            </div>
+            <div class="form-field">
+              <label>Correo *</label>
+              <input
+                type="email"
+                class="select-input"
+                placeholder="correo@ejemplo.com"
+                [(ngModel)]="userFormData().email"
+                name="email"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label>Teléfono</label>
+              <input
+                type="tel"
+                class="select-input"
+                placeholder="0000000000"
+                [(ngModel)]="userFormData().telefono"
+                name="telefono"
+                pattern="\d{10}"
+                title="10 dígitos sin espacios"
+              />
+            </div>
+            <div class="form-field">
+              <label>Rol *</label>
+              <select [(ngModel)]="userFormData().rol" name="rol" class="select-input" required>
+                <option [value]="UserRole.PACIENTE">Paciente</option>
+                <option [value]="UserRole.ALUMNO">Alumno</option>
+                <option [value]="UserRole.TERAPEUTA">Terapeuta</option>
+                <option [value]="UserRole.ADMINISTRADOR">Administrador</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Campos opcionales según el rol -->
+          <div class="form-row">
+            <div class="form-field">
+              <label>Folio (opcional)</label>
+              <input
+                type="text"
+                class="select-input"
+                placeholder="12345678"
+                [(ngModel)]="userFormData().folio"
+                name="folio"
+              />
+            </div>
+
+            <div class="form-field">
+              <label>ID del Alumno</label>
+              <input
+                type="text"
+                class="select-input"
+                [placeholder]="
+                  userFormData().rol === UserRole.ALUMNO ? '00000248171 *' : 'Solo para Alumnos'
+                "
+                [(ngModel)]="userFormData().idAlumno"
+                name="idAlumno"
+                [required]="userFormData().rol === UserRole.ALUMNO"
+                [disabled]="userFormData().rol !== UserRole.ALUMNO"
+              />
+            </div>
+          </div>
+
+          @if (!editingUser()) {
+          <div class="form-field">
+            <label>Contraseña temporal *</label>
+            <div class="password-field">
+              <input
+                type="text"
+                [(ngModel)]="userFormData().password"
+                name="password"
+                placeholder="Auto-generada"
+                class="select-input"
+                readonly
+                required
+              />
+              <button type="button" class="generate-btn" (click)="regeneratePassword()">
+                🔄 Regenerar
+              </button>
+            </div>
+          </div>
+          }
+        </form>
+      </div>
+      <div class="dialog-footer">
+        <app-button variant="outline" (clicked)="closeUserDialog()"> Cancelar </app-button>
+        <app-button
+          variant="primary"
+          [disabled]="
+            editingUser() ? updateUserResource.isLoading() : createUserResource.isLoading()
+          "
+          (clicked)="saveUser()"
+        >
+          @if (editingUser()) { @if (updateUserResource.isLoading()) {
+          <span>Actualizando...</span>
+          } @else {
+          <span>Actualizar usuario</span>
+          } } @else { @if (createUserResource.isLoading()) {
+          <span>Creando...</span>
+          } @else {
+          <span>Crear usuario</span>
+          } }
+        </app-button>
+      </div>
+    </div>
+  </div>
+  }
+</div>

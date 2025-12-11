@@ -1,0 +1,212 @@
+<div class="detalle-container">
+  <!-- Header -->
+  <div class="detalle-header">
+    <div class="title-section">
+      <h1>📋 Detalles de la Cita</h1>
+      @if (citaFormato()) {
+      <p class="folio">Folio: {{ citaFormato()!.folio }}</p>
+      }
+    </div>
+    <button (click)="volver()" class="btn-volver">← Volver</button>
+  </div>
+
+  <!-- Loading/Error States -->
+  @if (isLoading()) {
+  <div class="loading-state">
+    <p>🔄 Cargando detalles de la cita...</p>
+  </div>
+  } @else if (error()) {
+  <div class="error-state">
+    <p>❌ {{ error() }}</p>
+    <button (click)="cargarCita()" class="btn-retry">Reintentar</button>
+  </div>
+  } @else if (citaFormato()) {
+  <div class="detalle-content">
+    <!-- Información de Fecha y Hora -->
+    <section class="card section-datetime">
+      <h2>📅 Fecha y Hora</h2>
+      <div class="grid-2">
+        <div class="info-item">
+          <label>Fecha y Hora</label>
+          <p>{{ citaFormato()!.fechaFormato }}</p>
+        </div>
+        <div class="info-item">
+          <label>Duración</label>
+          <p>{{ citaFormato()!.duracion }} minutos</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Información del Paciente -->
+    <section class="card section-paciente">
+      <h2>👤 Paciente</h2>
+      <div class="grid-2">
+        <div class="info-item">
+          <label>Nombre</label>
+          <p>{{ citaFormato()!.pacienteNombre }}</p>
+        </div>
+        <div class="info-item">
+          <label>ID Paciente</label>
+          <p>
+            {{ citaFormato()!.pacienteId }}
+            <button
+              (click)="copiarAlPortapapeles(citaFormato()!.pacienteId)"
+              class="btn-copy"
+              title="Copiar ID"
+            >
+              📋
+            </button>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Información del Terapeuta -->
+    <section class="card section-terapeuta">
+      <h2>👨‍⚕️ Terapeuta</h2>
+      <div class="grid-2">
+        <div class="info-item">
+          <label>Nombre</label>
+          <p>{{ citaFormato()!.terapeutaNombre }}</p>
+        </div>
+        <div class="info-item">
+          <label>ID Terapeuta</label>
+          <p>
+            {{ citaFormato()!.terapeutaId }}
+            <button
+              (click)="copiarAlPortapapeles(citaFormato()!.terapeutaId)"
+              class="btn-copy"
+              title="Copiar ID"
+            >
+              📋
+            </button>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Información de la Sesión -->
+    <section class="card section-sesion">
+      <h2>📚 Información de la Sesión</h2>
+      <div class="grid-2">
+        <div class="info-item">
+          <label>Espacio</label>
+          <p>{{ citaFormato()!.espacioNombre }}</p>
+        </div>
+        <div class="info-item">
+          <label>Materia/Tema</label>
+          <p>{{ citaFormato()!.materia }}</p>
+        </div>
+        <div class="info-item">
+          <label>Modalidad</label>
+          <p>{{ citaFormato()!.modalidad }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Información Financiera -->
+    <section class="card section-financiera">
+      <h2>💰 Información Financiera</h2>
+      <div class="grid-2">
+        <div class="info-item">
+          <label>Costo Espacio</label>
+          <p>{{ citaFormato()!.costoEspacioFormato }}</p>
+        </div>
+        <div class="info-item">
+          <label>Costo Materiales</label>
+          <p>{{ citaFormato()!.costoMaterialesFormato }}</p>
+        </div>
+        <div class="info-item">
+          <label>Costo Adicional</label>
+          <p>{{ citaFormato()!.costoAdicionalFormato }}</p>
+        </div>
+        <div class="info-item total">
+          <label>Costo Total</label>
+          <p><strong>{{ citaFormato()!.costoTotalFormato }}</strong></p>
+        </div>
+        <div class="info-item">
+          <label>Monto Pagado</label>
+          <p>{{ citaFormato()!.montoPagadoFormato }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Estado de la Cita -->
+    <section class="card section-estado">
+      <h2>🔄 Estados</h2>
+      <div class="grid-2">
+        <div class="info-item">
+          <label>Estado de Cita</label>
+          <p class="badge" [ngClass]="'badge-' + citaFormato()!.estadoTicket?.toLowerCase()">
+            {{ citaFormato()!.estadoTicket }}
+          </p>
+        </div>
+        <div class="info-item">
+          <label>Estado de Pago</label>
+          <p class="badge" [ngClass]="'badge-' + citaFormato()!.estadoPago?.toLowerCase()">
+            {{ citaFormato()!.estadoPago }}
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Notas -->
+    @if (citaFormato()!.notas) {
+    <section class="card section-notas">
+      <h2>📝 Notas</h2>
+      <p class="notas-content">{{ citaFormato()!.notas }}</p>
+    </section>
+    }
+
+    <!-- Información de Auditoría -->
+    <section class="card section-auditoria">
+      <h2>🔒 Información de Auditoría</h2>
+      <div class="grid-2">
+        <div class="info-item">
+          <label>Creada Por</label>
+          <p>{{ citaFormato()!.creadoPor?.nombreCompleto || 'N/A' }}</p>
+        </div>
+        <div class="info-item">
+          <label>Fecha de Creación</label>
+          <p>{{ citaFormato()!.fechaCreacion | date : 'short' }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Detalles de Productos (si existen) -->
+    @if (citaFormato()!.detalles && citaFormato()!.detalles.length > 0) {
+    <section class="card section-detalles">
+      <h2>📦 Productos Utilizados</h2>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Cantidad</th>
+              <th>Precio Unitario</th>
+              <th>Subtotal</th>
+              <th>Tipo de Uso</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (detalle of citaFormato()!.detalles; track detalle.detalleId) {
+            <tr>
+              <td>{{ detalle.productoNombre }}</td>
+              <td>{{ detalle.cantidad }}</td>
+              <td>${{ detalle.precioUnitario?.toFixed(2) }}</td>
+              <td>${{ detalle.subtotal?.toFixed(2) }}</td>
+              <td>{{ detalle.tipoUso }}</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+    }
+  </div>
+  } @else {
+  <div class="empty-state">
+    <p>No hay información disponible</p>
+  </div>
+  }
+</div>

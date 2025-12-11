@@ -1,0 +1,35 @@
+<!-- Error Modal Global -->
+<app-error-modal></app-error-modal>
+
+<div class="app-container">
+  <!-- Sidebar: Solo se muestra si está autenticado y no es ruta de auth -->
+  @if (shouldShowSidebar()) {
+  <app-sidebar
+    [appName]="'MindCare'"
+    [menuGroups]="menuGroups()"
+    [userRole]="authService.currentUser()?.rol || 'Paciente'"
+    [userRoleLabel]="'Rol actual:'"
+    (logoutClick)="openLogoutModal()"
+  />
+  }
+
+  <!-- Main Content -->
+  <main class="main-content" [class.full-width]="!shouldShowSidebar()">
+    <!-- Router Outlet: Aquí se cargan las páginas -->
+    <div class="content-wrapper">
+      <router-outlet />
+    </div>
+  </main>
+
+  @if (showLogoutModal()) {
+  <app-confirmation-modal
+    title="Cerrar sesión"
+    message="¿Estás seguro de que deseas finalizar tu sesión actual?"
+    type="warning"
+    confirmText="Sí, salir"
+    confirmVariant="destructive"
+    (confirm)="confirmLogout()"
+    (cancel)="showLogoutModal.set(false)"
+  />
+  }
+</div>

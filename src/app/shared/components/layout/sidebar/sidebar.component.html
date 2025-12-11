@@ -1,0 +1,98 @@
+<aside class="sidebar">
+  <!-- Logo -->
+  <div class="sidebar-header">
+    <div class="logo">
+      <span class="logo-icon">🧠</span>
+      <span class="logo-text">{{ appName() }}</span>
+      <!-- Badge con contador de notificaciones no leídas - Ahora clickeable -->
+      @if (unreadCount() > 0) {
+      <button
+        (click)="toggleNotifications()"
+        class="logo-notif-badge-btn"
+        title="Ver notificaciones"
+      >
+        <app-badge variant="danger" class="logo-notif-badge">
+          {{ unreadCount() }}
+        </app-badge>
+      </button>
+      } @else {
+      <button
+        (click)="toggleNotifications()"
+        class="logo-notif-badge-btn"
+        title="Notificaciones"
+      >
+        <span class="notif-icon">🔔</span>
+      </button>
+      }
+    </div>
+  </div>
+
+  <!-- Notification Panel - Visible cuando está abierto -->
+  @if (notificationsPanelIsOpen()) {
+  <div class="notifications-panel-wrapper">
+    <app-notification-panel (closed)="toggleNotifications()"></app-notification-panel>
+  </div>
+  }
+
+  <!-- Navigation -->
+  <nav class="sidebar-nav">
+    @for (group of menuGroups(); track group.title) {
+    <div class="menu-group">
+      @if (group.title) {
+      <div class="menu-group-title">{{ group.title }}</div>
+      }
+
+      <ul class="menu-items">
+        @for (item of group.items; track item.label) {
+        <li class="menu-item">
+          <a
+            [routerLink]="item.route"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: false }"
+            class="menu-link"
+          >
+            @if (item.icon) {
+            <span class="menu-icon">{{ item.icon }}</span>
+            }
+            <span class="menu-label">{{ item.label }}</span>
+            @if (item.badge) {
+            <app-badge variant="info" class="menu-badge">
+              {{ item.badge }}
+            </app-badge>
+            }
+          </a>
+        </li>
+        }
+      </ul>
+    </div>
+    }
+  </nav>
+
+  <!-- User Section -->
+  <div class="sidebar-footer">
+    <div class="user-section">
+      <div class="user-profile">
+        <img
+          *ngIf="currentUser()?.foto"
+          [src]="currentUser()?.foto"
+          alt="Avatar"
+          class="user-avatar"
+        />
+        <div
+          *ngIf="!currentUser()?.foto"
+          class="user-avatar user-avatar-placeholder"
+        >
+          {{ (currentUserName() || 'U').charAt(0).toUpperCase() }}
+        </div>
+        <div class="user-details">
+          <div class="user-name">{{ currentUserName() }}</div>
+          <div class="user-role-display">{{ userRole() }}</div>
+        </div>
+      </div>
+
+      <button class="logout-button" (click)="onLogoutClick()">
+        <span>{{ logoutLabel() }}</span>
+      </button>
+    </div>
+  </div>
+</aside>

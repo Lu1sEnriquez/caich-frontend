@@ -1,0 +1,114 @@
+.error-container {
+  position: fixed;
+  top: var(--space-lg);
+  right: var(--space-lg);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  max-width: 400px;
+  pointer-events: none;
+}
+
+.error-modal {
+  pointer-events: all;
+  padding: var(--space-lg);
+  background: white;
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  animation: slideIn 0.3s ease-out;
+  border-left: 4px solid;
+}
+
+.error-modal-error {
+  border-left-color: var(--color-destructive);
+  background: linear-gradient(to right, rgba(239, 68, 68, 0.05), white);
+}
+
+.error-modal-warning {
+  border-left-color: var(--color-warning);
+  background: linear-gradient(to right, rgba(245, 158, 11, 0.05), white);
+}
+
+.error-modal-info {
+  border-left-color: var(--color-primary);
+  background: linear-gradient(to right, rgba(59, 130, 246, 0.05), white);
+}
+
+.error-modal-success {
+  border-left-color: var(--color-success);
+  background: linear-gradient(to right, rgba(16, 185, 129, 0.05), white);
+}
+
+.error-header {
+  display: flex;
+  gap: var(--space-md);
+  align-items: flex-start;
+}
+
+.error-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.error-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.error-title {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-foreground);
+  margin-bottom: var(--space-xs);
+}
+
+.error-message {
+  font-size: 14px;
+  color: var(--color-muted-foreground);
+  margin: 0;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+.error-close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--color-muted-foreground);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.error-close:hover {
+  background: var(--color-muted);
+  color: var(--color-foreground);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .error-container {
+    top: var(--space-md);
+    right: var(--space-md);
+    left: var(--space-md);
+    max-width: none;
+  }
+}

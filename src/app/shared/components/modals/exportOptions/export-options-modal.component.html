@@ -1,0 +1,35 @@
+<div class="modal-overlay" (click)="cancel.emit()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-icon icon-info">
+        <span>📥</span>
+      </div>
+      <h2>Exportar datos</h2>
+      <button class="close-btn" (click)="cancel.emit()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <p class="subtitle">Selecciona las columnas que deseas incluir en el archivo CSV:</p>
+
+      <div class="options-grid">
+        @for (field of availableFields(); track field) {
+        <label class="checkbox-option">
+          <input type="checkbox" [checked]="isFieldSelected(field)" (change)="toggleField(field)" />
+          <span class="checkbox-label">{{ field }}</span>
+        </label>
+        }
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <app-button variant="outline" (clicked)="cancel.emit()"> Cancelar </app-button>
+      <app-button
+        variant="primary"
+        (clicked)="confirmExport()"
+        [disabled]="selectedFields().length === 0"
+      >
+        Exportar CSV
+      </app-button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,70 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="logo">
+        <span class="logo-icon">🧠</span>
+        <h1>MindCare</h1>
+      </div>
+      <h2>Iniciar Sesión</h2>
+      <p>Accede a tu cuenta para continuar</p>
+    </div>
+
+    <!-- Loading state fullscreen -->
+    @if (isLoading()) {
+    <app-loading
+      [fullscreen]="false"
+      [message]="'Iniciando sesión...'"
+      [submessage]="'Verificando credenciales'"
+    />
+    } @else {
+    <form class="auth-form" (ngSubmit)="handleLogin()">
+      <!-- Email -->
+      <app-input
+        label="Correo electrónico"
+        type="email"
+        placeholder="tu@email.com"
+        [(value)]="email"
+        (valueChange)="onEmailChange()"
+        [error]="emailError()"
+        [required]="true"
+        [disabled]="isLoading()"
+      />
+
+      <!-- Password -->
+      <app-input
+        label="Contraseña"
+        type="password"
+        placeholder="••••••••"
+        [(value)]="password"
+        (valueChange)="onPasswordChange()"
+        [error]="passwordError()"
+        [required]="true"
+        [disabled]="isLoading()"
+      />
+
+      <!-- Botón de login -->
+      <app-button type="submit" variant="primary" [fullWidth]="true" [disabled]="isLoading()">
+        Iniciar Sesión
+      </app-button>
+
+      <!-- Link a register -->
+      <div class="auth-footer">
+        <p>
+          ¿No tienes cuenta?
+          <a routerLink="/register">Regístrate aquí</a>
+        </p>
+      </div>
+    </form>
+
+    <!-- Tips de ejemplo -->
+    <div class="demo-tips">
+      <p><strong>💡 Tips para probar:</strong></p>
+      <ul>
+        <li><code>admin@mindcare.com</code> → Rol Administrador</li>
+        <li><code>terapeuta@mindcare.com</code> → Rol Terapeuta</li>
+        <li><code>paciente@mindcare.com</code> → Rol Paciente</li>
+      </ul>
+    </div>
+    }
+  </div>
+</div>

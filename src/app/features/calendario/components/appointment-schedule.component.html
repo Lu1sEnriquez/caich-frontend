@@ -1,0 +1,381 @@
+<div class="schedule-container">
+  <!-- Header con fecha seleccionada -->
+  <div class="schedule-header">
+    <div class="header-info">
+      <h3>Agenda del día</h3>
+      <p>{{ formatDate(selectedDate()) }}</p>
+    </div>
+    <div class="header-actions">
+      <app-button variant="outline" size="sm" (clicked)="toggleConfigMode()">
+        {{ configMode() ? 'Cancelar' : '⚙️ Configurar horario' }}
+      </app-button>
+      <app-button variant="primary" size="sm" (clicked)="openNewAppointment()">
+        + Nueva cita
+      </app-button>
+    </div>
+  </div>
+
+  <!-- Estados de carga y error -->
+  @if (isLoading()) {
+  <div class="loading-overlay">
+    <div class="loading-content">
+      <p>🔄 Cargando agenda...</p>
+    </div>
+  </div>
+  } @if (hasError()) {
+  <div class="error-container">
+    <div class="error-content">
+      <p>❌ Error al cargar los datos</p>
+      <app-button variant="outline" size="sm" (clicked)="reloadData()"> Reintentar </app-button>
+    </div>
+  </div>
+  }
+
+  <!-- Modo configuración -->
+  @if (configMode() && !isLoading() && !hasError()) {
+  <app-card>
+    <div class="config-section">
+      <h4>Configurar horarios disponibles</h4>
+
+      <!-- Selección de espacio -->
+      <div class="form-field">
+        <label>Seleccionar espacio para configurar</label>
+
+        <select
+          class="select-input"
+          [(ngModel)]="selectedEspacioIdModel"
+          (ngModelChange)="onEspacioSelected($event)"
+          name="espacio"
+        >
+          <option [ngValue]="null">Selecciona un espacio</option>
+
+          @for (cubiculo of cubiculos(); track cubiculo.id) {
+          <option [ngValue]="cubiculo.id">{{ cubiculo.nombre }} ({{ cubiculo.tipo }})</option>
+          }
+        </select>
+      </div>
+
+      <!-- Mostrar horarios solo si ya eligió un espacio -->
+      @if (selectedEspacioId()) {
+      <p class="config-subtitle">Selecciona las horas que NO estarán disponibles para este día</p>
+
+      <div class="time-slots-config">
+        @for (slot of allTimeSlots(); track slot) {
+        <button
+          class="time-slot-config"
+          [class.disabled]="isHourDisabled(slot)"
+          (click)="toggleHourAvailability(slot)"
+        >
+          {{ slot }}
+          @if (isHourDisabled(slot)) {
+          <span class="disabled-badge">❌</span>
+          }
+        </button>
+        }
+      </div>
+
+      <div class="config-actions">
+        <app-button variant="outline" (clicked)="cancelConfig()"> Cancelar </app-button>
+        <app-button variant="primary" (clicked)="saveConfig()"> Guardar configuración </app-button>
+      </div>
+      }
+    </div>
+  </app-card>
+  }
+
+  <!-- Tabla de horarios -->
+  @if (!isLoading() && !hasError()) {
+  <div class="schedule-table-wrapper" #tableWrapper>
+    <table class="schedule-table">
+      <!-- Header con horas -->
+      <thead>
+        <tr>
+          <th class="cubiculo-header">Cubículo</th>
+          @for (hour of hours(); track hour) {
+          <th
+            class="hour-header"
+            [class.disabled]="isHourDisabled(hour)"
+            [class.current-hour]="isCurrentHour(hour)"
+          >
+            <div class="hour-content">
+              {{ hour }}
+              @if (isCurrentHour(hour)) {
+              <span class="current-indicator">●</span>
+              } @if (isHourDisabled(hour)) {
+              <span class="disabled-indicator">🚫</span>
+              }
+            </div>
+          </th>
+          }
+        </tr>
+      </thead>
+
+      <!-- Body con cubículos y citas -->
+      <tbody>
+        @for (cubiculo of cubiculos(); track cubiculo.id) {
+        <tr>
+          <!-- Nombre del cubículo -->
+          <td class="cubiculo-cell">
+            <div class="cubiculo-info">
+              <strong>{{ cubiculo.nombre }}</strong>
+              <span class="cubiculo-tipo">{{ cubiculo.tipo }}</span>
+            </div>
+          </td>
+
+          <!-- Celdas de horas -->
+          @for (hour of hours(); track hour; let colIndex = $index) { @if
+          (!shouldSkipCell(cubiculo.id, hour)) {
+          <td
+            class="time-cell"
+            [class.disabled]="isHourDisabled(hour)"
+            [class.current-hour]="isCurrentHour(hour)"
+            [attr.colspan]="
+              getAppointmentAt(cubiculo.id, hour)
+                ? getAppointmentSpan(getAppointmentAt(cubiculo.id, hour)!)
+                : 1
+            "
+            (click)="onCellClick(cubiculo.id, hour)"
+          >
+            @if (getAppointmentAt(cubiculo.id, hour); as appointment) {
+            <div
+              class="appointment-block"
+              [class.estado-agendada]="appointment.estado === 'Agendado'"
+              [class.estado-completada]="appointment.estado === 'Completado'"
+              [class.estado-no-asistio]="appointment.estado === 'NoAsistio'"
+              [class.estado-cancelada]="appointment.estado === 'Cancelado'"
+              (click)="editAppointment(appointment); $event.stopPropagation()"
+            >
+              <div class="appointment-content">
+                <strong class="patient-name">{{ appointment.pacienteNombre }}</strong>
+                <span class="appointment-time">
+                  ⏰ {{ appointment.horaInicio }} - {{ appointment.horaFin }}
+                </span>
+                <span class="appointment-therapist"> 👤 {{ appointment.terapeutaNombre }} </span>
+                @if (appointment.estado === 'NoAsistio') {
+                <span class="no-show-badge">❌ No asistió</span>
+                }
+              </div>
+            </div>
+            }
+          </td>
+          } }
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Mensaje cuando no hay citas -->
+  @if (appointments().length === 0 && !isLoading()) {
+  <div class="empty-state">
+    <p>No hay citas agendadas para este día</p>
+    <app-button variant="primary" (clicked)="openNewAppointment()">
+      Agendar primera cita
+    </app-button>
+  </div>
+  }
+
+  <!-- Leyenda mejorada -->
+  <div class="legend">
+    <div class="legend-title">Estado de las citas:</div>
+    <div class="legend-items">
+      <div class="legend-item">
+        <span class="legend-color-agendada estado-agendada"></span>
+        <span>Agendada</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-color-completada estado-completada"></span>
+        <span>Completada</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-color-no-asistio estado-no-asistio"></span>
+        <span>No asistió</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-color-cancelada estado-cancelada"></span>
+        <span>Cancelada</span>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- Modal de nueva cita / editar -->
+  @if (showAppointmentDialog()) {
+  <div class="dialog-overlay" (click)="closeDialog()">
+    <div class="dialog" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <h2>{{ editingAppointment() ? 'Editar cita' : 'Nueva cita' }}</h2>
+        <button class="close-btn" (click)="closeDialog()">✕</button>
+      </div>
+
+      <div class="dialog-content">
+        <form class="appointment-form">
+          <div class="form-field">
+            <label>Cubículo *</label>
+            <select [(ngModel)]="appointmentForm().cubiculoId" name="cubiculo" class="select-input">
+              <option value="">Seleccionar cubículo</option>
+              @for (cubiculo of cubiculos(); track cubiculo.id) {
+              <option [value]="cubiculo.id">{{ cubiculo.nombre }} ({{ cubiculo.tipo }})</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label>Fecha *</label>
+            <input
+              type="date"
+              [(ngModel)]="appointmentForm().fecha"
+              name="fecha"
+              class="input-field"
+            />
+          </div>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label>Hora inicio *</label>
+              <select
+                [(ngModel)]="appointmentForm().horaInicio"
+                name="horaInicio"
+                class="select-input"
+              >
+                @for (hour of availableHours(); track hour) {
+                <option [value]="hour">{{ hour }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label>Hora fin *</label>
+              <select [(ngModel)]="appointmentForm().horaFin" name="horaFin" class="select-input">
+                @for (hour of availableHours(); track hour) {
+                <option [value]="hour">{{ hour }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <!-- ✨ PACIENTE: Campo auto-poblado o dropdown según rol -->
+          @if (isAdminUser()) {
+          <div class="form-field">
+            <label>Paciente ID *</label>
+            <input
+              type="text"
+              [(ngModel)]="appointmentForm().pacienteId"
+              name="pacienteId"
+              placeholder="ID del paciente"
+              class="input-field"
+            />
+          </div>
+          } @else {
+          <div class="form-field">
+            <label>Paciente (auto-poblado)</label>
+            <input
+              type="text"
+              [value]="currentUser()?.nombreCompleto || 'Tu nombre'"
+              readonly
+              class="input-field"
+              style="background-color: #f5f5f5;"
+            />
+            <small style="color: #666; font-size: 12px;">
+              Tu ID: {{ currentUser()?.id }}
+            </small>
+          </div>
+          }
+
+          <div class="form-field">
+            <label>Nombre del Paciente *</label>
+            <input
+              type="text"
+              [(ngModel)]="appointmentForm().pacienteNombre"
+              name="paciente"
+              placeholder="Nombre completo del paciente"
+              class="input-field"
+            />
+          </div>
+
+          <!-- ✨ TERAPEUTA: Campo para ID -->
+          <div class="form-field">
+            <label>Terapeuta ID *</label>
+            <input
+              type="text"
+              [(ngModel)]="appointmentForm().terapeutaId"
+              name="terapeutaId"
+              placeholder="ID del terapeuta"
+              class="input-field"
+            />
+          </div>
+
+          <div class="form-field">
+            <label>Nombre del Terapeuta *</label>
+            <input
+              type="text"
+              [(ngModel)]="appointmentForm().terapeutaNombre"
+              name="terapeuta"
+              placeholder="Nombre completo del terapeuta"
+              class="input-field"
+            />
+          </div>
+
+          <!-- Campo Materia -->
+          <div class="form-field">
+            <label>Materia *</label>
+            <input
+              type="text"
+              [(ngModel)]="appointmentForm().materia"
+              name="materia"
+              placeholder="Materia o motivo de la cita"
+              class="input-field"
+            />
+          </div>
+
+          <!-- Campo Modalidad -->
+          <div class="form-field">
+            <label>Modalidad *</label>
+            <select [(ngModel)]="appointmentForm().modalidad" name="modalidad" class="select-input">
+              <option value="Presencial">Presencial</option>
+              <option value="Online">Online</option>
+            </select>
+          </div>
+
+          @if (editingAppointment()) {
+          <div class="form-field">
+            <label>Estado</label>
+            <select [(ngModel)]="appointmentForm().estado" name="estado" class="select-input">
+              <option value="Agendado">Agendada</option>
+              <option value="Completado">Completada</option>
+              <option value="NoAsistio">No asistió</option>
+              <option value="Cancelado">Cancelada</option>
+            </select>
+          </div>
+          }
+
+          <div class="form-field">
+            <label>Notas</label>
+            <textarea
+              [(ngModel)]="appointmentForm().notas"
+              name="notas"
+              rows="3"
+              placeholder="Notas adicionales..."
+              class="textarea-field"
+            ></textarea>
+          </div>
+
+          @if (validationMessage()) {
+          <div class="validation-message">⚠️ {{ validationMessage() }}</div>
+          }
+        </form>
+      </div>
+
+      <div class="dialog-footer">
+        @if (editingAppointment()) {
+        <app-button variant="destructive" (clicked)="deleteAppointment()"> Eliminar </app-button>
+        }
+        <app-button variant="outline" (clicked)="closeDialog()"> Cancelar </app-button>
+        <app-button variant="primary" (clicked)="saveAppointment()">
+          {{ editingAppointment() ? 'Actualizar' : 'Guardar' }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+  }
+</div>

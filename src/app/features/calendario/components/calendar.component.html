@@ -1,0 +1,276 @@
+<div class="calendar-container">
+  <div class="calendar-main">
+    <app-card [padding]="'none'">
+      <!-- Calendar Header -->
+      <div class="calendar-header">
+        <div class="header-left">
+          <h1>Calendario de citas</h1>
+        </div>
+        <div class="header-actions">
+          <app-button variant="outline" size="sm" (click)="toggleFilters()"> Filtros </app-button>
+          <app-button variant="outline" size="sm" (click)="openScheduleConfig()">
+            ⚙️ Configurar horario
+          </app-button>
+        </div>
+      </div>
+
+      <!-- Panel de Filtros -->
+      @if (showFilters()) {
+      <div class="filters-panel">
+        <div class="filters-header">
+          <h3>Filtros</h3>
+          <button class="close-filters" (click)="toggleFilters()">✕</button>
+        </div>
+        <div class="filters-content">
+          <div class="filter-group">
+            <label>Terapeuta</label>
+            <select [(ngModel)]="filters.terapeuta" class="filter-select">
+              <!-- ✅ Sin () -->
+              <option value="">Todos los terapeutas</option>
+              <option value="1">Terapeuta 1</option>
+              <option value="2">Terapeuta 2</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Tipo de cita</label>
+            <select [(ngModel)]="filters.tipoCita" class="filter-select">
+              <!-- ✅ Sin () -->
+              <option value="">Todos los tipos</option>
+              <option value="presencial">Presencial</option>
+              <option value="online">Online</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Estado</label>
+            <select [(ngModel)]="filters.estado" class="filter-select">
+              <!-- ✅ Sin () -->
+              <option value="">Todos los estados</option>
+              <option value="Agendado">Agendada</option>
+              <option value="Completado">Completada</option>
+              <option value="Cancelado">Cancelada</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Espacio</label>
+            <select [(ngModel)]="filters.espacio" class="filter-select">
+              <!-- ✅ Sin () -->
+              <option value="">Todos los espacios</option>
+              <option value="1">Cubículo 1</option>
+              <option value="2">Cubículo 2</option>
+            </select>
+          </div>
+          <div class="filter-actions">
+            <app-button variant="outline" (click)="clearFilters()">Limpiar</app-button>
+            <app-button variant="primary" (click)="applyFilters()">Aplicar</app-button>
+          </div>
+        </div>
+      </div>
+      }
+
+      <!-- Month Selector -->
+      <div class="month-selector">
+        <button class="month-nav" (click)="previousMonth()">←</button>
+        <div class="month-info">
+          <h2>{{ currentMonthName() }} {{ currentYear() }}</h2>
+          <p>Selecciona un día para ver horarios disponibles</p>
+        </div>
+        <button class="month-nav" (click)="nextMonth()">→</button>
+      </div>
+
+      <!-- Availability Legend -->
+      <div class="availability-legend">
+        <div class="legend-item">
+          <span class="legend-dot disponible"></span>
+          <span>Disponible</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot sin-disponibilidad"></span>
+          <span>Sin disponibilidad</span>
+        </div>
+      </div>
+
+      <!-- Calendar Grid -->
+      <div class="calendar-grid">
+        <div class="weekday-header">
+          @for (day of weekdays; track $index) {
+          <div class="weekday">{{ day }}</div>
+          }
+        </div>
+
+        <div class="calendar-days">
+          @for (day of calendarDays(); track day.date.getTime()) {
+          <button
+            class="calendar-day"
+            [class.current-month]="day.isCurrentMonth"
+            [class.today]="day.isToday"
+            [class.selected]="day.isSelected"
+            [class.has-slots]="day.slots > 0"
+            (click)="selectDay(day)"
+          >
+            <span class="day-number">{{ day.day }}</span>
+            @if (day.slots > 0) {
+            <span class="slots-badge"> {{ day.slots }} slot{{ day.slots > 1 ? 's' : '' }} </span>
+            }
+          </button>
+          }
+        </div>
+      </div>
+
+      @if (selectedDate()) {
+      <div #appointmentScheduleSection>
+        <app-appointment-schedule
+          [selectedDate]="selectedDate()!"
+          (appointmentSaved)="handleAppointmentSaved($event)"
+        />
+      </div>
+      }
+
+      <!-- Upcoming Appointments -->
+      <div class="upcoming-section">
+        <h3>Tus próximas citas</h3>
+        <p class="section-subtitle">Resumen de las próximas 2 semanas</p>
+
+        <div class="appointments-list">
+          @for (appointment of upcomingAppointments(); track appointment.id) {
+          <div class="appointment-card">
+            <div class="appointment-date">
+              <strong>{{ formatDate(appointment.fecha) }}</strong>
+              <span>{{ getHoraDisplay(appointment) }}</span>
+            </div>
+            <div class="appointment-details">
+              <strong>Con {{ appointment.terapeutaNombre }}</strong>
+              <p>{{ getModalidad(appointment) }}</p>
+            </div>
+            <div class="appointment-actions">
+              <app-badge [status]="getStatusBadge(appointment.estado)">
+                {{ getStatusText(appointment.estado) }}
+              </app-badge>
+              <app-button variant="outline" size="sm" (click)="verDetalleCita(appointment.id)">Ver detalle</app-button>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+
+      <!-- Quick Stats - Month Selected Indicators -->
+      <div class="quick-stats">
+        <h3>Indicadores del mes: {{ currentMonthName() }} {{ currentYear() }}</h3>
+        <p class="section-subtitle">Resumen de citas del mes seleccionado</p>
+
+        <div class="stats-grid">
+          <div class="stat-card month-indicator">
+            <span class="stat-label">Total citas</span>
+            <span class="stat-value">{{ monthIndicators().total }}</span>
+          </div>
+          <div class="stat-card month-indicator agendadas">
+            <span class="stat-label">Agendadas</span>
+            <span class="stat-value">{{ monthIndicators().agendadas }}</span>
+            <app-badge variant="info" style="font-size: 11px;">En proceso</app-badge>
+          </div>
+          <div class="stat-card month-indicator completadas">
+            <span class="stat-label">Completadas</span>
+            <span class="stat-value">{{ monthIndicators().completadas }}</span>
+            <app-badge variant="success" style="font-size: 11px;">Completado</app-badge>
+          </div>
+          <div class="stat-card month-indicator canceladas">
+            <span class="stat-label">Canceladas</span>
+            <span class="stat-value">{{ monthIndicators().canceladas }}</span>
+            <app-badge variant="danger" style="font-size: 11px;">Cancelado</app-badge>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Stats - General Stats -->
+      <div class="quick-stats">
+        <h3>Estadísticas generales</h3>
+        <p class="section-subtitle">Resumen general de actividad</p>
+
+        <div class="stats-grid">
+          <div class="stat-card" (click)="abrirModalCitasDelMes()" style="cursor: pointer;">
+            <span class="stat-label">Próximas 2 semanas</span>
+            <span class="stat-value">{{ upcomingAppointments().length }}</span>
+            <small style="font-size: 11px; color: var(--color-muted-foreground);">citas próximas</small>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Horas reservadas (mes)</span>
+            <span class="stat-value">{{ stats().horasReservadas }}</span>
+            <small style="font-size: 11px; color: var(--color-muted-foreground);">horas</small>
+          </div>
+          <div class="stat-card" (click)="abrirModalPagosPendientes()" style="cursor: pointer;">
+            <span class="stat-label">Pagos pendientes</span>
+            <span class="stat-value">{{ stats().pagosPendientes }}</span>
+            <small style="font-size: 11px; color: var(--color-muted-foreground);">items</small>
+          </div>
+        </div>
+      </div>
+    </app-card>
+  </div>
+
+  <!-- Time Slots Sidebar -->
+  <div class="time-slots-sidebar">
+    <app-card>
+      <div class="sidebar-header">
+        <div>
+          <h3>Horarios para</h3>
+          <p class="selected-date">{{ selectedDateFormatted() }}</p>
+        </div>
+        <app-button variant="primary" size="sm" (click)="updateHorarios()">Actualizar</app-button>
+      </div>
+
+      <!-- Mostrar mensaje cuando no hay fecha seleccionada -->
+      @if (!selectedDate()) {
+      <div class="no-date-selected">
+        <p>Selecciona una fecha para ver los horarios disponibles</p>
+      </div>
+      }
+
+      <div class="time-slots-list">
+        @for (slot of timeSlots(); track slot.time) {
+        <div class="time-slot">
+          <div class="slot-time">
+            <strong>{{ slot.time }}</strong>
+          </div>
+          <app-badge [status]="slot.status">
+            {{ slot.status }}
+          </app-badge>
+        </div>
+        }
+      </div>
+    </app-card>
+  </div>
+
+  <!-- Modal de Configuración de Horarios -->
+  @if (showScheduleConfig()) {
+  <div class="modal-overlay" (click)="closeScheduleConfig()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Configurar Horarios Especiales</h2>
+        <button class="close-modal" (click)="closeScheduleConfig()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <app-schedule-config-modal
+          (save)="saveScheduleConfig($event)"
+          (cancel)="closeScheduleConfig()"
+        ></app-schedule-config-modal>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- Modal de Citas del Mes -->
+  <app-appointments-modal
+    [appointments]="appointmentsThisMonth()"
+    [isOpen]="showAppointmentsModal()"
+    (closed)="cerrarModalCitas()"
+    (selectedAppointment)="handleAppointmentSelectedFromModal($event)"
+  />
+
+  <!-- Modal de Pagos Pendientes -->
+  <app-payments-modal
+    [payments]="paymentsThisMonth()"
+    [isOpen]="showPaymentsModal()"
+    (closed)="cerrarModalPagos()"
+    (navigateToPayments)="irASectionPagos()"
+  />
+</div>

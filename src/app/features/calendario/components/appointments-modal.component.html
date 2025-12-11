@@ -1,0 +1,115 @@
+@if (isOpen()) {
+<div class="modal-overlay">
+  <div class="modal-content">
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <h2>📋 Citas del Mes</h2>
+      <button class="btn-close" (click)="closeModal()" title="Cerrar">&times;</button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="modal-body">
+      <!-- Filtros -->
+      <div class="filters-section">
+        <div class="search-input">
+          <input
+            type="text"
+            placeholder="Buscar por paciente o terapeuta..."
+            [value]="searchText()"
+            (input)="searchText.set($event.target.value)"
+            class="input-field"
+          />
+        </div>
+
+        <div class="filter-buttons">
+          <button
+            [class.active]="filterStatus() === 'all'"
+            (click)="filterStatus.set('all')"
+            class="filter-btn"
+          >
+            Todas
+          </button>
+          <button
+            [class.active]="filterStatus() === 'agendado'"
+            (click)="filterStatus.set('agendado')"
+            class="filter-btn"
+          >
+            Agendadas
+          </button>
+          <button
+            [class.active]="filterStatus() === 'completado'"
+            (click)="filterStatus.set('completado')"
+            class="filter-btn"
+          >
+            Completadas
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabla de Citas -->
+      <div class="appointments-table">
+        @if (filteredAppointments().length > 0) {
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Paciente</th>
+                <th>Terapeuta</th>
+                <th>Modalidad</th>
+                <th>Estado</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (apt of filteredAppointments(); track apt.id) {
+              <tr (click)="selectAppointment(apt)" class="appointment-row">
+                <td>{{ formatDate(apt.fecha) }}</td>
+                <td>{{ getHoraDisplay(apt) }}</td>
+                <td>{{ apt.pacienteNombre }}</td>
+                <td>{{ apt.terapeutaNombre }}</td>
+                <td>{{ apt.modalidad || 'Presencial' }}</td>
+                <td>
+                  <app-badge [status]="getStatusBadge(apt.estado)">
+                    {{ getStatusText(apt.estado) }}
+                  </app-badge>
+                </td>
+                <td>
+                  <button class="btn-view" (click)="selectAppointment(apt); closeModal()">
+                    Ver
+                  </button>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        } @else {
+        <div class="no-appointments">
+          <p>{{ searchText() ? 'No se encontraron citas con esos criterios.' : 'No hay citas para este mes.' }}</p>
+        </div>
+        }
+      </div>
+
+      <!-- Resumen -->
+      @if (filteredAppointments().length > 0) {
+      <div class="appointments-summary">
+        <p>
+          Mostrando
+          <strong>{{ filteredAppointments().length }}</strong>
+          de
+          <strong>{{ appointments().length }}</strong>
+          citas
+        </p>
+      </div>
+      }
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="modal-footer">
+      <app-button variant="secondary" (click)="closeModal()">Cerrar</app-button>
+    </div>
+  </div>
+</div>
+}

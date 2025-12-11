@@ -1,0 +1,144 @@
+<div class="bank-accounts-management">
+  <div class="header">
+    <h1>🏦 Gestión de Cuentas Bancarias</h1>
+    <button (click)="openModal()" class="btn-primary">
+      ➕ Nueva Cuenta
+    </button>
+  </div>
+
+  <!-- Cargando -->
+  @if (accountsResource.isLoading()) {
+  <div class="loading">
+    <p>Cargando cuentas...</p>
+  </div>
+  }
+
+  <!-- Lista de cuentas -->
+  @if (accounts().length > 0) {
+  <div class="accounts-table">
+    <table>
+      <thead>
+        <tr>
+          <th>Banco</th>
+          <th>Titular</th>
+          <th>Número de Cuenta</th>
+          <th>CLABE</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (account of accounts(); track account.cuentaId) {
+        <tr>
+          <td><strong>{{ account.banco }}</strong></td>
+          <td>{{ account.titular }}</td>
+          <td class="mono">{{ maskAccountNumber(account.numeroCuenta) }}</td>
+          <td class="mono">{{ maskCLABE(account.clabe) }}</td>
+          <td>
+            <app-badge [variant]="account.estaActiva ? 'success' : 'destructive'">
+              {{ account.estaActiva ? '✓ Activa' : '✗ Inactiva' }}
+            </app-badge>
+          </td>
+          <td class="actions">
+            <button (click)="editAccount(account)" class="btn-secondary" title="Editar">
+              ✏️
+            </button>
+            <button (click)="toggleStatus(account)" class="btn-info" title="Cambiar estado">
+              {{ account.estaActiva ? '🔒' : '🔓' }}
+            </button>
+            <button (click)="deleteAccount(account)" class="btn-danger" title="Eliminar">
+              🗑️
+            </button>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  } @else {
+  <div class="empty-state">
+    <p>No hay cuentas bancarias registradas</p>
+  </div>
+  }
+
+  <!-- Modal -->
+  @if (showModal()) {
+  <div class="modal-overlay" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isEditing() ? '✏️ Editar Cuenta' : '➕ Nueva Cuenta' }}</h2>
+        <button (click)="closeModal()" class="btn-close">✕</button>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="saveAccount()" class="modal-content">
+        <div class="form-group">
+          <label>Banco *</label>
+          <input
+            type="text"
+            formControlName="banco"
+            placeholder="Ej: Banamex, Santander, etc."
+            class="form-input"
+          />
+          @if (form.get('banco')?.invalid && form.get('banco')?.touched) {
+          <span class="error">El banco es requerido</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label>Número de Cuenta *</label>
+          <input
+            type="text"
+            formControlName="numeroCuenta"
+            placeholder="Ej: 123456789"
+            class="form-input"
+          />
+          @if (form.get('numeroCuenta')?.invalid && form.get('numeroCuenta')?.touched) {
+          <span class="error">El número de cuenta es requerido</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label>CLABE (Opcional)</label>
+          <input
+            type="text"
+            formControlName="clabe"
+            placeholder="Ej: 002500000000000000"
+            maxlength="18"
+            class="form-input"
+          />
+          <small>Formato CLABE de 18 dígitos</small>
+        </div>
+
+        <div class="form-group">
+          <label>Titular de la Cuenta *</label>
+          <input
+            type="text"
+            formControlName="titular"
+            placeholder="Nombre completo del titular"
+            class="form-input"
+          />
+          @if (form.get('titular')?.invalid && form.get('titular')?.touched) {
+          <span class="error">El titular es requerido</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="estaActiva" />
+            <span>Cuenta Activa</span>
+          </label>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" (click)="closeModal()" class="btn-secondary">
+            Cancelar
+          </button>
+          <button type="submit" [disabled]="form.invalid" class="btn-primary">
+            {{ isEditing() ? 'Actualizar' : 'Crear' }} Cuenta
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  }
+</div>

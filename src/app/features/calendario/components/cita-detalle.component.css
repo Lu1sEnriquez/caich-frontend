@@ -1,0 +1,378 @@
+.detalle-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
+  border-radius: 8px;
+}
+
+/* Header */
+.detalle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.title-section h1 {
+  font-size: 28px;
+  margin: 0;
+  color: #333;
+  font-weight: 600;
+}
+
+.title-section .folio {
+  margin: 8px 0 0 0;
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.btn-volver {
+  padding: 10px 20px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-volver:hover {
+  background-color: #5a6268;
+  transform: translateX(-3px);
+}
+
+/* Loading/Error States */
+.loading-state,
+.error-state,
+.empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 16px;
+  color: #666;
+  margin: 20px 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.error-state {
+  flex-direction: column;
+  gap: 20px;
+  color: #dc3545;
+}
+
+.btn-retry {
+  padding: 10px 20px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-retry:hover {
+  background-color: #c82333;
+}
+
+/* Content Grid */
+.detalle-content {
+  display: grid;
+  gap: 20px;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Card Component Styling */
+.card {
+  background: white;
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.card h2 {
+  font-size: 18px;
+  margin: 0 0 20px 0;
+  color: #333;
+  font-weight: 600;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+/* Grid Layout */
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+/* Info Items */
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.info-item label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-item p {
+  font-size: 14px;
+  color: #333;
+  margin: 0;
+  word-break: break-word;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.info-item.total p {
+  font-size: 18px;
+  color: #28a745;
+  font-weight: 700;
+}
+
+/* Copy Button */
+.btn-copy {
+  padding: 4px 8px;
+  background-color: transparent;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-copy:hover {
+  background-color: #f0f0f0;
+  border-color: #999;
+}
+
+/* Badge Styling */
+.badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  width: fit-content;
+}
+
+.badge-activa,
+.badge-completed,
+.badge-pagado {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.badge-pendiente,
+.badge-pending,
+.badge-incomplete {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+.badge-cancelada,
+.badge-cancelled,
+.badge-unpaid {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.badge-ausente,
+.badge-noshowed {
+  background-color: #e7e7e7;
+  color: #404040;
+  border: 1px solid #c0c0c0;
+}
+
+/* Section Specific Styling */
+.section-datetime,
+.section-financiera,
+.section-estado {
+  border-left: 4px solid #007bff;
+}
+
+.section-paciente {
+  border-left: 4px solid #28a745;
+}
+
+.section-terapeuta {
+  border-left: 4px solid #17a2b8;
+}
+
+.section-sesion {
+  border-left: 4px solid #ffc107;
+}
+
+.section-notas {
+  border-left: 4px solid #6c757d;
+}
+
+.notas-content {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 4px;
+  line-height: 1.6;
+  color: #555;
+  font-style: italic;
+}
+
+.section-auditoria {
+  border-left: 4px solid #e83e8c;
+  opacity: 0.9;
+  font-size: 13px;
+}
+
+.section-detalles {
+  border-left: 4px solid #fd7e14;
+}
+
+/* Table Responsive */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+table thead {
+  background-color: #f8f9fa;
+}
+
+table thead tr {
+  border-bottom: 2px solid #dee2e6;
+}
+
+table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #495057;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+
+table td {
+  padding: 12px;
+  border-bottom: 1px solid #dee2e6;
+  color: #555;
+}
+
+table tbody tr:hover {
+  background-color: #f8f9fa;
+  transition: background-color 0.2s ease;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .detalle-container {
+    padding: 15px;
+  }
+
+  .detalle-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .btn-volver {
+    align-self: flex-start;
+  }
+
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .title-section h1 {
+    font-size: 22px;
+  }
+
+  .card {
+    padding: 15px;
+  }
+
+  .card h2 {
+    font-size: 16px;
+  }
+
+  table {
+    font-size: 12px;
+  }
+
+  table th,
+  table td {
+    padding: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .detalle-container {
+    padding: 10px;
+  }
+
+  .title-section h1 {
+    font-size: 18px;
+  }
+
+  .card {
+    padding: 12px;
+  }
+
+  .card h2 {
+    font-size: 14px;
+    margin-bottom: 15px;
+  }
+
+  .info-item p {
+    font-size: 13px;
+  }
+
+  table {
+    font-size: 11px;
+  }
+}

@@ -1,0 +1,24 @@
+<div class="modal-overlay" (click)="cancel.emit()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-icon" [class]="'icon-' + type()">
+        @switch (type()) { @case ('warning') { <span>⚠️</span> } @case ('danger') {
+        <span>❌</span> } @case ('info') { <span>ℹ️</span> } @case ('success') { <span>✅</span> }
+        @default { <span>❓</span> } }
+      </div>
+      <h2>{{ title() }}</h2>
+      <button class="close-btn" (click)="cancel.emit()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>{{ message() }}</p>
+    </div>
+    <div class="modal-footer">
+      <app-button variant="outline" (clicked)="cancel.emit()">
+        {{ cancelText() }}
+      </app-button>
+      <app-button [variant]="confirmVariant()" (clicked)="confirm.emit()">
+        {{ confirmText() }}
+      </app-button>
+    </div>
+  </div>
+</div>

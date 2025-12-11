@@ -1,0 +1,9 @@
+<div [class]="avatarClasses()">
+  @if (src() && !imageError) {
+  <img [src]="src()" [alt]="alt()" (error)="onImageError()" />
+  } @else {
+  <span class="avatar-fallback">{{ initials() }}</span>
+  } @if (status()) {
+  <span [class]="statusClasses()"></span>
+  }
+</div>

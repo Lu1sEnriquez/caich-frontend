@@ -1,0 +1,262 @@
+<div class="dashboard-container">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <h1>Dashboard Administrador</h1>
+    <app-button variant="outline" size="sm" (clicked)="refreshDashboard()">
+      🔄 Refrescar
+    </app-button>
+  </div>
+
+  <!-- Stats Cards -->
+  @if (dashboardResource.isLoading()) {
+  <div class="loading-container" style="text-align: center; padding: 2rem">
+    <p>Cargando estadísticas...</p>
+  </div>
+  } @else {
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-header">
+        <span class="stat-label">Citas hoy</span>
+        <span class="stat-icon">📅</span>
+      </div>
+      <div class="stat-value">{{ stats().citasHoy }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-header">
+        <span class="stat-label">Pagos pendientes</span>
+        <span class="stat-icon">💰</span>
+      </div>
+      <div class="stat-value">{{ stats().pagosPendientes }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-header">
+        <span class="stat-label">Nuevos pacientes</span>
+        <span class="stat-icon">👥</span>
+      </div>
+      <div class="stat-value">{{ stats().nuevosPacientes }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-header">
+        <span class="stat-label">Citas este mes</span>
+        <span class="stat-icon">📊</span>
+      </div>
+      <div class="stat-value">{{ stats().citasEsteMes }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-header">
+        <span class="stat-label">Préstamos activos</span>
+        <span class="stat-icon">📦</span>
+      </div>
+      <div class="stat-value">{{ stats().prestamosActivos }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-header">
+        <span class="stat-label">Ingresos mes</span>
+        <span class="stat-icon">💵</span>
+      </div>
+      <div class="stat-value">${{ stats().ingresosMes.toFixed(2) }}</div>
+    </div>
+  </div>
+  }
+
+  <div class="dashboard-grid">
+    <!-- Calendar Section - Mini Calendar with Quick View -->
+    <app-card [padding]="'none'">
+      <div class="section-header">
+        <div>
+          <h2>Calendario</h2>
+          <p class="section-subtitle">{{ formatMonthYear(currentMonth()) }}</p>
+        </div>
+        <div class="month-nav">
+          <button class="nav-btn" (click)="previousMonth()">Mes anterior</button>
+          <button class="nav-btn" (click)="nextMonth()">Siguiente mes</button>
+        </div>
+      </div>
+
+      <div class="calendar-wrapper">
+        <div class="calendar-grid-mini">
+          <div class="weekdays">
+            @for (day of weekdays; track $index) {
+            <div class="weekday">{{ day }}</div>
+            }
+          </div>
+          <div class="days-grid">
+            @for (day of calendarDays(); track day.date.getTime()) {
+            <button
+              class="calendar-day-mini"
+              [class.current-month]="day.isCurrentMonth"
+              [class.today]="day.isToday"
+              [class.has-slots]="day.slots > 0"
+              [disabled]="!day.isCurrentMonth"
+              (click)="selectCalendarDay(day)"
+            >
+              <span class="day-number">{{ day.day }}</span>
+              @if (day.slots > 0) {
+              <span class="slots-count">{{ day.slots }} citas</span>
+              }
+            </button>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Si hay día seleccionado, mostrar tabla de citas del día -->
+      @if (selectedDay() && selectedDayAppointments().length > 0) {
+      <div class="selected-day-appointments">
+        <div class="selected-day-header">
+          <h3>Citas para {{ formatSelectedDay() }}</h3>
+          <button class="close-btn" (click)="selectedDay.set(null)">✕</button>
+        </div>
+        <div class="appointments-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Hora</th>
+                <th>Paciente</th>
+                <th>Terapeuta</th>
+                <th>Espacio</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (apt of selectedDayAppointments(); track apt.id) {
+              <tr>
+                <td>{{ apt.horaInicio }} - {{ apt.horaFin }}</td>
+                <td>{{ apt.pacienteNombre }}</td>
+                <td>{{ apt.terapeutaNombre }}</td>
+                <td>{{ apt.espacioNombre }}</td>
+                <td>
+                  <app-button variant="outline" size="sm" (clicked)="goToCalendarWithAppointment(apt.id)">
+                    Ver en calendario
+                  </app-button>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+      } @else if (selectedDay() && selectedDayAppointments().length === 0) {
+      <div class="selected-day-empty">
+        <p>No hay citas para {{ formatSelectedDay() }}</p>
+        <button class="close-btn" (click)="selectedDay.set(null)">✕ Cerrar</button>
+      </div>
+      }
+    </app-card>
+
+    <!-- Pending Payments Section -->
+    <app-card>
+      <div class="section-header">
+        <div>
+          <h2>Pagos pendientes</h2>
+          <p class="section-subtitle">Resumen rápido</p>
+        </div>
+      </div>
+
+      @if (paymentsResource.isLoading()) {
+      <div class="loading-container" style="text-align: center; padding: 2rem">
+        <p>Cargando pagos...</p>
+      </div>
+      } @else if (pendingPayments().length === 0) {
+      <div class="empty-container" style="text-align: center; padding: 2rem">
+        <p>✅ No hay pagos pendientes de validación</p>
+      </div>
+      } @else {
+      <div class="summary-payments">
+        <div class="summary-stats">
+          <div class="stat">
+            <span class="label">Total pendientes:</span>
+            <span class="value">${{ getTotalPendingAmount().toFixed(2) }}</span>
+          </div>
+          <div class="stat">
+            <span class="label">Cantidad:</span>
+            <span class="value">{{ pendingPayments().length }}</span>
+          </div>
+        </div>
+        <div class="payments-preview">
+          @for (payment of pendingPayments().slice(0, 3); track payment.id) {
+          <div class="payment-item-compact">
+            <strong>{{ payment.nombre }}</strong>
+            <span>${{ payment.monto.toFixed(2) }}</span>
+          </div>
+          }
+          @if (pendingPayments().length > 3) {
+          <p class="more-items">+{{ pendingPayments().length - 3 }} pagos más</p>
+          }
+        </div>
+        <app-button variant="primary" (clicked)="goToPagos()">
+          Ver todos los pagos
+        </app-button>
+      </div>
+      }
+    </app-card>
+  </div>
+
+  <div class="dashboard-grid">
+    <!-- New Patients Section -->
+    <app-card>
+      <div class="section-header">
+        <div>
+          <h2>Nuevos pacientes</h2>
+          <p class="section-subtitle">Últimos registrados</p>
+        </div>
+      </div>
+
+      @if (newPatientsResource.isLoading()) {
+      <div class="loading-container" style="text-align: center; padding: 2rem">
+        <p>Cargando nuevos pacientes...</p>
+      </div>
+      } @else if (newPatients().length === 0) {
+      <div class="empty-container" style="text-align: center; padding: 2rem">
+        <p>No hay nuevos pacientes</p>
+      </div>
+      } @else {
+      <div class="patients-preview">
+        <div class="patients-stats">
+          <span>Este mes: <strong>{{ stats().nuevosPacientes }}</strong></span>
+        </div>
+        <div class="patients-list">
+          @for (patient of newPatients().slice(0, 4); track patient.id) {
+          <div class="patient-item">
+            <div class="patient-avatar">{{ (patient.nombreCompleto || 'P').charAt(0).toUpperCase() }}</div>
+            <div>
+              <strong>{{ patient.nombreCompleto }}</strong>
+              <p>{{ patient.email }}</p>
+            </div>
+          </div>
+          }
+        </div>
+        <app-button variant="primary" (clicked)="goToUsuarios()">
+          Ver todos los usuarios
+        </app-button>
+      </div>
+      }
+    </app-card>
+
+    <!-- Active Loans Section -->
+    <app-card>
+      <div class="section-header">
+        <div>
+          <h2>Préstamos activos</h2>
+          <p class="section-subtitle">Resumen rápido</p>
+        </div>
+      </div>
+
+      <div class="loans-summary">
+        <div class="loans-stat">
+          <span class="count">{{ stats().prestamosActivos }}</span>
+          <span class="label">Préstamos activos</span>
+        </div>
+        <div class="loans-stat warning">
+          <span class="count">{{ stats().prestamosVencidos }}</span>
+          <span class="label">Vencidos</span>
+        </div>
+      </div>
+    </app-card>
+  </div>
+</div>

@@ -1,0 +1,138 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="logo">
+        <span class="logo-icon">🧠</span>
+        <h1>MindCare</h1>
+      </div>
+      <h2>Crear Cuenta</h2>
+      <p>Regístrate para comenzar</p>
+    </div>
+
+    <!-- Mensaje de éxito -->
+    @if (registroExitoso()) {
+    <div class="success-message">
+      <span>✅</span>
+      <div>
+        <strong>¡Registro exitoso!</strong>
+        <p>Tu cuenta ha sido creada. Ahora puedes iniciar sesión.</p>
+        <app-button variant="primary" [fullWidth]="true" (clicked)="irALogin()">
+          Ir a Iniciar Sesión
+        </app-button>
+      </div>
+    </div>
+    } @else {
+    <form class="auth-form" (ngSubmit)="handleRegister()">
+      <!-- Nombre Completo -->
+      <app-input
+        label="Nombre completo"
+        type="text"
+        placeholder="Juan Pérez García"
+        [(value)]="nombreCompleto"
+        [required]="true"
+      />
+
+      <!-- Email -->
+      <app-input
+        label="Correo electrónico"
+        type="email"
+        placeholder="tu@email.com"
+        [(value)]="email"
+        [required]="true"
+      />
+
+      <!-- Folio -->
+      <app-input label="Folio (opcional)" type="text" placeholder="12345678" [(value)]="folio" />
+
+      <!-- Teléfono -->
+      <app-input
+        label="Teléfono (opcional)"
+        type="tel"
+        placeholder="6441234567"
+        [(value)]="telefono"
+        [hint]="'10 dígitos sin espacios'"
+      />
+
+      <!-- Rol -->
+      <div class="form-field">
+        <label>Tipo de cuenta</label>
+        <select [(ngModel)]="rol" name="rol" class="select-input">
+          @for (role of rolesDisponibles; track role.value) {
+          <option [value]="role.value">{{ role.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- ID del estudiante (solo para Alumno) -->
+      @if (rol() === 'Alumno') {
+      <app-input
+        label="ID del estudiante"
+        type="text"
+        placeholder="00000248171"
+        [(value)]="idAlumno"
+        [required]="true"
+        [hint]="'Requerido para rol Alumno'"
+      />
+      }
+
+      <!-- Contraseña -->
+      <app-input
+        label="Contraseña"
+        type="password"
+        placeholder="••••••••"
+        [(value)]="password"
+        [required]="true"
+        [hint]="'Mínimo 6 caracteres'"
+      />
+
+      <!-- Confirmar Contraseña -->
+      <app-input
+        label="Confirmar contraseña"
+        type="password"
+        placeholder="••••••••"
+        [(value)]="confirmPassword"
+        [required]="true"
+      />
+
+      <!-- Error general -->
+      @if (registerResource.error()) {
+      <div class="error-message">
+        <span>❌</span>
+        <span>{{ registerResource.error()?.message || 'Error al crear cuenta' }}</span>
+      </div>
+      }
+
+      <!-- Loading state -->
+      @if (registerResource.isLoading()) {
+      <div class="loading-message">
+        <span class="spinner">⏳</span>
+        <span>Creando tu cuenta...</span>
+        <span class="loading-subtitle">Esto puede tomar unos segundos</span>
+      </div>
+      }
+
+      <!-- Botón de registro -->
+      <app-button
+        type="submit"
+        variant="primary"
+        [fullWidth]="true"
+        [disabled]="registerResource.isLoading()"
+      >
+        @if (registerResource.isLoading()) {
+        <span>Registrando...</span>
+        } @else {
+        <span>Crear Cuenta</span>
+        }
+      </app-button>
+
+      <!-- Link a login -->
+      <div class="auth-footer">
+        <p>
+          ¿Ya tienes cuenta?
+          <a routerLink="/login">Inicia sesión aquí</a>
+        </p>
+      </div>
+    </form>
+    }
+  </div>
+</div>

@@ -1,0 +1,571 @@
+<div class="payments-container">
+  <!-- Header -->
+  <div class="payments-header">
+    <h1>@if (isAdmin()) { Pagos y comprobantes - Administración } @else { Mis pagos }</h1>
+    <div class="search-bar">
+      <input
+        type="search"
+        placeholder="Buscar pagos por nombre, folio o banco"
+        class="search-input"
+        [(ngModel)]="searchQuery"
+        (input)="applyFilters()"
+      />
+    </div>
+  </div>
+
+  <div class="payments-grid">
+    <!-- Left Column -->
+    <div class="left-column">
+      <!-- Summary Cards -->
+      <app-card>
+        <div class="summary-header">
+          <h2>Resumen</h2>
+          <p class="subtitle">Estado de los pagos</p>
+        </div>
+
+        <div class="summary-grid">
+          <div class="summary-card pending">
+            <div class="summary-label">Pendientes</div>
+            <div class="summary-value">{{ summary().pendientes }}</div>
+          </div>
+          <div class="summary-card approved">
+            <div class="summary-label">Aprobados</div>
+            <div class="summary-value">{{ summary().aprobados }}</div>
+          </div>
+          <div class="summary-card rejected">
+            <div class="summary-label">Rechazados</div>
+            <div class="summary-value">{{ summary().rechazados }}</div>
+          </div>
+        </div>
+
+        <div class="actions-section">
+          @if (isAdmin()) {
+          <app-button variant="outline" [fullWidth]="true" (clicked)="openExportDialog()">
+            Exportar
+          </app-button>
+          }
+          <app-button variant="outline" [fullWidth]="true" (clicked)="toggleFilterDialog()">
+            Filtros
+          </app-button>
+        </div>
+      </app-card>
+
+      <!-- Payment History -->
+      <app-card [padding]="'none'">
+        <div class="section-header">
+          <div>
+            <h2>Historial de pagos</h2>
+            <p class="subtitle">
+              @if (isAdmin()) { Registra y verifica comprobantes } @else { Consulta tus pagos
+              registrados }
+            </p>
+          </div>
+          <app-button variant="primary" size="sm" (clicked)="openNewPaymentDialog()">
+            Nuevo pago
+          </app-button>
+        </div>
+
+        <!-- Mostrar loading o mensaje si no hay datos -->
+        @if (paymentsResource.isLoading()) {
+        <div class="loading-container">
+          <p>Cargando pagos...</p>
+        </div>
+        } @else if (filteredPayments().length === 0) {
+        <div class="empty-container">
+          <p>No se encontraron pagos</p>
+        </div>
+        } @else {
+        <div class="table-wrapper">
+          <table class="payments-table">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Folio</th>
+                <th>Monto</th>
+                <th>Fecha</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (payment of filteredPayments(); track payment.id) {
+              <tr>
+                <td>
+                  <div class="name-cell">
+                    <strong>{{ payment.nombre }}</strong>
+                  </div>
+                </td>
+                <td class="folio">{{ payment.folio }}</td>
+                <td class="amount">\${{ payment.monto.toFixed(2) }}</td>
+                <td>{{ formatDate(payment.fechaPago) }}</td>
+                <td>
+                  <app-badge [status]="payment.status">{{ payment.status }}</app-badge>
+                </td>
+                <td>
+                  <div class="table-actions">
+                    <button class="action-btn view" (click)="viewPaymentDetails(payment)">
+                      Ver
+                    </button>
+                    @if (isAdmin() && payment.status === 'Pendiente') {
+                    <button class="action-btn edit" (click)="openStatusDialog(payment)">
+                      Estado
+                    </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        }
+      </app-card>
+    </div>
+
+    <!-- Right Column -->
+    <div class="right-column">
+      <!-- Bank Accounts Section -->
+      <app-card>
+        <div class="accounts-section">
+          <h3>Cuentas para depósito</h3>
+          <p class="subtitle">Información bancaria disponible</p>
+
+          <div class="accounts-list">
+            @for (account of bankAccountsList(); track account.id) {
+            <div class="account-card">
+              <div class="account-header">
+                <strong>{{ account.banco }}</strong>
+              </div>
+              <div class="account-details">
+                <div class="detail-row">
+                  <span class="label">Cuenta:</span>
+                  <span class="value">{{ account.numeroCuenta }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">CLABE:</span>
+                  <span class="value">{{ account.clabe }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Titular:</span>
+                  <span class="value">{{ account.titular }}</span>
+                </div>
+              </div>
+              <app-button
+                variant="outline"
+                size="sm"
+                [fullWidth]="true"
+                (clicked)="copyAccountInfo(account)"
+              >
+                Copiar datos
+              </app-button>
+            </div>
+            }
+          </div>
+        </div>
+      </app-card>
+    </div>
+  </div>
+
+  <!-- Filter Dialog -->
+  @if (showFilterDialog()) {
+  <div class="dialog-overlay" (click)="toggleFilterDialog()">
+    <div class="dialog" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <h2>Filtros de búsqueda</h2>
+        <button class="close-button" (click)="toggleFilterDialog()">✕</button>
+      </div>
+      <div class="dialog-content">
+        <div class="filter-form">
+          <div class="form-field">
+            <label>Estado</label>
+            <select class="select-input" [(ngModel)]="filterOptions().estado" name="estado">
+              <option value="">Todos</option>
+              <option value="Pendiente">Pendiente</option>
+              <option value="Aprobado">Aprobado</option>
+              <option value="Rechazado">Rechazado</option>
+            </select>
+          </div>
+
+          @if (isAdmin()) {
+          <div class="form-field">
+            <label>Nombre del paciente</label>
+            <input
+              type="text"
+              class="select-input"
+              placeholder="Buscar por nombre"
+              [(ngModel)]="filterOptions().paciente"
+              name="paciente"
+            />
+          </div>
+          }
+
+          <div class="form-row">
+            <div class="form-field">
+              <label>Fecha inicio</label>
+              <input
+                type="date"
+                class="select-input"
+                [(ngModel)]="filterOptions().fechaInicio"
+                name="fechaInicio"
+              />
+            </div>
+            <div class="form-field">
+              <label>Fecha fin</label>
+              <input
+                type="date"
+                class="select-input"
+                [(ngModel)]="filterOptions().fechaFin"
+                name="fechaFin"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <app-button variant="outline" (clicked)="clearFilters()"> Limpiar </app-button>
+        <app-button variant="primary" (clicked)="applyFilters(); toggleFilterDialog()">
+          Aplicar filtros
+        </app-button>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- Export Dialog (Solo Admin) -->
+  @if (showExportDialog() && isAdmin()) {
+  <div class="dialog-overlay" (click)="closeExportDialog()">
+    <div class="dialog" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <h2>Exportar pagos</h2>
+        <button class="close-button" (click)="closeExportDialog()">✕</button>
+      </div>
+      <div class="dialog-content">
+        <p class="dialog-description">Selecciona los criterios para exportar los pagos a Excel</p>
+
+        <div class="filter-form">
+          <div class="form-field">
+            <label>Estado</label>
+            <select class="select-input" [(ngModel)]="exportFilters().estado" name="exportEstado">
+              <option value="">Todos</option>
+              <option value="Pendiente">Pendiente</option>
+              <option value="Aprobado">Aprobado</option>
+              <option value="Rechazado">Rechazado</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label>Fecha inicio *</label>
+              <input
+                type="date"
+                class="select-input"
+                [(ngModel)]="exportFilters().fechaInicio"
+                name="exportFechaInicio"
+              />
+            </div>
+            <div class="form-field">
+              <label>Fecha fin *</label>
+              <input
+                type="date"
+                class="select-input"
+                [(ngModel)]="exportFilters().fechaFin"
+                name="exportFechaFin"
+              />
+            </div>
+          </div>
+
+          <div class="export-preview">
+            <strong>Registros a exportar: {{ getExportCount() }}</strong>
+          </div>
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <app-button variant="outline" (clicked)="closeExportDialog()"> Cancelar </app-button>
+        <app-button variant="primary" [disabled]="!canExport()" (clicked)="exportToExcel()">
+          Descargar Excel
+        </app-button>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- Payment Details Dialog -->
+  @if (showDetailsDialog()) {
+  <div class="dialog-overlay" (click)="closeDetailsDialog()">
+    <div class="dialog large" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <h2>Detalles del pago</h2>
+        <button class="close-button" (click)="closeDetailsDialog()">✕</button>
+      </div>
+      <div class="dialog-content">
+        @if (selectedPayment()) {
+        <div class="details-grid">
+          <div class="detail-item">
+            <label>Nombre:</label>
+            <span>{{ selectedPayment()!.nombre }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Folio:</label>
+            <span>{{ selectedPayment()!.folio }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Fecha de pago:</label>
+            <span>{{ formatDate(selectedPayment()!.fechaPago) }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Monto:</label>
+            <span class="amount-large">\${{ selectedPayment()!.monto.toFixed(2) }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Estado:</label>
+            <app-badge [status]="selectedPayment()!.status">
+              {{ selectedPayment()!.status }}
+            </app-badge>
+          </div>
+          <div class="detail-item">
+            <label>Fecha de registro:</label>
+            <span>{{ formatDate(selectedPayment()!.fechaRegistro) }}</span>
+          </div>
+        </div>
+
+        <div class="comprobante-section">
+          <h4>Comprobante de pago</h4>
+          @if (selectedPayment()!.comprobante) {
+          <div class="comprobante-preview">
+            <div class="file-icon">📄</div>
+            <span>{{ selectedPayment()!.comprobante }}</span>
+            <!-- <app-button variant="outline" size="sm" (clicked)="viewComprobante()"> -->
+            <app-button variant="outline" size="sm" (clicked)="viewComprobante()">
+              Ver comprobante
+            </app-button>
+          </div>
+          } @else {
+          <p class="no-comprobante">No hay comprobante adjunto</p>
+          }
+        </div>
+        }
+      </div>
+      <div class="dialog-footer">
+        <app-button variant="outline" (clicked)="closeDetailsDialog()"> Cerrar </app-button>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- Status Update Dialog (Solo Admin) -->
+  @if (showStatusDialog() && isAdmin()) {
+  <div class="dialog-overlay" (click)="closeStatusDialog()">
+    <div class="dialog" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <h2>Actualizar estado</h2>
+        <button class="close-button" (click)="closeStatusDialog()">✕</button>
+      </div>
+      <div class="dialog-content">
+        <p class="dialog-description">
+          Actualiza el estado del pago de {{ selectedPayment()?.nombre }}
+        </p>
+
+        <div class="status-form">
+          <div class="form-field">
+            <label>Nuevo estado</label>
+            <select class="select-input" [(ngModel)]="newStatus" name="newStatus">
+              <option value="Pendiente">Pendiente</option>
+              <option value="Aprobado">Aprobado</option>
+              <option value="Rechazado">Rechazado</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label>Notas (opcional)</label>
+            <textarea
+              class="textarea-input"
+              placeholder="Agrega comentarios sobre el cambio de estado"
+              rows="3"
+              [(ngModel)]="statusNotes"
+              name="statusNotes"
+            ></textarea>
+          </div>
+
+          <div class="form-field">
+            <label>Concepto de Ingreso (opcional)</label>
+            <input
+              type="text"
+              class="text-input"
+              placeholder="Descripción breve del concepto de ingreso"
+              [(ngModel)]="statusConcepto"
+              name="statusConcepto"
+            />
+          </div>
+
+          <div class="form-field">
+            <label>Comprobante de Pago (opcional)</label>
+            <div class="file-upload-area">
+              @if (statusComprobante()) {
+              <div class="file-selected">
+                <span>✅ {{ statusComprobante()!.name }}</span>
+                <button class="btn-clear" (click)="clearComprobante()" type="button">
+                  Cambiar
+                </button>
+              </div>
+              } @else {
+              <label class="file-input-label">
+                <input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  (change)="onComprobanteSelected($event)"
+                  style="display: none;"
+                />
+                <span>📎 Selecciona o arrastra un archivo</span>
+                <small>PDF, JPEG o PNG (máx 10MB)</small>
+              </label>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <app-button variant="outline" (clicked)="closeStatusDialog()"> Cancelar </app-button>
+        <app-button
+          variant="primary"
+          [disabled]="updateStatusResource.isLoading()"
+          (clicked)="updatePaymentStatus()"
+        >
+          @if (updateStatusResource.isLoading()) {
+          <span>Actualizando...</span>
+          } @else {
+          <span>Actualizar estado</span>
+          }
+        </app-button>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- New Payment Dialog -->
+  @if (showNewPaymentDialog()) {
+  <div class="dialog-overlay" (click)="closeNewPaymentDialog()">
+    <div class="dialog large" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <h2>Registrar nuevo pago</h2>
+        <button class="close-button" (click)="closeNewPaymentDialog()">✕</button>
+      </div>
+      <div class="dialog-content">
+        <div class="upload-form">
+          <div class="form-row">
+            <div class="form-field">
+              <label>ID del Ticket *</label>
+              <input
+                type="number"
+                class="select-input"
+                placeholder="Ingresa el ID del ticket"
+                [(ngModel)]="uploadForm().ticketId"
+                min="1"
+                (input)="onFormChange()"
+              />
+            </div>
+            <div class="form-field">
+              <label>Monto *</label>
+              <input
+                type="number"
+                class="select-input"
+                placeholder="0.00"
+                step="0.01"
+                min="0.01"
+                [(ngModel)]="uploadForm().monto"
+                (input)="onFormChange()"
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label>Método de Pago *</label>
+              <select
+                class="select-input"
+                [(ngModel)]="uploadForm().metodoPago"
+                (change)="onFormChange()"
+              >
+                <option value="">Selecciona método</option>
+                <option value="Transferencia">Transferencia</option>
+                <option value="Depósito">Depósito</option>
+                <option value="Efectivo">Efectivo</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label>Fecha de Pago *</label>
+              <input
+                type="date"
+                class="select-input"
+                [(ngModel)]="uploadForm().fechaPago"
+                (change)="onFormChange()"
+              />
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label>Notas (opcional)</label>
+            <textarea
+              class="textarea-input"
+              placeholder="Agrega notas adicionales sobre el pago"
+              rows="3"
+              [(ngModel)]="uploadForm().notas"
+            ></textarea>
+          </div>
+
+          <div class="form-field">
+            <label>Comprobante de pago *</label>
+            <div class="file-upload-section">
+              @if (!uploadedFile()) {
+              <div
+                class="upload-box"
+                [class.dragging]="isDragging()"
+                (click)="fileInput.click()"
+                (dragover)="onDragOver($event)"
+                (dragleave)="onDragLeave($event)"
+                (drop)="onFileDrop($event)"
+              >
+                <input
+                  #fileInput
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  (change)="handleFileUpload($event)"
+                  style="display: none"
+                />
+                <div class="upload-content">
+                  <span class="upload-icon">📎</span>
+                  <p>Haz clic o arrastra tu comprobante aquí</p>
+                  <span class="upload-hint">Formatos permitidos: PDF, JPG, PNG (máx. 5MB)</span>
+                </div>
+              </div>
+              } @else {
+              <div class="upload-box has-file">
+                <span class="upload-icon success">📄</span>
+                <p>{{ uploadedFile()!.name }}</p>
+                <span class="file-size">{{ getFileSize(uploadedFile()!.size) }}</span>
+                <button type="button" class="remove-file-btn" (click)="removeFile()">
+                  Eliminar archivo
+                </button>
+              </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <app-button variant="outline" (clicked)="closeNewPaymentDialog()"> Cancelar </app-button>
+        <app-button
+          variant="primary"
+          [disabled]="!canSubmit() || createPaymentResource.isLoading()"
+          (clicked)="submitPayment()"
+        >
+          @if (createPaymentResource.isLoading()) {
+          <span>Registrando...</span>
+          } @else {
+          <span>Registrar pago</span>
+          }
+        </app-button>
+      </div>
+    </div>
+  </div>
+  }
+</div>

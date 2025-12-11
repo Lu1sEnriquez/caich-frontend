@@ -1,0 +1,44 @@
+<div class="notification-panel" [class.open]="isOpen()">
+  <div class="notification-header">
+    <h3>Notificaciones</h3>
+    @if (unreadCount() > 0) {
+    <span class="unread-badge">{{ unreadCount() }}</span>
+    }
+  </div>
+
+  <div class="notification-actions">
+    @if (unreadCount() > 0) {
+    <button (click)="markAllAsRead()" class="btn-link">
+      Marcar todas como leídas
+    </button>
+    }
+  </div>
+
+  <div class="notification-list">
+    @if (notifications().length === 0) {
+    <div class="empty-state">
+      <p>📭 No hay notificaciones</p>
+    </div>
+    } @else {
+    @for (notification of notifications(); track notification.notificacionId) {
+    <div class="notification-item" [class.unread]="!notification.leida" [class]="getNotificationClass(notification.tipo || '')">
+      <div class="notification-content">
+        <div class="notification-header-item">
+          <span class="notification-icon">{{ getNotificationIcon(notification.tipo || '') }}</span>
+          <div class="notification-text">
+            <h4>{{ notification.titulo }}</h4>
+            <p>{{ notification.mensaje }}</p>
+            <small>{{ formatDate(notification.fechaCreacion || '') }}</small>
+          </div>
+        </div>
+        @if (!notification.leida) {
+        <button (click)="markAsRead(notification.notificacionId || 0)" class="btn-read" title="Marcar como leída">
+          ✓
+        </button>
+        }
+      </div>
+    </div>
+    }
+    }
+  </div>
+</div>

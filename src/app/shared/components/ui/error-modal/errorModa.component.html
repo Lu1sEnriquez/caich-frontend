@@ -1,0 +1,17 @@
+<div class="error-container">
+  @for (error of errorService.errors(); track error.id) {
+  <div class="error-modal" [class]="'error-modal-' + error.type">
+    <div class="error-header">
+      <div class="error-icon">
+        @switch (error.type) { @case ('error') { <span>❌</span> } @case ('warning') {
+        <span>⚠️</span> } @case ('info') { <span>ℹ️</span> } @case ('success') { <span>✅</span> } }
+      </div>
+      <div class="error-content">
+        <strong class="error-title">{{ error.title }}</strong>
+        <p class="error-message">{{ error.message }}</p>
+      </div>
+      <button class="error-close" (click)="closeError(error.id)">✕</button>
+    </div>
+  </div>
+  }
+</div>

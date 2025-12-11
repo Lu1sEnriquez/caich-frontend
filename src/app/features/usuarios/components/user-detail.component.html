@@ -1,0 +1,235 @@
+<div class="detail-container">
+  <!-- Header -->
+  <div class="detail-header">
+    <div class="title-section">
+      <h1>👤 Detalle de Usuario</h1>
+    </div>
+    <button (click)="volver()" class="btn-volver">← Volver</button>
+  </div>
+
+  <!-- Loading/Error States -->
+  @if (isLoading()) {
+  <div class="loading-state">
+    <p>🔄 Cargando información del usuario...</p>
+  </div>
+  } @else if (error()) {
+  <div class="error-state">
+    <p>❌ {{ error() }}</p>
+    <button (click)="cargarDetallesUsuario()" class="btn-retry">Reintentar</button>
+  </div>
+  } @else if (user()) {
+  <div class="detail-content">
+    <!-- Información del Usuario -->
+    <section class="card section-usuario">
+      <h2>📋 Información del Usuario</h2>
+      <div class="grid-2">
+        <div class="info-item">
+          <label>Nombre Completo</label>
+          <p>{{ user()!.nombre }} {{ user()!.apellido }}</p>
+        </div>
+        <div class="info-item">
+          <label>Email</label>
+          <p>{{ user()!.email }}</p>
+        </div>
+        <div class="info-item">
+          <label>Teléfono</label>
+          <p>{{ user()!.telefono || 'N/A' }}</p>
+        </div>
+        <div class="info-item">
+          <label>Rol</label>
+          <p class="badge badge-role">{{ getRoleText(user()!.rol) }}</p>
+        </div>
+        @if (user()!.cedula) {
+        <div class="info-item">
+          <label>Cédula</label>
+          <p>{{ user()!.cedula }}</p>
+        </div>
+        } @if (user()!.folio) {
+        <div class="info-item">
+          <label>Folio</label>
+          <p>{{ user()!.folio }}</p>
+        </div>
+        } @if (user()!.idAlumno) {
+        <div class="info-item">
+          <label>ID Alumno</label>
+          <p>{{ user()!.idAlumno }}</p>
+        </div>
+        } @if (user()!.estado) {
+        <div class="info-item">
+          <label>Estado</label>
+          <p class="badge" [class]="'badge-' + user()!.estado?.toLowerCase()">
+            {{ user()!.estado }}
+          </p>
+        </div>
+        }
+        @if (user()!.fechaRegistro) {
+        <div class="info-item">
+          <label>Fecha de Registro</label>
+          <p>{{ formatDate(user()!.fechaRegistro!) }}</p>
+        </div>
+        } @if (user()!.createdAt) {
+        <div class="info-item">
+          <label>Creado</label>
+          <p>{{ formatDate(user()!.createdAt!) }}</p>
+        </div>
+        } @if (user()!.updatedAt) {
+        <div class="info-item">
+          <label>Última Actualización</label>
+          <p>{{ formatDate(user()!.updatedAt!) }}</p>
+        </div>
+        }
+      </div>
+    </section>
+
+    <!-- Información Administrativa (si es Admin) -->
+    @if (user()!.rol === 'Administrador') {
+    <section class="card section-admin-info">
+      <h2>🔐 Información Administrativa</h2>
+      <div class="admin-stats">
+        <div class="stat-card">
+          <div class="stat-icon">📊</div>
+          <div class="stat-content">
+            <label>Rol del Sistema</label>
+            <p class="stat-value">Administrador</p>
+            <small>Acceso completo a la plataforma</small>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🔑</div>
+          <div class="stat-content">
+            <label>Permisos</label>
+            <p class="stat-value">Todos</p>
+            <small>Gestión de usuarios, citas, pagos y reportes</small>
+          </div>
+        </div>
+      </div>
+    </section>
+    }
+
+    <!-- Especialización (si es Terapeuta) -->
+    @if (user()!.rol === 'Terapeuta' && user()!.especializacion) {
+    <section class="card section-especializacion">
+      <h2>🎓 Especialización</h2>
+      <div class="info-item">
+        <p>{{ user()!.especializacion }}</p>
+      </div>
+    </section>
+    }
+
+    <!-- Citas (para Terapeuta y Paciente) -->
+    @if (shouldShowAppointments() && appointments().length > 0) {
+    <section class="card section-citas">
+      <h2>
+        @if (user()!.rol === 'Terapeuta') {
+        👨‍⚕️ Sus Citas Agendadas
+        } @else {
+        📅 Sus Citas
+        }
+      </h2>
+
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Hora</th>
+              @if (user()!.rol === 'Paciente') {
+              <th>Terapeuta</th>
+              } @else {
+              <th>Paciente</th>
+              }
+              <th>Modalidad</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (apt of appointments(); track apt.id) {
+            <tr>
+              <td>{{ formatDate(apt.fecha) }}</td>
+              <td>{{ apt.horaInicio }} - {{ apt.horaFin }}</td>
+              <td>
+                @if (user()!.rol === 'Paciente') {
+                {{ apt.terapeutaNombre }}
+                } @else {
+                {{ apt.pacienteNombre }}
+                }
+              </td>
+              <td>{{ apt.modalidad || 'Presencial' }}</td>
+              <td>
+                <span class="badge" [class]="'badge-' + getStatusBadge(apt.estado)">
+                  {{ getStatusText(apt.estado) }}
+                </span>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="summary">
+        <p>Total de citas: <strong>{{ appointments().length }}</strong></p>
+      </div>
+    </section>
+    } @else if (shouldShowAppointments() && appointments().length === 0) {
+    <section class="card section-citas">
+      <h2>📅 Sus Citas</h2>
+      <div class="no-data">
+        <p>No hay citas registradas</p>
+      </div>
+    </section>
+    }
+
+    <!-- Pagos (solo para Paciente) -->
+    @if (shouldShowPayments() && payments().length > 0) {
+    <section class="card section-pagos">
+      <h2>💳 Sus Pagos</h2>
+
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Folio</th>
+              <th>Monto</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (pago of payments(); track pago.id) {
+            <tr>
+              <td><strong>{{ pago.folio }}</strong></td>
+              <td>{{ formatMonto(pago.monto) }}</td>
+              <td>{{ formatDate(pago.fecha) }}</td>
+              <td>
+                <span class="badge" [class]="'badge-' + getStatusBadge(pago.estado)">
+                  {{ getStatusText(pago.estado) }}
+                </span>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="summary">
+        <p>
+          Total de pagos: <strong>{{ payments().length }}</strong>
+        </p>
+        <p>
+          Total Pagado: <strong>{{ formatMonto(totalPagado()) }}</strong>
+        </p>
+      </div>
+    </section>
+    } @else if (shouldShowPayments() && payments().length === 0) {
+    <section class="card section-pagos">
+      <h2>💳 Sus Pagos</h2>
+      <div class="no-data">
+        <p>No hay pagos registrados</p>
+      </div>
+    </section>
+    }
+  </div>
+  } @else {
+  <div class="empty-state">
+    <p>No hay información disponible</p>
+  </div>
+  }
+</div>
