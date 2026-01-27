@@ -22,22 +22,26 @@
 
 .error-modal-error {
   border-left-color: var(--color-destructive);
-  background: linear-gradient(to right, rgba(239, 68, 68, 0.05), white);
+  /* Agrega ", white" al final */
+  background: linear-gradient(to right, rgba(239, 68, 68, 0.05), white), white;
 }
 
 .error-modal-warning {
   border-left-color: var(--color-warning);
-  background: linear-gradient(to right, rgba(245, 158, 11, 0.05), white);
+  /* Agrega ", white" al final */
+  background: linear-gradient(to right, rgba(245, 158, 11, 0.05), white), white;
 }
 
 .error-modal-info {
   border-left-color: var(--color-primary);
-  background: linear-gradient(to right, rgba(59, 130, 246, 0.05), white);
+  /* Agrega ", white" al final */
+  background: linear-gradient(to right, rgba(59, 130, 246, 0.05), white), white;
 }
 
 .error-modal-success {
   border-left-color: var(--color-success);
-  background: linear-gradient(to right, rgba(16, 185, 129, 0.05), white);
+  /* Agrega ", white" al final */
+  background: linear-gradient(to right, rgba(16, 185, 129, 0.05), white), white;
 }
 
 .error-header {
