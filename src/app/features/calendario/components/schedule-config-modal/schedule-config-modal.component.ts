@@ -1,9 +1,9 @@
 import { Component, output, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ButtonComponent } from '../../../shared/components/ui/button/button.component';
-import { CalendarService } from '../../../core/services/calendar.service';
-import { formatDateForInput } from '../../../core/utils';
+import { ButtonComponent } from '../../../../shared/components/ui/button/button.component';
+import { CalendarService } from '../../../../core/services/calendar.service';
+import { formatDateForInput } from '../../../../core/utils';
 
 @Component({
   selector: 'app-schedule-config-modal',

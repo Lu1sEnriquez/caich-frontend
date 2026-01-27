@@ -401,7 +401,9 @@ export interface AppointmentSlot {
   horaInicio: string;
   horaFin: string;
   cubiculoId: string;
+  pacienteId: number; // nuevo
   pacienteNombre: string;
+  terapeutaId: number; // nuevo
   terapeutaNombre: string;
   estado: 'Agendado' | 'Completado' | 'Cancelado' | 'NoAsistio';
   notas?: string;

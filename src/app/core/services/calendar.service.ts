@@ -341,6 +341,8 @@ export class CalendarService {
       horaFin: horaFin,
       cubiculoId: String(dto.espacioId),
       pacienteNombre: dto.pacienteNombre,
+      pacienteId: Number(dto.pacienteId),
+      terapeutaId: Number(dto.terapeutaId),
       terapeutaNombre: dto.terapeutaNombre,
       estado: this.mapEstadoCita(dto.estadoTicket),
       notas: dto.notas,

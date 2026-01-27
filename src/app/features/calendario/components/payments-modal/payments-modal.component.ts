@@ -1,8 +1,8 @@
 import { Component, signal, computed, inject, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ButtonComponent } from '../../../shared/components/ui/button/button.component';
-import { BadgeComponent } from '../../../shared/components/ui/badge/badge.component';
-import { formatDisplayDate, getPaymentStatusBadgeClass, formatMonto } from '../../../core/utils';
+import { ButtonComponent } from '../../../../shared/components/ui/button/button.component';
+import { BadgeComponent } from '../../../../shared/components/ui/badge/badge.component';
+import { formatDisplayDate, getPaymentStatusBadgeClass, formatMonto } from '../../../../core/utils';
 
 /**
  * Interfaz para el objeto de pago

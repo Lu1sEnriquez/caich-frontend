@@ -1,8 +1,8 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
-import { CalendarService } from '../../../core/services/calendar.service';
-import { DateUtilService } from '../../../core/services/date-util.service';
+import { CalendarService } from '../../../../core/services/calendar.service';
+import { DateUtilService } from '../../../../core/services/date-util.service';
 
 /**
  * Componente para ver detalles completos de una cita (ticket/appointment)

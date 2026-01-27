@@ -1,9 +1,9 @@
 import { Component, signal, computed, inject, OnInit, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AppointmentSlot } from '../../../core/models/models';
-import { formatDisplayDate, getTicketStatusBadgeClass, getTicketStatusLabel } from '../../../core/utils';
-import { ButtonComponent } from '../../../shared/components/ui/button/button.component';
-import { BadgeComponent } from '../../../shared/components/ui/badge/badge.component';
+import { AppointmentSlot } from '../../../../core/models/models';
+import { formatDisplayDate, getTicketStatusBadgeClass, getTicketStatusLabel } from '../../../../core/utils';
+import { ButtonComponent } from '../../../../shared/components/ui/button/button.component';
+import { BadgeComponent } from '../../../../shared/components/ui/badge/badge.component';
 
 /**
  * Modal para mostrar lista de citas del mes actual

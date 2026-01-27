@@ -1,8 +1,8 @@
 import { Routes } from '@angular/router';
 import { DashboardAdminComponent } from './features/dashboard/components/dashboard-admin.component';
 import { PaymentsComponent } from './features/pagos/components/payments.component';
-import { CalendarComponent } from './features/calendario/components/calendar.component';
-import { CitaDetalleComponent } from './features/calendario/components/cita-detalle.component';
+import { CalendarComponent } from './features/calendario/components/calendar/calendar.component';
+import { CitaDetalleComponent } from './features/calendario/components/cita-detalle/cita-detalle.component';
 import { UsersTableComponent } from './features/usuarios/components/users-table.component';
 import { UserDetailComponent } from './features/usuarios/components/user-detail.component';
 import { UserProfileComponent } from './features/perfil/components/user-profile.component';

@@ -2,17 +2,17 @@ import { Component, signal, computed, inject, effect, ViewChild, ElementRef } fr
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms'; // ✅ Agregar FormsModule
 import { Router, ActivatedRoute } from '@angular/router';
-import { CardComponent } from '../../../shared/components/ui/card/card.component';
-import { ButtonComponent } from '../../../shared/components/ui/button/button.component';
-import { BadgeComponent } from '../../../shared/components/ui/badge/badge.component';
-import type { AppointmentSlot, CalendarDay, TimeSlot } from '../../../core/models/models';
-import { AppointmentScheduleComponent } from './appointment-schedule.component';
-import { ScheduleConfigModalComponent } from './schedule-config-modal.component'; // ✅ Importar el modal
-import { AppointmentsModalComponent } from './appointments-modal.component';
-import { PaymentsModalComponent } from './payments-modal.component';
-import { CalendarService } from '../../../core/services/calendar.service';
-import { AuthService } from '../../../core/services/auth.service';
-import { formatDisplayDate } from '../../../core/utils';
+import { CardComponent } from '../../../../shared/components/ui/card/card.component';
+import { ButtonComponent } from '../../../../shared/components/ui/button/button.component';
+import { BadgeComponent } from '../../../../shared/components/ui/badge/badge.component';
+import type { AppointmentSlot, CalendarDay, TimeSlot } from '../../../../core/models/models';
+import { AppointmentScheduleComponent } from '../appointment-schedule/appointment-schedule.component';
+import { ScheduleConfigModalComponent } from '../schedule-config-modal/schedule-config-modal.component'; // ✅ Importar el modal
+import { AppointmentsModalComponent } from '../appointments-modal/appointments-modal.component';
+import { PaymentsModalComponent } from '../payments-modal/payments-modal.component';
+import { CalendarService } from '../../../../core/services/calendar.service';
+import { AuthService } from '../../../../core/services/auth.service';
+import { formatDisplayDate } from '../../../../core/utils';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
 

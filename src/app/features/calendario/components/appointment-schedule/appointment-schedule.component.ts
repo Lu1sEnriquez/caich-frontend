@@ -12,20 +12,21 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ButtonComponent } from '../../../shared/components/ui/button/button.component';
-import { CardComponent } from '../../../shared/components/ui/card/card.component';
-import { AppointmentSlot, Cubiculo, DayScheduleConfig } from '../../../core/models/models';
+import { ButtonComponent } from '../../../../shared/components/ui/button/button.component';
+import { CardComponent } from '../../../../shared/components/ui/card/card.component';
+import { AppointmentSlot, Cubiculo, DayScheduleConfig } from '../../../../core/models/models';
 import {
   CalendarService,
   CrearCitaDTO,
   ActualizarCitaDTO,
-} from '../../../core/services/calendar.service';
-import { AuthService } from '../../../core/services/auth.service';
-import { DateUtilService } from '../../../core/services/date-util.service';
-import { UserRole } from '../../../core/models/enums';
-import { formatDisplayDate, formatDateForInput } from '../../../core/utils';
+} from '../../../../core/services/calendar.service';
+import { AuthService } from '../../../../core/services/auth.service';
+import { DateUtilService } from '../../../../core/services/date-util.service';
+import { UserRole } from '../../../../core/models/enums';
+import { formatDisplayDate, formatDateForInput } from '../../../../core/utils';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
+import { UsersService } from '../../../../core/services/users.service';
 
 @Component({
   selector: 'app-appointment-schedule',
@@ -40,6 +41,7 @@ export class AppointmentScheduleComponent implements AfterViewInit {
   private calendarService = inject(CalendarService);
   private authService = inject(AuthService);
   private dateUtilService = inject(DateUtilService);
+  private usersService = inject(UsersService); // <--- Inyectar servicio
 
   // Inputs y Outputs
   selectedDate = input.required<Date>();
@@ -365,7 +367,7 @@ export class AppointmentScheduleComponent implements AfterViewInit {
     if (conflict) {
       this.validationMessage.set(
         `⚠️ Ya existe una cita para "${conflict.pacienteNombre}" de ${conflict.horaInicio} a ${conflict.horaFin}. ` +
-          `No se pueden agendar citas que se solapen en el mismo cubículo.`
+          `No se pueden agendar citas que se solapen en el mismo cubículo.`,
       );
       return false;
     }
@@ -427,14 +429,14 @@ export class AppointmentScheduleComponent implements AfterViewInit {
     duracion: number,
     fechaCompleta: Date,
     currentUserId: string | undefined,
-    isAdmin: boolean
+    isAdmin: boolean,
   ): void {
     // Usar pacienteId del formulario si es admin, sino del usuario autenticado
     const pacienteId = isAdmin
       ? Number(form.pacienteId)
       : currentUserId
-      ? Number(currentUserId)
-      : 1;
+        ? Number(currentUserId)
+        : 1;
 
     // //TODO: Obtener terapeutaId del formulario o de búsqueda por nombre
     const terapeutaId = Number(form.terapeutaId) || 1;
@@ -464,7 +466,7 @@ export class AppointmentScheduleComponent implements AfterViewInit {
         this.citasTrigger.update((v) => v + 1);
         this.appointmentSaved.emit(newAppointment);
         this.closeDialog();
-        alert('✅ Cita agendada. Pago pendiente creado automáticamente.');
+        // alert('✅ Cita agendada. Pago pendiente creado automáticamente.');
       },
       error: (error: unknown) => {
         // El HttpErrorInterceptor ya maneja el error y muestra mensajes
@@ -480,7 +482,7 @@ export class AppointmentScheduleComponent implements AfterViewInit {
     editing: AppointmentSlot,
     form: any,
     duracion: number,
-    fechaCompleta: Date
+    fechaCompleta: Date,
   ): void {
     // //TODO: Obtener IDs reales desde el formulario o base de datos
     const pacienteId = Number(form.pacienteId) || 1;
@@ -523,7 +525,7 @@ export class AppointmentScheduleComponent implements AfterViewInit {
       `¿Estás seguro de eliminar la cita?\n\n` +
         `Paciente: ${editing.pacienteNombre}\n` +
         `Fecha: ${this.formatDate(editing.fecha)}\n` +
-        `Hora: ${editing.horaInicio} - ${editing.horaFin}`
+        `Hora: ${editing.horaInicio} - ${editing.horaFin}`,
     );
 
     if (confirmation) {
@@ -565,22 +567,29 @@ export class AppointmentScheduleComponent implements AfterViewInit {
     this.showAppointmentDialog.set(true);
   }
 
-  editAppointment(appointment: AppointmentSlot): void {
+ editAppointment(appointment: AppointmentSlot): void {
     this.editingAppointment.set(appointment);
+    
     this.appointmentForm.set({
       cubiculoId: appointment.cubiculoId,
       fecha: this.formatDateForInput(appointment.fecha),
       horaInicio: appointment.horaInicio,
       horaFin: appointment.horaFin,
-      pacienteId: '',
+      
+      // ✅ CORRECCIÓN: Precargar IDs reales (convertidos a string para el select)
+      // Asegúrate de que AppointmentSlot tenga estas propiedades
+      pacienteId: appointment.pacienteId?.toString() || '',
       pacienteNombre: appointment.pacienteNombre,
-      terapeutaId: '',
+      
+      terapeutaId: appointment.terapeutaId?.toString() || '',
       terapeutaNombre: appointment.terapeutaNombre,
+      
       materia: appointment.materia || '',
       modalidad: appointment.modalidad || 'Presencial',
       estado: appointment.estado,
       notas: appointment.notas || '',
     });
+    
     this.validationMessage.set('');
     this.showAppointmentDialog.set(true);
   }
@@ -618,7 +627,7 @@ export class AppointmentScheduleComponent implements AfterViewInit {
         (apt) =>
           apt.cubiculoId === cubiculoId &&
           apt.horaInicio === hour &&
-          this.isSameDay(apt.fecha, date)
+          this.isSameDay(apt.fecha, date),
       ) || null
     );
   }
@@ -724,5 +733,45 @@ export class AppointmentScheduleComponent implements AfterViewInit {
 
   onEspacioSelected(id: number | null) {
     this.selectedEspacioId.set(id);
+  }
+
+  terapeutasResource = rxResource({
+    stream: () => this.usersService.getActiveUsersByRole(UserRole.TERAPEUTA),
+  });
+
+  // ✅ CORREGIDO: Usando 'stream' y lógica condicional
+  pacientesResource = rxResource({
+    stream: () => {
+      // Si no es admin, retornamos un observable vacío con la forma correcta
+      if (!this.isAdminUser()) {
+        return of({
+          status: 'success',
+          data: [],
+          message: '',
+          timestamp: new Date().toISOString(),
+        });
+      }
+      // Si es admin, llamamos al servicio
+      return this.usersService.getActiveUsersByRole(UserRole.PACIENTE);
+    },
+  });
+
+  // ... resto del código
+
+  // ✨ Helper para actualizar nombre cuando seleccionan un ID en el dropdown
+  onTerapeutaChange(id: string) {
+    const lista = this.terapeutasResource.value()?.data || [];
+    const seleccionado = lista.find((t) => t.usuarioId?.toString() === id);
+    if (seleccionado?.nombreCompleto) {
+      this.appointmentForm.update((f) => ({ ...f, terapeutaNombre: seleccionado.nombreCompleto ?? '' }));
+    }
+  }
+
+  onPacienteChange(id: string) {
+    const lista = this.pacientesResource.value()?.data || [];
+    const seleccionado = lista.find((p) => p.usuarioId?.toString() === id);
+    if (seleccionado?.nombreCompleto) {
+      this.appointmentForm.update((f) => ({ ...f, pacienteNombre: seleccionado.nombreCompleto ?? '' }));
+    }
   }
 }
