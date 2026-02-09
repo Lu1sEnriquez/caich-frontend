@@ -31,7 +31,7 @@ export class HttpErrorInterceptor implements HttpInterceptor {
         const backendMessage = this.extractErrorMessage(error);
 
         // Log para debugging
-        console.error('❌ [HTTP Error]', {
+        console.error('[HTTP Error]', {
           status: error.status,
           statusText: error.statusText,
           message: backendMessage,
@@ -86,13 +86,13 @@ export class HttpErrorInterceptor implements HttpInterceptor {
     switch (error.status) {
       case 400:
         // Bad Request - Error de validación
-        console.warn('⚠️ Error de validación (400):', message);
+        console.warn('Error de validacion (400):', message);
         this.errorHandler.showWarning('Datos inválidos', message);
         break;
 
       case 401:
         // Unauthorized - Token expirado o no válido
-        console.warn('🔐 No autorizado (401)');
+        console.warn('No autorizado (401)');
         this.errorHandler.showError(
           'Sesión expirada',
           'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.'
@@ -111,19 +111,19 @@ export class HttpErrorInterceptor implements HttpInterceptor {
 
       case 404:
         // Not Found
-        console.warn('🔍 Recurso no encontrado (404):', message);
+        console.warn('Recurso no encontrado (404):', message);
         this.errorHandler.showWarning('No encontrado', message);
         break;
 
       case 409:
         // Conflict - Conflicto (ej: recurso ya existe)
-        console.warn('⚡ Conflicto (409):', message);
+        console.warn('Conflicto (409):', message);
         this.errorHandler.showWarning('Conflicto', message);
         break;
 
       case 500:
         // Internal Server Error
-        console.error('🔴 Error del servidor (500)');
+        console.error('Error del servidor (500)');
         this.errorHandler.showError(
           'Error del servidor',
           'Algo salió mal en el servidor. Por favor, intenta más tarde.'
@@ -141,7 +141,7 @@ export class HttpErrorInterceptor implements HttpInterceptor {
 
       default:
         // Otros errores
-        console.error(`❌ Error HTTP ${error.status}:`, message);
+        console.error(`Error HTTP ${error.status}:`, message);
         if (error.status === 0) {
           this.errorHandler.showError(
             'Error de conexión',

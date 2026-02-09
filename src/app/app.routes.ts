@@ -118,30 +118,6 @@ export const routes: Routes = [
   },
 
   // ==========================================
-  // RUTAS PARA ALUMNOS
-  // ==========================================
-  // {
-  //   path: 'prestamos',
-  //   loadComponent: () =>
-  //     import('./features/prestamos/components/prestamos.component').then(
-  //       (m) => m.PrestamosComponent
-  //     ),
-  //   canActivate: [authGuard, roleGuard([UserRole.ADMINISTRADOR, UserRole.ALUMNO])],
-  //   title: 'Préstamos - MindCare',
-  // },
-
-  // // ==========================================
-  // // RUTAS DE REPORTES
-  // // ==========================================
-  // {
-  //   path: 'reportes',
-  //   loadComponent: () =>
-  //     import('./features/reportes/components/reportes.component').then((m) => m.ReportesComponent),
-  //   canActivate: [authGuard, permissionGuard('viewReports')],
-  //   title: 'Reportes - MindCare',
-  // },
-
-  // ==========================================
   // REDIRECCIONES
   // ==========================================
   {

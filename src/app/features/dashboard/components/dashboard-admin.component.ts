@@ -8,7 +8,8 @@ import { catchError, of } from 'rxjs';
 import { ReportsService } from '../../../core/services/reports.service';
 import { CardComponent } from '../../../shared/components/ui/card';
 import { ButtonComponent } from '../../../shared/components/ui/button/button.component';
-import { PaymentsService } from '../../../core/services/payments.service';
+import { InfoModalComponent, ModalAction } from '../../../shared/components/modal/info-modal.component';
+import { TicketsService } from '../../../core/services/tickets.service';
 import { CalendarService } from '../../../core/services/calendar.service';
 import { UsersService } from '../../../core/services/users.service';
 import { PaymentStatus } from '../../../core/models/enums';
@@ -23,18 +24,19 @@ import { Router } from '@angular/router';
     RouterModule,
     CardComponent,
     ButtonComponent,
+    InfoModalComponent,
   ],
   templateUrl: './dashboard-admin.component.html',
   styleUrls: ['./dashboard-admin.component.css'],
 })
 export class DashboardAdminComponent {
-  currentMonth = signal(new Date(2025, 9, 1)); // Octubre 2025
+  currentMonth = signal(new Date()); // Fecha actual sincronizada
   selectedDay = signal<CalendarDay | null>(null);
 
   weekdays = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
   private reportsService = inject(ReportsService);
-  private paymentsService = inject(PaymentsService);
+  private ticketsService = inject(TicketsService);
   private calendarService = inject(CalendarService);
   private usersService = inject(UsersService);
   private router = inject(Router);
@@ -44,29 +46,35 @@ export class DashboardAdminComponent {
   private appointmentsTrigger = signal(1);
   private newPatientsTrigger = signal(1);
 
-  // ✅ Obtener datos del dashboard desde la API
+  // Modales
+  showCitasHoyModal = signal(false);
+  showPagosPendientesModal = signal(false);
+  showNuevosPacientesModal = signal(false);
+  showCitasMesModal = signal(false);
+
+  // Obtener datos del dashboard desde la API
   dashboardResource = rxResource({
     params: () => ({ trigger: this.dashboardTrigger() }),
     stream: ({ params }) => {
       if (params.trigger === 0) return of(null);
       return this.reportsService.obtenerDashboardAdmin().pipe(
         catchError((error) => {
-          console.error('❌ Error cargando dashboard:', error);
+          console.error('Error cargando dashboard:', error);
           return of(null);
         })
       );
     },
   });
 
-  // ✅ Obtener pagos pendientes desde la API
+  // Obtener pagos pendientes desde la API
   paymentsResource = rxResource({
     params: () => ({ trigger: this.paymentsTrigger() }),
     stream: ({ params }) => {
       if (params.trigger === 0) return of(null);
 
-      return this.paymentsService.getTickets({ estadoPago: PaymentStatus.PENDIENTE }).pipe(
+      return this.ticketsService.getTickets({ estadoPago: PaymentStatus.PENDIENTE }).pipe(
         catchError((error) => {
-          console.error('❌ Error cargando pagos:', error);
+          console.error('Error cargando pagos:', error);
           return of({
             status: 'error',
             message: error.message || 'Error al cargar pagos',
@@ -86,7 +94,7 @@ export class DashboardAdminComponent {
     },
   });
 
-  // ✅ Obtener citas del mes actual
+  // Obtener citas del mes actual
   appointmentsThisMonthResource = rxResource({
     params: () => ({ trigger: this.appointmentsTrigger(), month: this.currentMonth() }),
     stream: ({ params }) => {
@@ -100,14 +108,14 @@ export class DashboardAdminComponent {
         fechaFin: endDate.toISOString().split('T')[0],
       }).pipe(
         catchError((error) => {
-          console.error('❌ Error cargando citas:', error);
+          console.error('Error cargando citas:', error);
           return of(null);
         })
       );
     },
   });
 
-  // ✅ Obtener nuevos pacientes
+  // Obtener nuevos pacientes
   newPatientsResource = rxResource({
     params: () => ({ trigger: this.newPatientsTrigger() }),
     stream: ({ params }) => {
@@ -115,14 +123,14 @@ export class DashboardAdminComponent {
 
       return this.usersService.getAllUsers({ size: 10 }).pipe(
         catchError((error) => {
-          console.error('❌ Error cargando pacientes:', error);
+          console.error('Error cargando pacientes:', error);
           return of(null);
         })
       );
     },
   });
 
-  // ✅ Stats del dashboard
+  // Stats del dashboard
   stats = computed<DashboardStats>(() => {
     const data = this.dashboardResource.value()?.data;
 
@@ -155,26 +163,36 @@ export class DashboardAdminComponent {
     };
   });
 
-  // ✅ Pagos pendientes mapeados
+  // Pagos pendientes mapeados
   pendingPayments = computed(() => {
     const response = this.paymentsResource.value();
+    const responseData = response as any;
 
-    if (!response?.data) {
-      console.warn('⚠️ Sin datos de pagos');
+    if (!responseData?.data) {
+      console.warn('Sin datos de pagos');
       return [];
     }
 
-    const content = response.data.content || [];
+    const content = responseData.data.content || [];
 
     if (!Array.isArray(content)) {
-      console.warn('⚠️ content no es un array');
+      console.warn('content no es un array');
       return [];
     }
 
-    return content.map((ticket: any) => this.paymentsService.mapToPayment(ticket));
+    return content
+      .slice(0, 5)
+      .map((ticket: any) => ({
+        id: ticket.ticketId,
+        folio: ticket.folio,
+        paciente: ticket.pacienteNombre,
+        monto: ticket.costoTotal || 0,
+        fecha: new Date(ticket.fecha),
+        status: ticket.estadoPago,
+      }));
   });
 
-  // ✅ Nuevos pacientes
+  // Nuevos pacientes
   newPatients = computed(() => {
     const response = this.newPatientsResource.value();
     if (!response?.data?.content) return [];
@@ -189,7 +207,7 @@ export class DashboardAdminComponent {
       }));
   });
 
-  // ✅ Citas del mes actual
+  // Citas del mes actual
   appointmentsThisMonth = computed(() => {
     const response = this.appointmentsThisMonthResource.value();
     if (!response?.data) return [];
@@ -197,7 +215,7 @@ export class DashboardAdminComponent {
     return response.data.map((dto: any) => this.calendarService.mapToAppointmentSlot(dto));
   });
 
-  // ✅ Estadísticas de citas del mes
+  // Estadisticas de citas del mes
   appointmentsStats = computed(() => {
     const appointments = this.appointmentsThisMonth();
 
@@ -208,7 +226,7 @@ export class DashboardAdminComponent {
     };
   });
 
-  // ✅ Días del calendario
+  // Dias del calendario
   calendarDays = computed(() => {
     const year = this.currentMonth().getFullYear();
     const month = this.currentMonth().getMonth();
@@ -266,7 +284,7 @@ export class DashboardAdminComponent {
     return days;
   });
 
-  // ✅ Citas del día seleccionado
+  // Citas del dia seleccionado
   selectedDayAppointments = computed(() => {
     if (!this.selectedDay()) return [];
 
@@ -349,10 +367,130 @@ export class DashboardAdminComponent {
   }
 
   refreshDashboard() {
-    console.log('🔄 Refrescando dashboard...');
+    console.log('Refrescando dashboard...');
     this.dashboardTrigger.update((v) => v + 1);
     this.paymentsTrigger.update((v) => v + 1);
     this.appointmentsTrigger.update((v) => v + 1);
     this.newPatientsTrigger.update((v) => v + 1);
   }
+
+  // Handlers para clicks en stat-cards
+  handleCitasHoyClick() {
+    const count = this.stats().citasHoy;
+    if (count > 0) {
+      // Abrir modal con detalles
+      this.showCitasHoyModal.set(true);
+    } else {
+      // Navegar al calendario para agendar
+      this.goToCalendario();
+    }
+  }
+
+  handlePagosPendientesClick() {
+    const count = this.stats().pagosPendientes;
+    if (count > 0) {
+      // Navegar directamente a pagos con filtro pendientes
+      this.router.navigate(['/pagos'], {
+        queryParams: { estado: 'PENDIENTE' }
+      });
+    }
+  }
+
+  handleNuevosPacientesClick() {
+    const count = this.stats().nuevosPacientes;
+    if (count > 0) {
+      // Abrir modal con lista
+      this.showNuevosPacientesModal.set(true);
+    } else {
+      this.goToUsuarios();
+    }
+  }
+
+  handleCitasMesClick() {
+    // Abrir modal con estadísticas
+    this.showCitasMesModal.set(true);
+  }
+
+  // Acciones de modales
+  getCitasHoyActions(): ModalAction[] {
+    return [
+      {
+        label: 'Cerrar',
+        variant: 'outline',
+        action: () => this.showCitasHoyModal.set(false)
+      },
+      {
+        label: 'Ver en calendario',
+        variant: 'primary',
+        action: () => {
+          this.showCitasHoyModal.set(false);
+          this.goToCalendario();
+        }
+      }
+    ];
+  }
+
+  getNuevosPacientesActions(): ModalAction[] {
+    return [
+      {
+        label: 'Cerrar',
+        variant: 'outline',
+        action: () => this.showNuevosPacientesModal.set(false)
+      },
+      {
+        label: 'Ver todos',
+        variant: 'primary',
+        action: () => {
+          this.showNuevosPacientesModal.set(false);
+          this.goToUsuarios();
+        }
+      }
+    ];
+  }
+
+  getCitasMesActions(): ModalAction[] {
+    return [
+      {
+        label: 'Cerrar',
+        variant: 'outline',
+        action: () => this.showCitasMesModal.set(false)
+      },
+      {
+        label: 'Ver calendario completo',
+        variant: 'primary',
+        action: () => {
+          this.showCitasMesModal.set(false);
+          this.goToCalendario();
+        }
+      }
+    ];
+  }
+
+  // Obtener citas de hoy
+  citasHoy = computed(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayKey = today.toISOString().split('T')[0];
+
+    return this.appointmentsThisMonth().filter((apt: any) => {
+      const aptDate = new Date(apt.fecha);
+      aptDate.setHours(0, 0, 0, 0);
+      const aptKey = aptDate.toISOString().split('T')[0];
+      return aptKey === todayKey;
+    });
+  });
+
+  // Obtener nuevos pacientes (últimos 5)
+  nuevosPacientes = computed(() => {
+    const response = this.newPatientsResource.value();
+    if (!response?.data?.content) return [];
+
+    return response.data.content.slice(0, 5).map((user: any) => ({
+      id: user.id,
+      nombre: user.nombreCompleto || 'Sin nombre',
+      email: user.email || 'Sin email',
+      rol: user.rol || 'PACIENTE',
+      fechaCreacion: user.fechaCreacion
+    }));
+  });
 }

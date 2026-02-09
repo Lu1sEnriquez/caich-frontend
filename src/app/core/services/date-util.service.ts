@@ -21,7 +21,7 @@ export class DateUtilService {
    */
   toLocalISOString(date: Date): string {
     if (!date || !(date instanceof Date)) {
-      console.warn('DateUtilService: Fecha inválida', date);
+      console.warn('DateUtilService: Fecha invalida', date);
       return '';
     }
 
@@ -43,7 +43,7 @@ export class DateUtilService {
    */
   toDateString(date: Date): string {
     if (!date || !(date instanceof Date)) {
-      console.warn('DateUtilService: Fecha inválida', date);
+      console.warn('DateUtilService: Fecha invalida', date);
       return '';
     }
 
@@ -61,7 +61,7 @@ export class DateUtilService {
    */
   toTimeString(date: Date): string {
     if (!date || !(date instanceof Date)) {
-      console.warn('DateUtilService: Fecha inválida', date);
+      console.warn('DateUtilService: Fecha invalida', date);
       return '';
     }
 
@@ -77,7 +77,7 @@ export class DateUtilService {
    */
   toUTCISOString(date: Date): string {
     if (!date || !(date instanceof Date)) {
-      console.warn('DateUtilService: Fecha inválida', date);
+      console.warn('DateUtilService: Fecha invalida', date);
       return '';
     }
 
@@ -90,7 +90,7 @@ export class DateUtilService {
    */
   parseDate(dateString: string): Date {
     if (!dateString) {
-      console.warn('DateUtilService: String de fecha vacío');
+      console.warn('DateUtilService: String de fecha vacio');
       return new Date();
     }
 
@@ -103,7 +103,7 @@ export class DateUtilService {
    */
   parseDateTime(dateTimeString: string): Date {
     if (!dateTimeString) {
-      console.warn('DateUtilService: String de fecha-hora vacío');
+      console.warn('DateUtilService: String de fecha-hora vacio');
       return new Date();
     }
 

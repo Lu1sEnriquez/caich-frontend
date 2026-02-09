@@ -29,7 +29,7 @@ export class NotificationsService {
       .get<DataResponseDTO<NotificacionDTO[]>>(`${API_BASE}/notificaciones`, { params })
       .pipe(
         tap((response) =>
-          console.log('✅ Notificaciones obtenidas:', response.data.length, 'registros')
+          console.log('Notificaciones obtenidas:', response.data.length, 'registros')
         ),
         catchError((error) => {
           this.errorHandler.handleHttpError(error, 'Obtener notificaciones');
@@ -45,7 +45,7 @@ export class NotificationsService {
     return this.http
       .get<DataResponseDTO<NotificacionDTO[]>>(`${API_BASE}/notificaciones/no-leidas`)
       .pipe(
-        tap((response) => console.log('✅ Notificaciones no leídas:', response.data.length)),
+        tap((response) => console.log('Notificaciones no leidas:', response.data.length)),
         catchError((error) => {
           this.errorHandler.handleHttpError(error, 'Obtener notificaciones no leídas');
           return throwError(() => error);
@@ -60,7 +60,7 @@ export class NotificationsService {
     return this.http
       .get<DataResponseDTO<number>>(`${API_BASE}/notificaciones/contador-no-leidas`)
       .pipe(
-        tap((response) => console.log('✅ Contador de no leídas:', response.data)),
+        tap((response) => console.log('Contador de no leidas:', response.data)),
         catchError((error) => {
           this.errorHandler.handleHttpError(error, 'Obtener contador');
           return throwError(() => error);
@@ -75,7 +75,7 @@ export class NotificationsService {
     return this.http
       .post<BaseResponseDTO>(`${API_BASE}/notificaciones/${notificacionId}/marcar-leida`, null)
       .pipe(
-        tap(() => console.log('✅ Notificación marcada como leída')),
+        tap(() => console.log('Notificacion marcada como leida')),
         catchError((error) => {
           this.errorHandler.handleHttpError(error, 'Marcar como leída');
           return throwError(() => error);
@@ -91,7 +91,7 @@ export class NotificationsService {
       .post<DataResponseDTO<number>>(`${API_BASE}/notificaciones/marcar-todas-leidas`, null)
       .pipe(
         tap((response) => {
-          console.log('✅ Todas las notificaciones marcadas como leídas');
+          console.log('Todas las notificaciones marcadas como leidas');
           this.errorHandler.showSuccess(
             'Notificaciones leídas',
             `Se marcaron ${response.data} notificaciones como leídas`
@@ -113,7 +113,7 @@ export class NotificationsService {
     return this.http
       .get<DataResponseDTO<NotificacionDTO[]>>(`${API_BASE}/notificaciones`, { params })
       .pipe(
-        tap((response) => console.log('✅ Notificaciones por tipo:', response.data.length)),
+        tap((response) => console.log('Notificaciones por tipo:', response.data.length)),
         catchError((error) => {
           this.errorHandler.handleHttpError(error, 'Obtener notificaciones por tipo');
           return throwError(() => error);
@@ -127,7 +127,7 @@ export class NotificationsService {
   deleteNotification(notificacionId: number | string): Observable<BaseResponseDTO> {
     return this.http.delete<BaseResponseDTO>(`${API_BASE}/notificaciones/${notificacionId}`).pipe(
       tap(() => {
-        console.log('✅ Notificación eliminada');
+        console.log('Notificacion eliminada');
         this.errorHandler.showSuccess('Notificación eliminada', 'Se eliminó correctamente');
       }),
       catchError((error) => {
@@ -145,7 +145,7 @@ export class NotificationsService {
       .delete<DataResponseDTO<number>>(`${API_BASE}/notificaciones/eliminar-leidas`)
       .pipe(
         tap((response) => {
-          console.log('✅ Notificaciones leídas eliminadas');
+          console.log('Notificaciones leidas eliminadas');
           this.errorHandler.showSuccess(
             'Notificaciones eliminadas',
             `Se eliminaron ${response.data} notificaciones`
@@ -169,13 +169,13 @@ export class NotificationsService {
     referenciaUrl?: string;
   }): Observable<DataResponseDTO<NotificacionDTO>> {
     //TODO: Implementar endpoint POST /notificaciones en la API
-    console.warn('⚠️ createNotification: Endpoint pendiente en la API');
+    console.warn('createNotification: Endpoint pendiente en la API');
 
     return this.http
       .post<DataResponseDTO<NotificacionDTO>>(`${API_BASE}/notificaciones`, notificationData)
       .pipe(
         tap(() => {
-          console.log('✅ Notificación creada');
+          console.log('Notificacion creada');
           this.errorHandler.showSuccess(
             'Notificación enviada',
             'La notificación se envió correctamente'
@@ -197,7 +197,7 @@ export class NotificationsService {
     porTipo: Record<NotificationType, number>;
   }> {
     //TODO: Implementar endpoint GET /notificaciones/stats en la API
-    console.warn('⚠️ getNotificationStats: Endpoint pendiente en la API');
+    console.warn('getNotificationStats: Endpoint pendiente en la API');
 
     return this.http.get<any>(`${API_BASE}/notificaciones/stats`).pipe(
       catchError((error) => {

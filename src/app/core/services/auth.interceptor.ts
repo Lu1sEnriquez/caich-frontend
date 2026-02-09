@@ -116,7 +116,7 @@ export class AuthInterceptor implements HttpInterceptor {
    * Cierra sesión y redirige al login
    */
   private logout(): void {
-    console.log('🚪 Token expirado, cerrando sesión...');
+    console.log('Token expirado, cerrando sesion...');
     localStorage.removeItem('auth_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('auth_user');

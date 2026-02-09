@@ -3,6 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonComponent } from '../../ui/button/button.component';
 
+export interface ExportOptions {
+  fields: string[];
+  roles: string[];
+}
+
 @Component({
   selector: 'app-export-options-modal',
   standalone: true,
@@ -12,25 +17,26 @@ import { ButtonComponent } from '../../ui/button/button.component';
 })
 export class ExportOptionsModalComponent {
   availableFields = input.required<string[]>();
+  availableRoles = input<string[]>([]);
 
-  // Señal interna para manejar selecciones
+  // Señales internas para manejar selecciones
   selectedFields = signal<string[]>([]);
+  selectedRoles = signal<string[]>([]);
 
-  confirm = output<string[]>();
+  confirm = output<ExportOptions>();
   cancel = output<void>();
-
-  constructor() {
-    // Inicializar con todos los campos seleccionados por defecto al cargar
-    // (Esto requiere un efecto o lógica en ngOnInit si availableFields cambia dinámicamente,
-    // pero para este caso simple lo manejaremos en el toggle inicial)
-  }
 
   ngOnInit() {
     this.selectedFields.set([...this.availableFields()]);
+    this.selectedRoles.set([...this.availableRoles()]);
   }
 
   isFieldSelected(field: string): boolean {
     return this.selectedFields().includes(field);
+  }
+
+  isRoleSelected(role: string): boolean {
+    return this.selectedRoles().includes(role);
   }
 
   toggleField(field: string) {
@@ -43,7 +49,36 @@ export class ExportOptionsModalComponent {
     });
   }
 
+  toggleRole(role: string) {
+    this.selectedRoles.update((roles) => {
+      if (roles.includes(role)) {
+        return roles.filter((r) => r !== role);
+      } else {
+        return [...roles, role];
+      }
+    });
+  }
+
+  selectAllRoles() {
+    this.selectedRoles.set([...this.availableRoles()]);
+  }
+
+  deselectAllRoles() {
+    this.selectedRoles.set([]);
+  }
+
+  selectAllFields() {
+    this.selectedFields.set([...this.availableFields()]);
+  }
+
+  deselectAllFields() {
+    this.selectedFields.set([]);
+  }
+
   confirmExport() {
-    this.confirm.emit(this.selectedFields());
+    this.confirm.emit({
+      fields: this.selectedFields(),
+      roles: this.selectedRoles(),
+    });
   }
 }

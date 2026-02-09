@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UsersService } from '../../../core/services/users.service';
 import { CalendarService } from '../../../core/services/calendar.service';
-import { PaymentsService } from '../../../core/services/payments.service';
+import { TicketsService } from '../../../core/services/tickets.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { DateUtilService } from '../../../core/services/date-util.service';
 import { UserRole } from '../../../core/models/enums';
 import type { AppointmentSlot } from '../../../core/models/models';
+import { UsuarioDTO } from '../../../core/models/api-models';
 import {
   formatDisplayDate,
   getUserRoleLabel,
@@ -18,24 +19,6 @@ import {
   getPaymentStatusLabel,
   formatMonto,
 } from '../../../core/utils';
-
-
-interface UserDetail {
-  id: number;
-  nombre: string;
-  apellido: string;
-  email: string;
-  telefono?: string;
-  rol: UserRole;
-  estado?: string;
-  fechaRegistro?: Date;
-  especializacion?: string;
-  cedula?: string;
-  folio?: string;
-  idAlumno?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
 
 interface PaymentInfo {
   id: string;
@@ -62,7 +45,7 @@ interface PaymentInfo {
 export class UserDetailComponent implements OnInit {
   private usersService = inject(UsersService);
   private calendarService = inject(CalendarService);
-  private paymentsService = inject(PaymentsService);
+  private ticketsService = inject(TicketsService);
   private authService = inject(AuthService);
   private dateUtilService = inject(DateUtilService);
   private route = inject(ActivatedRoute);
@@ -71,7 +54,7 @@ export class UserDetailComponent implements OnInit {
   // Estado
   isLoading = signal(false);
   error = signal<string | null>(null);
-  user = signal<UserDetail | null>(null);
+  user = signal<UsuarioDTO | null>(null);
   appointments = signal<AppointmentSlot[]>([]);
   payments = signal<PaymentInfo[]>([]);
 
@@ -91,12 +74,12 @@ export class UserDetailComponent implements OnInit {
   // Mostrar appointments (para Terapeuta y Paciente)
   shouldShowAppointments = computed(() => {
     const role = this.userRole();
-    return role === UserRole.TERAPEUTA || role === UserRole.PACIENTE;
+    return role === 'Terapeuta' || role === 'Paciente';
   });
 
   // Mostrar payments (solo para Paciente)
   shouldShowPayments = computed(() => {
-    return this.userRole() === UserRole.PACIENTE;
+    return this.userRole() === 'Paciente';
   });
 
   ngOnInit(): void {
@@ -120,15 +103,15 @@ export class UserDetailComponent implements OnInit {
     // Cargar datos del usuario
     this.usersService.obtenerUsuarioPorId(Number(userId)).subscribe({
       next: (response: any) => {
-        const userData = response.data as UserDetail;
+        const userData = response.data as UsuarioDTO;
         this.user.set(userData);
 
-        // Cargar datos adicionales según el rol
-        if (userData.rol === UserRole.TERAPEUTA) {
-          this.cargarCitasDelTerapeuta(userData.id);
-        } else if (userData.rol === UserRole.PACIENTE) {
-          this.cargarCitasDelPaciente(userData.id);
-          this.cargarPagosDelPaciente(userData.id);
+        // Cargar datos adicionales segun el rol
+        if (userData.rol === 'Terapeuta' && userData.usuarioId) {
+          this.cargarCitasDelTerapeuta(userData.usuarioId);
+        } else if (userData.rol === 'Paciente' && userData.usuarioId) {
+          this.cargarCitasDelPaciente(userData.usuarioId);
+          this.cargarPagosDelPaciente(userData.usuarioId);
         }
 
         this.isLoading.set(false);
@@ -174,7 +157,8 @@ export class UserDetailComponent implements OnInit {
    * Carga los pagos del paciente
    */
   private cargarPagosDelPaciente(pacienteId: number): void {
-    this.paymentsService.obtenerPagosPorPaciente(pacienteId).subscribe({
+    // TODO: Implementar llamada correcta para obtener pagos del paciente
+    this.ticketsService.getTickets({ pacienteId }).subscribe({
       next: (response: any) => {
         this.payments.set(response.data || []);
       },
@@ -190,7 +174,7 @@ export class UserDetailComponent implements OnInit {
   }
 
   // Helpers
-  formatDate(date: Date): string {
+  formatDate(date: Date | string): string {
     return formatDisplayDate(date);
   }
 
@@ -212,8 +196,8 @@ export class UserDetailComponent implements OnInit {
     return estado || 'N/A';
   }
 
-  getRoleText(rol: UserRole): string {
-    return getUserRoleLabel(rol);
+  getRoleText(role: UserRole | string): string {
+    return getUserRoleLabel(role as UserRole);
   }
 
   formatMonto(monto: number): string {

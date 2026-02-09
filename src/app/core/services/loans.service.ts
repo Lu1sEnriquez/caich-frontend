@@ -39,7 +39,7 @@ export class LoansService {
     if (estado) params = params.set('estado', estado);
 
     return this.http.get<DataResponseDTO<PrestamoDTO[]>>(`${API_BASE}/prestamos`, { params }).pipe(
-      tap((response) => console.log('✅ Préstamos obtenidos:', response.data.length, 'registros')),
+      tap((response) => console.log('Prestamos obtenidos:', response.data.length, 'registros')),
       catchError((error) => {
         this.errorHandler.handleHttpError(error, 'Obtener préstamos');
         return throwError(() => error);
@@ -52,7 +52,7 @@ export class LoansService {
    */
   getLoanById(prestamoId: number | string): Observable<DataResponseDTO<PrestamoDTO>> {
     return this.http.get<DataResponseDTO<PrestamoDTO>>(`${API_BASE}/prestamos/${prestamoId}`).pipe(
-      tap((response) => console.log('✅ Préstamo obtenido:', response.data.prestamoId)),
+      tap((response) => console.log('Prestamo obtenido:', response.data.prestamoId)),
       catchError((error) => {
         this.errorHandler.handleHttpError(error, 'Obtener préstamo');
         return throwError(() => error);
@@ -67,7 +67,7 @@ export class LoansService {
     return this.http
       .get<DataResponseDTO<PrestamoDTO[]>>(`${API_BASE}/prestamos/alumno/${alumnoId}`)
       .pipe(
-        tap((response) => console.log('✅ Préstamos del alumno:', response.data.length)),
+        tap((response) => console.log('Prestamos del alumno:', response.data.length)),
         catchError((error) => {
           this.errorHandler.handleHttpError(error, 'Obtener préstamos del alumno');
           return throwError(() => error);
@@ -84,7 +84,7 @@ export class LoansService {
       .pipe(
         tap((response) => {
           const activos = response.data.filter((p) => p.estadoPrestamo === 'Activo');
-          console.log('✅ Préstamos activos del alumno:', activos.length);
+          console.log('Prestamos activos del alumno:', activos.length);
         }),
         catchError((error) => {
           this.errorHandler.handleHttpError(error, 'Obtener préstamos activos');
@@ -101,7 +101,7 @@ export class LoansService {
       .get<DataResponseDTO<PrestamoDTO[]>>(`${API_BASE}/prestamos?estado=Vencido`)
       .pipe(
         tap((response) => {
-          console.log('✅ Préstamos vencidos:', response.data.length);
+          console.log('Prestamos vencidos:', response.data.length);
           if (response.data.length > 0) {
             this.errorHandler.showWarning(
               'Préstamos vencidos',
@@ -122,10 +122,10 @@ export class LoansService {
   createLoan(loanData: CrearPrestamoRequest): Observable<DataResponseDTO<PrestamoDTO>> {
     return this.http.post<DataResponseDTO<PrestamoDTO>>(`${API_BASE}/prestamos`, loanData).pipe(
       tap((response) => {
-        console.log('✅ Préstamo creado:', response.data.prestamoId);
+        console.log('Prestamo creado:', response.data.prestamoId);
         this.errorHandler.showSuccess(
-          'Préstamo registrado',
-          'El préstamo se registró exitosamente'
+          'Prestamo registrado',
+          'El prestamo se registro exitosamente'
         );
       }),
       catchError((error) => {
@@ -146,7 +146,7 @@ export class LoansService {
       .put<DataResponseDTO<PrestamoDTO>>(`${API_BASE}/prestamos/${prestamoId}`, loanData)
       .pipe(
         tap(() => {
-          console.log('✅ Préstamo actualizado');
+          console.log('Prestamo actualizado');
           this.errorHandler.showSuccess('Préstamo actualizado', 'Los cambios se guardaron');
         }),
         catchError((error) => {
@@ -172,7 +172,7 @@ export class LoansService {
       })
       .pipe(
         tap(() => {
-          console.log('✅ Préstamo devuelto');
+          console.log('Prestamo devuelto');
           this.errorHandler.showSuccess(
             'Material devuelto',
             'El material se devolvió correctamente'
@@ -197,7 +197,7 @@ export class LoansService {
       })
       .pipe(
         tap(() => {
-          console.log('✅ Préstamo marcado como perdido');
+          console.log('Prestamo marcado como perdido');
           this.errorHandler.showWarning('Material perdido', 'El material se marcó como perdido');
         }),
         catchError((error) => {
@@ -213,7 +213,7 @@ export class LoansService {
   deleteLoan(prestamoId: number | string): Observable<BaseResponseDTO> {
     return this.http.delete<BaseResponseDTO>(`${API_BASE}/prestamos/${prestamoId}`).pipe(
       tap(() => {
-        console.log('✅ Préstamo eliminado');
+        console.log('Prestamo eliminado');
         this.errorHandler.showSuccess('Préstamo eliminado', 'El registro se eliminó');
       }),
       catchError((error) => {
@@ -240,7 +240,7 @@ export class LoansService {
       .put<DataResponseDTO<PrestamoDTO>>(`${API_BASE}/prestamos/${prestamoId}`, body)
       .pipe(
         tap(() => {
-          console.log('✅ Fecha de devolución extendida');
+          console.log('Fecha de devolucion extendida');
           this.errorHandler.showSuccess('Plazo extendido', 'Se actualizó la fecha de devolución');
         }),
         catchError((error) => {
@@ -262,7 +262,7 @@ export class LoansService {
   }> {
     //TODO: Implementar endpoint GET /prestamos/stats en la API
     // Response esperado: { total, activos, vencidos, devueltos, perdidos }
-    console.warn('⚠️ getLoanStats: Endpoint pendiente en la API');
+    console.warn('getLoanStats: Endpoint pendiente en la API');
 
     return this.http.get<any>(`${API_BASE}/prestamos/stats`).pipe(
       catchError((error) => {

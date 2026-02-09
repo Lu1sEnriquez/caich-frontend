@@ -1,30 +1,44 @@
-<aside class="sidebar">
+<!-- Hover Trigger Zone - Se muestra cuando el sidebar está colapsado -->
+@if (isCollapsed()) {
+<div class="sidebar-hover-trigger" (mouseenter)="expandSidebar()"></div>
+}
+
+<aside class="sidebar" [class.collapsed]="isCollapsed()" (mouseenter)="onSidebarMouseEnter()" (mouseleave)="onSidebarMouseLeave()">
+  <!-- Toggle Button - COMENTADO POR AHORA -->
+  <!--
+  <button class="sidebar-toggle" (click)="toggleSidebar()" [title]="isCollapsed() ? 'Expandir sidebar' : 'Contraer sidebar'">
+    <span class="toggle-icon">{{ isCollapsed() ? '▶' : '◀' }}</span>
+  </button>
+  -->
+
   <!-- Logo -->
   <div class="sidebar-header">
-    <div class="logo">
-      <span class="logo-icon">🧠</span>
-      <span class="logo-text">{{ appName() }}</span>
-      <!-- Badge con contador de notificaciones no leídas - Ahora clickeable -->
-      @if (unreadCount() > 0) {
+    <button class="logo" (click)="goToDashboard()" title="Ir a Dashboard">
+      <div class="logo-content">
+        <span class="logo-icon">🧠</span>
+        <span class="logo-text">{{ appName() }}</span>
+      </div>
+      <!-- Badge con contador de items importantes -->
+      @if (totalNotifications() > 0) {
       <button
-        (click)="toggleNotifications()"
+        (click)="toggleNotifications(); $event.stopPropagation()"
         class="logo-notif-badge-btn"
-        title="Ver notificaciones"
+        [title]="notificationTooltip()"
       >
         <app-badge variant="danger" class="logo-notif-badge">
-          {{ unreadCount() }}
+          {{ totalNotifications() }}
         </app-badge>
       </button>
       } @else {
       <button
-        (click)="toggleNotifications()"
+        (click)="toggleNotifications(); $event.stopPropagation()"
         class="logo-notif-badge-btn"
         title="Notificaciones"
       >
         <span class="notif-icon">🔔</span>
       </button>
       }
-    </div>
+    </button>
   </div>
 
   <!-- Notification Panel - Visible cuando está abierto -->
@@ -50,6 +64,8 @@
             routerLinkActive="active"
             [routerLinkActiveOptions]="{ exact: false }"
             class="menu-link"
+            [title]="item.label"
+            (click)="collapseSidebar()"
           >
             @if (item.icon) {
             <span class="menu-icon">{{ item.icon }}</span>

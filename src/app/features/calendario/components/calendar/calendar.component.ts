@@ -1,13 +1,13 @@
 import { Component, signal, computed, inject, effect, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'; // ✅ Agregar FormsModule
+import { FormsModule } from '@angular/forms'; // Agregar FormsModule
 import { Router, ActivatedRoute } from '@angular/router';
 import { CardComponent } from '../../../../shared/components/ui/card/card.component';
 import { ButtonComponent } from '../../../../shared/components/ui/button/button.component';
 import { BadgeComponent } from '../../../../shared/components/ui/badge/badge.component';
 import type { AppointmentSlot, CalendarDay, TimeSlot } from '../../../../core/models/models';
 import { AppointmentScheduleComponent } from '../appointment-schedule/appointment-schedule.component';
-import { ScheduleConfigModalComponent } from '../schedule-config-modal/schedule-config-modal.component'; // ✅ Importar el modal
+import { ScheduleConfigModalComponent } from '../schedule-config-modal/schedule-config-modal.component'; // Importar el modal
 import { AppointmentsModalComponent } from '../appointments-modal/appointments-modal.component';
 import { PaymentsModalComponent } from '../payments-modal/payments-modal.component';
 import { CalendarService } from '../../../../core/services/calendar.service';
@@ -21,12 +21,12 @@ import { of } from 'rxjs';
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule, // ✅ Agregar FormsModule aquí
+    FormsModule, // Agregar FormsModule aqui
     CardComponent,
     ButtonComponent,
     BadgeComponent,
     AppointmentScheduleComponent,
-    ScheduleConfigModalComponent, // ✅ Agregar el modal aquí
+    ScheduleConfigModalComponent, // Agregar el modal aqui
     AppointmentsModalComponent,
     PaymentsModalComponent,
   ],
@@ -103,7 +103,7 @@ export class CalendarComponent {
     params: () => ({
       trigger: this.appointmentsTrigger(),
       month: this.currentMonth(),
-      filters: this.filters, // ✅ Usar el objeto filters normal
+      filters: this.filters, // Usar el objeto filters normal
     }),
     stream: ({ params }) => {
       if (params.trigger === 0) return of(null);
@@ -406,7 +406,7 @@ export class CalendarComponent {
   }
 
   saveScheduleConfig(config: any) {
-    console.log('Guardando configuración:', config);
+    console.log('Guardando configuracion:', config);
     // Aquí llamarías al servicio para guardar la configuración
     this.calendarService.guardarConfiguracionHorarios(config).subscribe({
       next: () => {
@@ -414,7 +414,7 @@ export class CalendarComponent {
         this.closeScheduleConfig();
       },
       error: (error) => {
-        console.error('Error al guardar configuración:', error);
+        console.error('Error al guardar configuracion:', error);
       },
     });
   }

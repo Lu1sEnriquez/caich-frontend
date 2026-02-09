@@ -54,14 +54,14 @@ export class NotificationPanelComponent {
 
   getNotificationIcon(tipo: string): string {
     const icons: Record<string, string> = {
-      PAGO: '💳',
-      CITA: '📅',
-      USUARIO: '👤',
-      SISTEMA: '⚙️',
-      ALERTA: '⚠️',
-      EXITO: '✅',
+      PAGO: '',
+      CITA: '',
+      USUARIO: '',
+      SISTEMA: '',
+      ALERTA: '',
+      EXITO: '',
     };
-    return icons[tipo] || '📢';
+    return icons[tipo] || '';
   }
 
   getNotificationClass(tipo: string): string {

@@ -51,12 +51,12 @@ export class AuthService {
   currentRole = computed(() => this.currentUser()?.rol ?? null);
 
   constructor() {
-    console.log('🔐 AuthService inicializado');
+    console.log('AuthService inicializado');
     const user = this.currentUser();
     if (user) {
-      console.log('✅ Usuario en sesión:', user.email, '- Rol:', user.rol);
+      console.log('Usuario en sesion:', user.email, '- Rol:', user.rol);
     } else {
-      console.log('ℹ️ No hay usuario en sesión');
+      console.log('No hay usuario en sesion');
     }
   }
 
@@ -64,7 +64,7 @@ export class AuthService {
    * Login - Autenticación de usuario
    */
   login(credentials: LoginRequest): Observable<AuthResponse> {
-    console.log('🔐 Iniciando login:', credentials.email);
+    console.log('Iniciando login:', credentials.email);
     this.loadingSubject.next(true);
 
     const loginDTO = {
@@ -92,14 +92,14 @@ export class AuthService {
           return authResp;
         }),
         tap((response) => {
-          console.log('✅ Login exitoso:', response.email);
+          console.log('Login exitoso:', response.email);
           this.saveAuthData(response);
 
           // Navegar según el rol
           this.navigateByRole(response.rol);
         }),
         catchError((error) => {
-          console.error('❌ Error en login:', error);
+          console.error('Error en login:', error);
           this.errorHandler.handleHttpError(error, 'Inicio de sesión');
           return throwError(() => error);
         }),
@@ -113,7 +113,7 @@ export class AuthService {
    * Register - Registro de nuevo usuario
    */
   register(userData: RegisterRequest): Observable<AuthResponse> {
-    console.log('📝 Iniciando registro:', userData.email);
+    console.log('Iniciando registro:', userData.email);
     this.loadingSubject.next(true);
 
     const registerDTO = {
@@ -146,7 +146,7 @@ export class AuthService {
           return authResp;
         }),
         tap((response) => {
-          console.log('✅ Registro exitoso:', response.email);
+          console.log('Registro exitoso:', response.email);
 
           // Si la API devuelve token, guardar y navegar
           if (response.accessToken) {
@@ -161,7 +161,7 @@ export class AuthService {
           }
         }),
         catchError((error) => {
-          console.error('❌ Error en registro:', error);
+          console.error('Error en registro:', error);
           this.errorHandler.handleHttpError(error, 'Registro');
           return throwError(() => error);
         }),
@@ -175,7 +175,7 @@ export class AuthService {
    * Logout - Cerrar sesión
    */
   logout(): void {
-    console.log('👋 Cerrando sesión');
+    console.log('Cerrando sesion');
 
     //TODO: Implementar endpoint POST /auth/logout en la API
     // Este endpoint debe invalidar el refresh token en el servidor
@@ -220,11 +220,11 @@ export class AuthService {
           return authResp;
         }),
         tap((response) => {
-          console.log('🔄 Token refrescado');
+          console.log('Token refrescado');
           this.saveAuthData(response);
         }),
         catchError((error) => {
-          console.error('❌ Error al refrescar token:', error);
+          console.error('Error al refrescar token:', error);
           this.logout();
           return throwError(() => error);
         })
@@ -274,7 +274,7 @@ export class AuthService {
 
     this.currentUserSignal.set(user);
 
-    console.log('💾 Datos guardados en localStorage');
+    console.log('Datos guardados en localStorage');
   }
 
   /**
@@ -292,7 +292,7 @@ export class AuthService {
       if (expiresAtStr) {
         const expiresAt = parseInt(expiresAtStr, 10);
         if (Date.now() > expiresAt) {
-          console.warn('⚠️ Sesión expirada detectada al inicio. Limpiando datos.');
+          console.warn('Sesion expirada detectada al inicio. Limpiando datos.');
           this.logout(); // Limpia todo
           return null;
         }
@@ -300,14 +300,14 @@ export class AuthService {
 
       // Validar que el usuario tenga los campos necesarios
       if (!user.id || !user.email || !user.rol) {
-        console.warn('⚠️ Usuario en localStorage inválido');
+        console.warn('Usuario en localStorage invalido');
         localStorage.removeItem('auth_user');
         return null;
       }
 
       return user;
     } catch (error) {
-      console.error('❌ Error al parsear usuario de localStorage:', error);
+      console.error('Error al parsear usuario de localStorage:', error);
       localStorage.removeItem('auth_user');
       return null;
     }
@@ -317,7 +317,7 @@ export class AuthService {
    * Navegar según el rol del usuario
    */
   private navigateByRole(role: UserRole): void {
-    console.log('🧭 Navegando según rol:', role);
+    console.log('Navegando segun rol:', role);
 
     switch (role) {
       case UserRole.ADMINISTRADOR:
@@ -328,7 +328,6 @@ export class AuthService {
         this.router.navigate(['/calendario']);
         break;
       case UserRole.ALUMNO:
-        //TODO: Definir ruta específica para alumnos
         this.router.navigate(['/calendario']);
         break;
       default:

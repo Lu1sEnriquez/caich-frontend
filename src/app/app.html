@@ -10,11 +10,14 @@
     [userRole]="authService.currentUser()?.rol || 'Paciente'"
     [userRoleLabel]="'Rol actual:'"
     (logoutClick)="openLogoutModal()"
+    (collapsedChange)="onSidebarCollapsedChange($event)"
   />
   }
 
   <!-- Main Content -->
-  <main class="main-content" [class.full-width]="!shouldShowSidebar()">
+  <main class="main-content"
+    [class.full-width]="!shouldShowSidebar()"
+    [class.sidebar-collapsed]="sidebarCollapsed()">
     <!-- Router Outlet: Aquí se cargan las páginas -->
     <div class="content-wrapper">
       <router-outlet />

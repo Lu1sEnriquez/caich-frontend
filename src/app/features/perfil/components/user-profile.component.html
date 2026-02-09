@@ -1,295 +1,300 @@
 <div class="profile-container">
   <!-- Header Card -->
-  <app-card>
-    <div class="profile-header">
-      <div class="profile-info">
-        <app-avatar
-          [src]="user()?.foto ? '../../../../assets/profiles/' + user()!.foto : ''"
-          [name]="user()?.nombreCompleto || ''"
-          size="xl"
-          status="online"
-        />
-        <div class="profile-details">
-          <h2>{{ user()?.nombreCompleto }}</h2>
-          <p class="email">{{ user()?.email }}</p>
-          <div class="meta">
-            <span class="id">ID #{{ user()?.id }}</span>
+  <div class="profile-header-card">
+    <div class="header-background"></div>
+    <div class="header-content">
+      <div class="profile-avatar-section">
+        <div class="avatar-wrapper">
+          <app-avatar
+            [src]="user()?.foto ? '../../../../assets/profiles/' + user()!.foto : ''"
+            [name]="user()?.nombreCompleto || ''"
+            size="xl"
+            status="online"
+          />
+          <button class="avatar-upload-btn" (click)="uploadPhoto()" title="Cambiar foto">
+            <span>📸</span>
+          </button>
+        </div>
+        <div class="profile-header-info">
+          <h1 class="profile-name">{{ user()?.nombreCompleto }}</h1>
+          <p class="profile-email">{{ user()?.email }}</p>
+          <div class="profile-meta">
+            <span class="meta-item">
+              <span class="meta-icon">🆔</span>
+              <span class="meta-text">ID #{{ user()?.id }}</span>
+            </span>
             <app-badge [status]="user()?.rol || 'Paciente'">{{ user()?.rol }}</app-badge>
           </div>
         </div>
       </div>
-      <div class="profile-actions">
-        <app-button variant="outline" size="sm" (clicked)="uploadPhoto()">Subir foto</app-button>
-        <app-button variant="outline" size="sm" (clicked)="downloadData()"
-          >Descargar datos</app-button
-        >
+      <div class="profile-quick-actions">
+        <app-button variant="outline" size="sm" (clicked)="downloadData()">
+          <span class="btn-icon">📥</span>
+          Descargar datos
+        </app-button>
       </div>
     </div>
-  </app-card>
+  </div>
 
   <!-- Loading State -->
   @if (profileResource.isLoading()) {
-  <app-card>
-    <div style="text-align: center; padding: 2rem">
-      <p style="font-size: 18px; margin-bottom: 0.5rem">⏳ Cargando perfil...</p>
-      <p style="font-size: 14px; color: var(--color-muted-foreground); margin: 0">
-        Obteniendo información desde el servidor
-      </p>
-    </div>
-  </app-card>
+  <div class="state-card loading-card">
+    <div class="state-icon">⏳</div>
+    <h3>Cargando perfil</h3>
+    <p>Obteniendo informacion desde el servidor...</p>
+  </div>
   }
 
   <!-- Error State -->
   @if (profileResource.error() && !profileResource.isLoading()) {
-  <app-card>
-    <div style="text-align: center; padding: 2rem">
-      <p style="font-size: 18px; color: var(--color-destructive); margin-bottom: 0.5rem">
-        ❌ Error al cargar el perfil
-      </p>
-      <p style="font-size: 14px; color: var(--color-muted-foreground); margin: 0 0 1rem 0">
-        {{ profileResource.error()?.message || 'Error desconocido' }}
-      </p>
-      <app-button variant="primary" size="sm" (clicked)="refreshProfile()">
-        🔄 Reintentar
-      </app-button>
-    </div>
-  </app-card>
+  <div class="state-card error-card">
+    <div class="state-icon">❌</div>
+    <h3>Error al cargar el perfil</h3>
+    <p>{{ profileResource.error()?.message || 'Error desconocido' }}</p>
+    <app-button variant="primary" size="sm" (clicked)="refreshProfile()">
+      <span class="btn-icon">🔄</span>
+      Reintentar
+    </app-button>
+  </div>
   }
 
   <!-- Main Content -->
   @if (!profileResource.isLoading() && !profileResource.error()) {
   <div class="profile-grid">
     <!-- Personal Information -->
-    <app-card>
-      <app-card-header>
-        <app-card-title>Información personal</app-card-title>
-        <app-card-description>Actualiza tus datos personales</app-card-description>
-      </app-card-header>
-      <app-card-content>
-        <form class="profile-form">
-          <app-input
-            label="Nombre completo"
-            placeholder="Nombre completo"
-            [(value)]="formData().nombreCompleto"
-            [required]="true"
-          />
-          <app-input
-            label="Correo electrónico"
-            type="email"
-            placeholder="correo@ejemplo.com"
-            [(value)]="formData().email"
-            [required]="true"
-          />
-          <app-input
-            label="Teléfono"
-            type="tel"
-            placeholder="0000000000"
-            [(value)]="formData().telefono"
-            [hint]="'10 dígitos sin espacios'"
-          />
-          <app-input
-            label="Folio (opcional)"
-            type="text"
-            placeholder="12345678"
-            [(value)]="formData().folio"
-          />
+    <div class="profile-section">
+      <app-card>
+        <div class="section-header">
+          <div class="section-icon">👤</div>
+          <div class="section-title-group">
+            <h2 class="section-title">Informacion personal</h2>
+            <p class="section-description">Actualiza tus datos personales</p>
+          </div>
+        </div>
+        <app-card-content>
+          <form class="profile-form">
+            <div class="form-group">
+              <app-input
+                label="Nombre completo"
+                placeholder="Nombre completo"
+                [(value)]="formData.nombreCompleto"
+                [required]="true"
+              />
+            </div>
+            <div class="form-group">
+              <app-input
+                label="Correo electronico"
+                type="email"
+                placeholder="correo@ejemplo.com"
+                [(value)]="formData.email"
+                [required]="true"
+              />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <app-input
+                  label="Telefono"
+                  type="tel"
+                  placeholder="0000000000"
+                  [(value)]="formData.telefono"
+                  [hint]="'10 digitos sin espacios'"
+                />
+              </div>
+              <div class="form-group">
+                <app-input
+                  label="Folio (opcional)"
+                  type="text"
+                  placeholder="12345678"
+                  [(value)]="formData.folio"
+                />
+              </div>
+            </div>
 
-          @if (updateResource.error()) {
-          <div
-            style="
-              padding: 1rem;
-              background: rgba(239, 68, 68, 0.1);
-              border: 1px solid var(--color-destructive);
-              border-radius: var(--radius-sm);
-              color: var(--color-destructive);
-              font-size: 14px;
-            "
-          >
-            ❌ {{ updateResource.error()?.message || 'Error al actualizar' }}
+            @if (updateResource.error()) {
+            <div class="alert alert-error">
+              <span class="alert-icon">❌</span>
+              <span>{{ updateResource.error()?.message || 'Error al actualizar' }}</span>
+            </div>
+            }
+
+            <div class="form-actions">
+              <app-button
+                variant="primary"
+                [disabled]="updateResource.isLoading()"
+                (clicked)="saveProfile()"
+              >
+                @if (updateResource.isLoading()) {
+                <span class="btn-icon">⏳</span>
+                <span>Guardando...</span>
+                } @else {
+                <span class="btn-icon">💾</span>
+                <span>Guardar cambios</span>
+                }
+              </app-button>
+            </div>
+          </form>
+        </app-card-content>
+      </app-card>
+    </div>
+
+    <!-- Security Settings -->
+    <div class="profile-section">
+      <app-card>
+        <div class="section-header">
+          <div class="section-icon">🔒</div>
+          <div class="section-title-group">
+            <h2 class="section-title">Seguridad</h2>
+            <p class="section-description">Protege tu cuenta</p>
+          </div>
+        </div>
+        <app-card-content>
+          <div class="security-section">
+            <div class="security-item">
+              <div class="security-item-content">
+                <div class="security-icon">🔑</div>
+                <div class="security-info">
+                  <h4>Contrasena</h4>
+                  <p>Ultima actualizacion hace 30 dias</p>
+                </div>
+              </div>
+              <app-button variant="outline" size="sm" (clicked)="openPasswordDialog()">
+                Cambiar
+              </app-button>
+            </div>
+          </div>
+
+          <!-- Password Change Dialog -->
+          @if (showPasswordDialog()) {
+          <div class="dialog-overlay" (click)="closePasswordDialog()">
+            <div class="dialog" (click)="$event.stopPropagation()">
+              <div class="dialog-header">
+                <div class="dialog-title-group">
+                  <div class="dialog-icon">🔒</div>
+                  <h2>Cambiar contrasena</h2>
+                </div>
+                <button class="close-button" (click)="closePasswordDialog()">✕</button>
+              </div>
+              <div class="dialog-content">
+                <p class="dialog-description">
+                  Ingresa tu contrasena actual y luego la nueva contrasena que deseas usar.
+                </p>
+                <form class="password-form">
+                  <app-input
+                    label="Contrasena actual"
+                    type="password"
+                    placeholder="••••••••"
+                    [(value)]="passwordForm.passwordActual"
+                    [required]="true"
+                  />
+                  <app-input
+                    label="Nueva contrasena"
+                    type="password"
+                    placeholder="••••••••"
+                    [(value)]="passwordForm.passwordNueva"
+                    [required]="true"
+                    [hint]="'Minimo 6 caracteres'"
+                  />
+                  <app-input
+                    label="Confirmar nueva contrasena"
+                    type="password"
+                    placeholder="••••••••"
+                    [(value)]="passwordForm.confirmarPassword"
+                    [required]="true"
+                  />
+
+                  @if (passwordResource.error()) {
+                  <div class="alert alert-error">
+                    <span class="alert-icon">❌</span>
+                    <span>{{ passwordResource.error()?.message || 'Error al cambiar contrasena' }}</span>
+                  </div>
+                  }
+                </form>
+              </div>
+              <div class="dialog-footer">
+                <app-button variant="outline" (clicked)="closePasswordDialog()">
+                  Cancelar
+                </app-button>
+                <app-button
+                  variant="primary"
+                  [disabled]="passwordResource.isLoading()"
+                  (clicked)="changePassword()"
+                >
+                  @if (passwordResource.isLoading()) {
+                  <span class="btn-icon">⏳</span>
+                  <span>Cambiando...</span>
+                  } @else {
+                  <span class="btn-icon">🔒</span>
+                  <span>Cambiar contrasena</span>
+                  }
+                </app-button>
+              </div>
+            </div>
           </div>
           }
+        </app-card-content>
+      </app-card>
+    </div>
+  </div>
 
-          <div class="form-actions">
-            <app-button
-              variant="primary"
-              [disabled]="updateResource.isLoading()"
-              (clicked)="saveProfile()"
-            >
-              @if (updateResource.isLoading()) {
-              <span>⏳ Guardando...</span>
-              } @else {
-              <span>💾 Guardar cambios</span>
-              }
-            </app-button>
+  <!-- Additional Info Cards -->
+  <div class="info-grid">
+    <!-- Account Details -->
+    <app-card class="info-card">
+      <div class="section-header compact">
+        <div class="section-icon small">ℹ️</div>
+        <div class="section-title-group">
+          <h2 class="section-title">Detalles de cuenta</h2>
+        </div>
+      </div>
+      <app-card-content>
+        <div class="info-list">
+          <div class="info-item">
+            <span class="info-label">ID de Usuario</span>
+            <span class="info-value">{{ user()?.id }}</span>
           </div>
-        </form>
+          <div class="info-item">
+            <span class="info-label">Rol</span>
+            <span class="info-value">
+              <app-badge [status]="user()?.rol || 'Paciente'">{{ user()?.rol }}</app-badge>
+            </span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Correo electronico</span>
+            <span class="info-value">{{ user()?.email }}</span>
+          </div>
+        </div>
       </app-card-content>
     </app-card>
 
-    <!-- Security Settings -->
-    <app-card>
-      <app-card-header>
-        <app-card-title>Seguridad</app-card-title>
-        <app-card-description>Protege tu cuenta</app-card-description>
-      </app-card-header>
+    <!-- Quick Actions -->
+    <app-card class="info-card">
+      <div class="section-header compact">
+        <div class="section-icon small">⚡</div>
+        <div class="section-title-group">
+          <h2 class="section-title">Acciones rapidas</h2>
+        </div>
+      </div>
       <app-card-content>
-        <div class="security-section">
-          <div class="security-item">
-            <div class="security-info">
-              <h4>Contraseña</h4>
-              <p>••••••••</p>
+        <div class="quick-actions-list">
+          <button class="quick-action-item" (click)="downloadData()">
+            <div class="quick-action-icon">📥</div>
+            <div class="quick-action-info">
+              <h4>Descargar datos</h4>
+              <p>Exporta tu informacion en formato JSON</p>
             </div>
-            <app-button variant="outline" size="sm" (clicked)="openPasswordDialog()">
-              🔒 Cambiar contraseña
-            </app-button>
-          </div>
-          <!-- Comentado hasta que se implemente 2FA -->
-          <!--
-          <div class="security-item">
-            <div class="security-info">
-              <h4>Autenticación de dos factores</h4>
-              <p>⚠️ No disponible en la API actual</p>
+            <span class="quick-action-arrow">→</span>
+          </button>
+          <button class="quick-action-item" (click)="uploadPhoto()">
+            <div class="quick-action-icon">📸</div>
+            <div class="quick-action-info">
+              <h4>Cambiar foto</h4>
+              <p>Actualiza tu foto de perfil</p>
             </div>
-            <app-button variant="outline" size="sm" [disabled]="true" (clicked)="open2FADialog()">
-              🔐 Habilitar 2FA
-            </app-button>
-          </div>
-        -->
+            <span class="quick-action-arrow">→</span>
+          </button>
         </div>
-
-        <!-- Password Change Dialog -->
-        @if (showPasswordDialog()) {
-        <div class="dialog-overlay" (click)="closePasswordDialog()">
-          <div class="dialog" (click)="$event.stopPropagation()">
-            <div class="dialog-header">
-              <h2>Cambiar contraseña</h2>
-              <button class="close-button" (click)="closePasswordDialog()">✕</button>
-            </div>
-            <div class="dialog-content">
-              <p class="dialog-description">
-                Ingresa tu contraseña actual y luego la nueva contraseña que deseas usar.
-              </p>
-              <form class="password-form">
-                <app-input
-                  label="Contraseña actual"
-                  type="password"
-                  placeholder="••••••••"
-                  [(value)]="passwordForm().passwordActual"
-                  [required]="true"
-                />
-                <app-input
-                  label="Nueva contraseña"
-                  type="password"
-                  placeholder="••••••••"
-                  [(value)]="passwordForm().passwordNueva"
-                  [required]="true"
-                  [hint]="'Mínimo 6 caracteres'"
-                />
-                <app-input
-                  label="Confirmar nueva contraseña"
-                  type="password"
-                  placeholder="••••••••"
-                  [(value)]="passwordForm().confirmarPassword"
-                  [required]="true"
-                />
-
-                @if (passwordResource.error()) {
-                <div
-                  style="
-                    padding: 1rem;
-                    background: rgba(239, 68, 68, 0.1);
-                    border: 1px solid var(--color-destructive);
-                    border-radius: var(--radius-sm);
-                    color: var(--color-destructive);
-                    font-size: 14px;
-                  "
-                >
-                  ❌ {{ passwordResource.error()?.message || 'Error al cambiar contraseña' }}
-                </div>
-                }
-              </form>
-            </div>
-            <div class="dialog-footer">
-              <app-button variant="outline" (clicked)="closePasswordDialog()">
-                Cancelar
-              </app-button>
-              <app-button
-                variant="primary"
-                [disabled]="passwordResource.isLoading()"
-                (clicked)="changePassword()"
-              >
-                @if (passwordResource.isLoading()) {
-                <span>⏳ Cambiando...</span>
-                } @else {
-                <span>🔒 Cambiar contraseña</span>
-                }
-              </app-button>
-            </div>
-          </div>
-        </div>
-        }
       </app-card-content>
     </app-card>
   </div>
-
-  <!-- Additional Info Card -->
-  <app-card>
-    <app-card-header>
-      <app-card-title>Información adicional</app-card-title>
-      <app-card-description>Detalles de tu cuenta</app-card-description>
-    </app-card-header>
-    <app-card-content>
-      <div class="preferences-grid">
-        <div class="preference-item">
-          <label>ID de Usuario</label>
-          <p>{{ user()?.id }}</p>
-        </div>
-        <div class="preference-item">
-          <label>Rol</label>
-          <p>
-            <app-badge [status]="user()?.rol || 'Paciente'">{{ user()?.rol }}</app-badge>
-          </p>
-        </div>
-        <!-- <div class="preference-item">
-          <label>Estado de la cuenta</label>
-          <p>
-            <app-badge [status]="user()?.status || 'Activo'">{{ user()?.status }}</app-badge>
-          </p>
-        </div> -->
-        <div class="preference-item full-width">
-          <label>Correo electrónico</label>
-          <p>{{ user()?.email }}</p>
-        </div>
-      </div>
-    </app-card-content>
-  </app-card>
-
-  <!-- Help Card -->
-  <app-card>
-    <app-card-header>
-      <app-card-title>¿Necesitas ayuda?</app-card-title>
-      <app-card-description>Información y soporte</app-card-description>
-    </app-card-header>
-    <app-card-content>
-      <div class="preferences-grid">
-        <div class="preference-item full-width">
-          <label>Descargar mis datos</label>
-          <p style="margin-bottom: 0.5rem">
-            Puedes descargar una copia de todos tus datos en formato JSON.
-          </p>
-          <app-button variant="outline" size="sm" (clicked)="downloadData()">
-            📥 Descargar datos
-          </app-button>
-        </div>
-        <div class="preference-item full-width">
-          <label>Actualizar foto de perfil</label>
-          <p style="margin-bottom: 0.5rem">Sube una foto para personalizar tu perfil.</p>
-          <app-button variant="outline" size="sm" (clicked)="uploadPhoto()">
-            📸 Subir foto
-          </app-button>
-        </div>
-      </div>
-    </app-card-content>
-  </app-card>
   }
 </div>

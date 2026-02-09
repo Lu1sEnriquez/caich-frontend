@@ -16,7 +16,7 @@ import { UserRole, UserStatus } from '../../../core/models/enums';
 import { UsersService } from '../../../core/services/users.service';
 import { CrearUsuarioDTO, ActualizarUsuarioDTO } from '../../../core/models/api-models';
 import { mapUserFromApi } from '../../../core/mappers/mappers';
-import { ExportOptionsModalComponent } from '../../../shared/components/modals/exportOptions/export-options-modal.component';
+import { ExportOptionsModalComponent, ExportOptions } from '../../../shared/components/modals/exportOptions/export-options-modal.component';
 
 // Tipo para los filtros
 type UserFilter = 'Todos' | UserRole;
@@ -54,12 +54,18 @@ export class UsersTableComponent {
     'ID',
     'Nombre',
     'Email',
-    'Teléfono',
+    'Telefono',
     'Rol',
     'Estado',
     'Folio',
     'ID Alumno',
-    'Última Conexión',
+    'Ultima Conexion',
+  ];
+  readonly availableRoles = [
+    'Administrador',
+    'Terapeuta',
+    'Paciente',
+    'Alumno',
   ];
 
   // Triggers
@@ -90,7 +96,7 @@ export class UsersTableComponent {
   users = computed(() => {
     const response = this.usersResource.value();
     if (!response) return [];
-    console.log('✅ Usuarios cargados:', response.data.content.length);
+    console.log('Usuarios cargados:', response.data.content.length);
     return response.data.content.map((dto) => mapUserFromApi(dto));
   });
 
@@ -248,19 +254,19 @@ export class UsersTableComponent {
 
     if (this.editingUser()) {
       // Actualizar
-      console.log('📝 Actualizando usuario...');
+      console.log('Actualizando usuario...');
       this.updateUserTrigger.update((v) => v + 1);
 
       const checkResult = () => {
         if (this.updateUserResource.value()) {
           this.closeUserDialog();
           this.usersTrigger.update((v) => v + 1);
-          setTimeout(() => alert('✅ Usuario actualizado exitosamente'), 100);
+          setTimeout(() => alert('Usuario actualizado exitosamente'), 100);
         } else if (!this.updateUserResource.isLoading() && !this.updateUserResource.error()) {
           setTimeout(checkResult, 100);
         } else if (this.updateUserResource.error()) {
-          console.error('❌ Error:', this.updateUserResource.error());
-          alert('❌ Error al actualizar usuario');
+          console.error('Error:', this.updateUserResource.error());
+          alert('Error al actualizar usuario');
         }
       };
 
@@ -268,7 +274,7 @@ export class UsersTableComponent {
     } else {
       // Crear
       if (!form.password) {
-        alert('La contraseña es requerida para crear un usuario');
+        alert('La contrasena es requerida para crear un usuario');
         return;
       }
 
@@ -277,15 +283,15 @@ export class UsersTableComponent {
 
       const checkResult = () => {
         if (this.createUserResource.value()) {
-          console.log('✅ Usuario creado');
+          console.log('Usuario creado');
           this.closeUserDialog();
           this.usersTrigger.update((v) => v + 1);
-          setTimeout(() => alert('✅ Usuario creado exitosamente'), 100);
+          setTimeout(() => alert('Usuario creado exitosamente'), 100);
         } else if (!this.createUserResource.isLoading() && !this.createUserResource.error()) {
           setTimeout(checkResult, 100);
         } else if (this.createUserResource.error()) {
-          console.error('❌ Error:', this.createUserResource.error());
-          alert('❌ Error al crear usuario');
+          console.error('Error:', this.createUserResource.error());
+          alert('Error al crear usuario');
         }
       };
 
@@ -322,7 +328,7 @@ export class UsersTableComponent {
     const users = this.filteredUsers();
 
     if (users.length === 0) {
-      alert('❌ No hay usuarios para exportar');
+      alert('No hay usuarios para exportar');
       return;
     }
 
@@ -350,7 +356,7 @@ export class UsersTableComponent {
     // Validar campos
     const camposInvalidos = campos.filter((campo) => !camposDisponibles.includes(campo));
     if (camposInvalidos.length > 0) {
-      alert(`❌ Campos inválidos: ${camposInvalidos.join(', ')}`);
+      alert(`Campos invalidos: ${camposInvalidos.join(', ')}`);
       return;
     }
 
@@ -412,7 +418,7 @@ export class UsersTableComponent {
     link.click();
     document.body.removeChild(link);
 
-    alert(`✅ Se exportaron ${users.length} usuarios (filtro: ${this.selectedFilter()})`);
+    alert(`Se exportaron ${users.length} usuarios (filtro: ${this.selectedFilter()})`);
   }
 
   /**
@@ -421,23 +427,32 @@ export class UsersTableComponent {
   openExportModal(): void {
     const users = this.filteredUsers();
     if (users.length === 0) {
-      alert('❌ No hay usuarios para exportar');
+      alert('No hay usuarios para exportar');
       return;
     }
     this.showExportModal.set(true);
   }
 
   /**
-   * Ejecutar exportación con campos seleccionados
+   * Ejecutar exportacion con campos y roles seleccionados
    */
-  onExportConfirmed(selectedFields: string[]): void {
+  onExportConfirmed(options: ExportOptions): void {
     this.showExportModal.set(false);
-    const users = this.filteredUsers();
-    const headers = selectedFields;
+    
+    // Filtrar usuarios por roles seleccionados
+    const allUsers = this.filteredUsers();
+    const users = allUsers.filter(u => options.roles.includes(u.rol));
+    
+    if (users.length === 0) {
+      alert('No hay usuarios con los roles seleccionados para exportar');
+      return;
+    }
+    
+    const headers = options.fields;
 
     const rows = users.map((u) => {
       const row: any[] = [];
-      selectedFields.forEach((campo) => {
+      options.fields.forEach((campo) => {
         switch (campo) {
           case 'ID':
             row.push(u.id);
@@ -448,7 +463,7 @@ export class UsersTableComponent {
           case 'Email':
             row.push(u.email);
             break;
-          case 'Teléfono':
+          case 'Telefono':
             row.push(u.telefono || '');
             break;
           case 'Rol':
@@ -463,7 +478,7 @@ export class UsersTableComponent {
           case 'ID Alumno':
             row.push(u.idAlumno || '');
             break;
-          case 'Última Conexión':
+          case 'Ultima Conexion':
             row.push(u.ultimaConexion ? new Date(u.ultimaConexion).toISOString() : '');
             break;
         }
@@ -471,7 +486,6 @@ export class UsersTableComponent {
       return row;
     });
 
-    // ... Lógica de generación de CSV existente ...
     const csvContent = [
       headers.join(','),
       ...rows.map((row) => row.map((cell) => `"${cell}"`).join(',')),
@@ -480,18 +494,21 @@ export class UsersTableComponent {
     const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
-    const filterName =
-      this.selectedFilter() === 'Todos' ? 'todos' : this.selectedFilter().toLowerCase();
-
+    
+    // Generar nombre del archivo con roles seleccionados
+    const rolesName = options.roles.length === this.availableRoles.length 
+      ? 'todos_roles' 
+      : options.roles.map(r => r.toLowerCase()).join('_');
+    
     link.setAttribute('href', url);
     link.setAttribute(
       'download',
-      `usuarios_${filterName}_${new Date().toISOString().split('T')[0]}.csv`
+      `usuarios_${rolesName}_${new Date().toISOString().split('T')[0]}.csv`
     );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
-    // Mensaje de éxito opcional o toast
+    // Mensaje de exito opcional o toast
   }
 }

@@ -34,6 +34,8 @@ export class App {
   private currentRoute = signal('');
   // SEÑAL PARA CONTROLAR EL MODAL DE LOGOUT
   showLogoutModal = signal(false);
+  // Estado del sidebar colapsado (inicia colapsado para ser menos intrusivo)
+  sidebarCollapsed = signal(true);
 
   constructor() {
     // Suscribirse a cambios de ruta
@@ -42,7 +44,7 @@ export class App {
       .subscribe((event) => {
         const navEvent = event as NavigationEnd;
         this.currentRoute.set(navEvent.urlAfterRedirects);
-        console.log('📍 Navegación:', navEvent.urlAfterRedirects);
+        console.log('Navegacion:', navEvent.urlAfterRedirects);
       });
   }
   openLogoutModal() {
@@ -53,6 +55,11 @@ export class App {
   confirmLogout() {
     this.showLogoutModal.set(false);
     this.authService.logout();
+  }
+
+  // MÉTODO PARA MANEJAR EL CAMBIO DE ESTADO DEL SIDEBAR
+  onSidebarCollapsedChange(collapsed: boolean) {
+    this.sidebarCollapsed.set(collapsed);
   }
 
   // Menú del sidebar adaptado según el rol
@@ -97,7 +104,7 @@ export class App {
       ];
     }
 
-    // Menú para Terapeutas
+    // Menu para Terapeutas
     if (role === UserRole.TERAPEUTA) {
       return [
         {
@@ -123,7 +130,7 @@ export class App {
       ];
     }
 
-    // Menú para Pacientes
+    // Menu para Pacientes
     if (role === UserRole.PACIENTE) {
       return [
         {
@@ -149,18 +156,12 @@ export class App {
       ];
     }
 
-    // Menú para Alumnos
+    // Menu para Alumnos
     if (role === UserRole.ALUMNO) {
-      //TODO: Definir menú específico para alumnos
       return [
         {
           title: 'General',
           items: [
-            {
-              label: 'Mis Préstamos',
-              route: '/prestamos',
-              icon: '📦',
-            },
             {
               label: 'Calendario',
               route: '/calendario',

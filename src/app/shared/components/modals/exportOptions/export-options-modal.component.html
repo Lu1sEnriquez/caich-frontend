@@ -2,31 +2,72 @@
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <div class="modal-icon icon-info">
-        <span>📥</span>
+        <span>EXP</span>
       </div>
-      <h2>Exportar datos</h2>
+      <h2>Exportar datos de usuarios</h2>
       <button class="close-btn" (click)="cancel.emit()">✕</button>
     </div>
 
     <div class="modal-body">
-      <p class="subtitle">Selecciona las columnas que deseas incluir en el archivo CSV:</p>
+      <!-- Seccion de Roles -->
+      @if (availableRoles().length > 0) {
+      <div class="section">
+        <div class="section-header">
+          <h3>Selecciona roles a incluir</h3>
+          <div class="section-actions">
+            <button type="button" class="link-btn" (click)="selectAllRoles()">Todos</button>
+            <span class="separator">|</span>
+            <button type="button" class="link-btn" (click)="deselectAllRoles()">Ninguno</button>
+          </div>
+        </div>
+        <div class="options-grid">
+          @for (role of availableRoles(); track role) {
+          <label class="checkbox-option">
+            <input 
+              type="checkbox" 
+              [checked]="isRoleSelected(role)" 
+              (change)="toggleRole(role)" 
+            />
+            <span class="checkbox-label">{{ role }}</span>
+          </label>
+          }
+        </div>
+      </div>
+      }
 
-      <div class="options-grid">
-        @for (field of availableFields(); track field) {
-        <label class="checkbox-option">
-          <input type="checkbox" [checked]="isFieldSelected(field)" (change)="toggleField(field)" />
-          <span class="checkbox-label">{{ field }}</span>
-        </label>
-        }
+      <!-- Seccion de Campos -->
+      <div class="section">
+        <div class="section-header">
+          <h3>Selecciona campos a exportar</h3>
+          <div class="section-actions">
+            <button type="button" class="link-btn" (click)="selectAllFields()">Todos</button>
+            <span class="separator">|</span>
+            <button type="button" class="link-btn" (click)="deselectAllFields()">Ninguno</button>
+          </div>
+        </div>
+        <div class="options-grid">
+          @for (field of availableFields(); track field) {
+          <label class="checkbox-option">
+            <input 
+              type="checkbox" 
+              [checked]="isFieldSelected(field)" 
+              (change)="toggleField(field)" 
+            />
+            <span class="checkbox-label">{{ field }}</span>
+          </label>
+          }
+        </div>
       </div>
     </div>
 
     <div class="modal-footer">
-      <app-button variant="outline" (clicked)="cancel.emit()"> Cancelar </app-button>
+      <app-button variant="outline" (clicked)="cancel.emit()">
+        Cancelar
+      </app-button>
       <app-button
         variant="primary"
         (clicked)="confirmExport()"
-        [disabled]="selectedFields().length === 0"
+        [disabled]="selectedFields().length === 0 || selectedRoles().length === 0"
       >
         Exportar CSV
       </app-button>

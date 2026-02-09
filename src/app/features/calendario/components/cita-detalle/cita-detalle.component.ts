@@ -65,7 +65,7 @@ export class CitaDetalleComponent implements OnInit {
         this.isLoading.set(false);
       },
       error: (err) => {
-        console.error('❌ Error al cargar cita:', err);
+        console.error('Error al cargar cita:', err);
         this.error.set('Error al cargar los detalles de la cita');
         this.isLoading.set(false);
       },
@@ -84,7 +84,7 @@ export class CitaDetalleComponent implements OnInit {
    */
   copiarAlPortapapeles(texto: string | number): void {
     navigator.clipboard.writeText(String(texto)).then(() => {
-      alert('✅ Copiado al portapapeles');
+      alert('Copiado al portapapeles');
     });
   }
 }

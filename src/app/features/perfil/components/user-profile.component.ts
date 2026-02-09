@@ -1,13 +1,10 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { rxResource } from '@angular/core/rxjs-interop';
 
 import {
   CardComponent,
-  CardHeaderComponent,
-  CardTitleComponent,
-  CardDescriptionComponent,
   CardContentComponent,
 } from '../../../shared/components/ui/card';
 
@@ -29,9 +26,6 @@ import { mapUserFromApi } from '../../../core/mappers/mappers';
     CommonModule,
     FormsModule,
     CardComponent,
-    CardHeaderComponent,
-    CardTitleComponent,
-    CardDescriptionComponent,
     CardContentComponent,
     ButtonComponent,
     InputComponent,
@@ -65,11 +59,11 @@ export class UserProfileComponent {
 
       const userId = this.authService.currentUser()?.id;
       if (!userId) {
-        console.error('❌ No hay usuario autenticado');
+        console.error('No hay usuario autenticado');
         return of(null);
       }
 
-      console.log('🔄 Cargando perfil desde API para usuario:', userId);
+      console.log('Cargando perfil desde API para usuario:', userId);
       return this.usersService.getUserById(userId);
     },
   });
@@ -80,27 +74,27 @@ export class UserProfileComponent {
 
     if (profile?.data) {
       const mappedUser = mapUserFromApi(profile.data);
-      console.log('✅ Perfil cargado desde API:', mappedUser);
+      console.log('Perfil cargado desde API:', mappedUser);
       return mappedUser;
     }
 
-    console.log('⚠️ No hay datos del usuario disponibles');
+    console.log('No hay datos del usuario disponibles');
     return null;
   });
 
-  // Formularios
-  formData = signal({
+  // Formularios - usar propiedades normales para permitir two-way binding con ngModel
+  formData = {
     nombreCompleto: '',
     email: '',
     telefono: '',
     folio: '',
-  });
+  };
 
-  passwordForm = signal({
+  passwordForm = {
     passwordActual: '',
     passwordNueva: '',
     confirmarPassword: '',
-  });
+  };
 
   // Actualizar perfil
   updateResource = rxResource({
@@ -112,13 +106,13 @@ export class UserProfileComponent {
       if (!userId) return of(null);
 
       const data: ActualizarUsuarioDTO = {
-        nombreCompleto: this.formData().nombreCompleto,
-        email: this.formData().email,
-        telefono: this.formData().telefono,
-        folio: this.formData().folio,
+        nombreCompleto: this.formData.nombreCompleto,
+        email: this.formData.email,
+        telefono: this.formData.telefono,
+        folio: this.formData.folio,
       };
 
-      console.log('💾 Actualizando perfil:', data);
+      console.log('Actualizando perfil:', data);
       return this.usersService.updateUser(userId, data);
     },
   });
@@ -133,11 +127,11 @@ export class UserProfileComponent {
       if (!userId) return of(null);
 
       const data: CambiarPasswordDTO = {
-        currentPassword: this.passwordForm().passwordActual,
-        newPassword: this.passwordForm().passwordNueva,
+        currentPassword: this.passwordForm.passwordActual,
+        newPassword: this.passwordForm.passwordNueva,
       };
 
-      console.log('🔒 Cambiando contraseña...');
+      console.log('Cambiando contrasena...');
       return this.usersService.changePassword(userId, data);
     },
   });
@@ -162,66 +156,61 @@ export class UserProfileComponent {
     // Cargar perfil desde la API automáticamente
     this.profileTrigger.set(1);
 
-    // Actualizar formulario cuando lleguen datos de la API
-    const updateFormFromAPI = () => {
-      if (this.profileResource.value()?.data) {
-        const userData = this.profileResource.value()!.data;
-        console.log('📋 Actualizando formulario con datos de API:', userData);
+    // Effect para actualizar formulario cuando lleguen datos de la API
+    effect(() => {
+      const profile = this.profileResource.value();
+      if (profile?.data) {
+        const userData = profile.data;
+        console.log('📝 Precargando datos del usuario en formulario:', userData);
 
-        this.formData.set({
-          nombreCompleto: userData.nombreCompleto || '',
-          email: userData.email || '',
-          telefono: userData.telefono || '',
-          folio: userData.folio || '',
-        });
-      } else if (!this.profileResource.isLoading() && !this.profileResource.error()) {
-        setTimeout(updateFormFromAPI, 100);
+        this.formData.nombreCompleto = userData.nombreCompleto || '';
+        this.formData.email = userData.email || '';
+        this.formData.telefono = userData.telefono || '';
+        this.formData.folio = userData.folio || '';
       }
-    };
-
-    updateFormFromAPI();
+    });
   }
 
   /**
    * Guardar cambios del perfil
    */
   saveProfile(): void {
-    const form = this.formData();
+    const form = this.formData;
 
     // Validación
     if (!form.nombreCompleto || !form.email) {
-      alert('❌ Por favor completa todos los campos requeridos');
+      alert('Por favor completa todos los campos requeridos');
       return;
     }
 
     // Validar formato de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(form.email)) {
-      alert('❌ Email inválido');
+      alert('Email invalido');
       return;
     }
 
     // Validar teléfono si se proporciona (debe ser 10 dígitos)
     if (form.telefono && !/^\d{10}$/.test(form.telefono)) {
-      alert('❌ El teléfono debe tener 10 dígitos');
+      alert('El telefono debe tener 10 digitos');
       return;
     }
 
-    console.log('💾 Guardando cambios del perfil...');
+    console.log('Guardando cambios del perfil...');
     this.updateTrigger.update((v) => v + 1);
 
     const checkResult = () => {
       if (this.updateResource.value()) {
-        console.log('✅ Perfil actualizado exitosamente');
-        alert('✅ Perfil actualizado exitosamente');
+        console.log('Perfil actualizado exitosamente');
+        alert('Perfil actualizado exitosamente');
         this.profileTrigger.update((v) => v + 1);
       } else if (!this.updateResource.isLoading() && !this.updateResource.error()) {
         setTimeout(checkResult, 100);
       } else if (this.updateResource.error()) {
-        console.error('❌ Error al actualizar perfil:', this.updateResource.error());
+        console.error('Error al actualizar perfil:', this.updateResource.error());
         const errorMsg =
           (this.updateResource.error() as any)?.message || 'Error al actualizar perfil';
-        alert(`❌ ${errorMsg}`);
+        alert(`${errorMsg}`);
       }
     };
 
@@ -232,7 +221,7 @@ export class UserProfileComponent {
    * Recargar perfil manualmente
    */
   refreshProfile(): void {
-    console.log('🔄 Recargando perfil...');
+    console.log('Recargando perfil...');
     this.profileTrigger.update((v) => v + 1);
   }
 
@@ -240,11 +229,9 @@ export class UserProfileComponent {
    * Abrir diálogo de cambio de contraseña
    */
   openPasswordDialog(): void {
-    this.passwordForm.set({
-      passwordActual: '',
-      passwordNueva: '',
-      confirmarPassword: '',
-    });
+    this.passwordForm.passwordActual = '';
+    this.passwordForm.passwordNueva = '';
+    this.passwordForm.confirmarPassword = '';
     this.showPasswordDialog.set(true);
   }
 
@@ -253,51 +240,51 @@ export class UserProfileComponent {
    */
   closePasswordDialog(): void {
     this.showPasswordDialog.set(false);
-    this.passwordForm.set({
+    this.passwordForm = {
       passwordActual: '',
       passwordNueva: '',
       confirmarPassword: '',
-    });
+    };
   }
 
   /**
    * Cambiar contraseña
    */
   changePassword(): void {
-    const form = this.passwordForm();
+    const form = this.passwordForm;
 
     // Validación
     if (!form.passwordActual || !form.passwordNueva || !form.confirmarPassword) {
-      alert('❌ Por favor completa todos los campos');
+      alert('Por favor completa todos los campos');
       return;
     }
 
     if (form.passwordNueva.length < 6) {
-      alert('❌ La contraseña debe tener al menos 6 caracteres');
+      alert('La contrasena debe tener al menos 6 caracteres');
       return;
     }
 
     if (form.passwordNueva !== form.confirmarPassword) {
-      alert('❌ Las contraseñas no coinciden');
+      alert('Las contrasenas no coinciden');
       return;
     }
 
-    console.log('🔒 Cambiando contraseña...');
+    console.log('Cambiando contrasena...');
     this.passwordTrigger.update((v) => v + 1);
 
     const checkResult = () => {
       if (this.passwordResource.value()) {
-        console.log('✅ Contraseña actualizada exitosamente');
-        alert('✅ Contraseña actualizada exitosamente');
+        console.log('Contrasena actualizada exitosamente');
+        alert('Contrasena actualizada exitosamente');
         this.closePasswordDialog();
-        setTimeout(() => alert('✅ Contraseña actualizada exitosamente'), 100);
+        setTimeout(() => alert('Contrasena actualizada exitosamente'), 100);
       } else if (!this.passwordResource.isLoading() && !this.passwordResource.error()) {
         setTimeout(checkResult, 100);
       } else if (this.passwordResource.error()) {
-        console.error('❌ Error al cambiar contraseña:', this.passwordResource.error());
+        console.error('Error al cambiar contrasena:', this.passwordResource.error());
         const errorMsg =
-          (this.passwordResource.error() as any)?.message || 'Error al cambiar contraseña';
-        alert(`❌ ${errorMsg}\n\nVerifica que tu contraseña actual sea correcta.`);
+          (this.passwordResource.error() as any)?.message || 'Error al cambiar contrasena';
+        alert(`${errorMsg}\n\nVerifica que tu contrasena actual sea correcta.`);
       }
     };
 
@@ -324,19 +311,19 @@ export class UserProfileComponent {
       // Validar tipo de archivo
       const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
       if (!validTypes.includes(file.type)) {
-        alert('❌ Solo se permiten archivos JPG o PNG');
+        alert('Solo se permiten archivos JPG o PNG');
         return;
       }
 
       // Validar tamaño (2MB máximo)
       if (file.size > 2 * 1024 * 1024) {
-        alert('❌ La imagen no debe superar los 2MB');
+        alert('La imagen no debe superar los 2MB');
         return;
       }
 
-      console.log('📁 Archivo seleccionado:', file.name);
+      console.log('Archivo seleccionado:', file.name);
       console.log('   Tipo:', file.type);
-      console.log('   Tamaño:', (file.size / 1024 / 1024).toFixed(2), 'MB');
+      console.log('   Tamano:', (file.size / 1024 / 1024).toFixed(2), 'MB');
 
       // Guardar archivo y activar resource
       this.selectedPhotoFile.set(file);
@@ -346,18 +333,18 @@ export class UserProfileComponent {
       const checkResult = () => {
         if (this.uploadPhotoResource.value()) {
           const response = this.uploadPhotoResource.value()!;
-          console.log('✅ Foto subida exitosamente:', response.data);
-          alert('✅ Foto de perfil actualizada exitosamente');
+          console.log('Foto subida exitosamente:', response.data);
+          alert('Foto de perfil actualizada exitosamente');
 
           // Recargar perfil para mostrar nueva foto
           this.profileTrigger.update((v) => v + 1);
         } else if (!this.uploadPhotoResource.isLoading() && !this.uploadPhotoResource.error()) {
           setTimeout(checkResult, 100);
         } else if (this.uploadPhotoResource.error()) {
-          console.error('❌ Error al subir foto:', this.uploadPhotoResource.error());
+          console.error('Error al subir foto:', this.uploadPhotoResource.error());
           const errorMsg =
             (this.uploadPhotoResource.error() as any)?.message || 'Error al subir la foto';
-          alert(`❌ ${errorMsg}`);
+          alert(errorMsg);
         }
       };
 
@@ -374,7 +361,7 @@ export class UserProfileComponent {
     const userData = this.user();
 
     if (!userData) {
-      alert('❌ No hay datos para descargar');
+      alert('No hay datos para descargar');
       return;
     }
 
@@ -408,7 +395,7 @@ export class UserProfileComponent {
 
     URL.revokeObjectURL(url);
 
-    console.log('✅ Datos descargados:', filename);
-    alert(`✅ Datos descargados exitosamente\n\nArchivo: ${filename}`);
+    console.log('Datos descargados:', filename);
+    alert(`Datos descargados exitosamente\n\nArchivo: ${filename}`);
   }
 }
