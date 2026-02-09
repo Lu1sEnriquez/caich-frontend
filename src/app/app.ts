@@ -34,6 +34,8 @@ export class App {
   private currentRoute = signal('');
   // SEÑAL PARA CONTROLAR EL MODAL DE LOGOUT
   showLogoutModal = signal(false);
+  // Estado del sidebar colapsado (inicia colapsado para ser menos intrusivo)
+  sidebarCollapsed = signal(true);
 
   constructor() {
     // Suscribirse a cambios de ruta
@@ -55,6 +57,11 @@ export class App {
     this.authService.logout();
   }
 
+  // MÉTODO PARA MANEJAR EL CAMBIO DE ESTADO DEL SIDEBAR
+  onSidebarCollapsedChange(collapsed: boolean) {
+    this.sidebarCollapsed.set(collapsed);
+  }
+
   // Menú del sidebar adaptado según el rol
   menuGroups = computed<MenuGroup[]>(() => {
     const role = this.authService.currentRole();
@@ -70,27 +77,27 @@ export class App {
             {
               label: 'Dashboard',
               route: '/dashboard',
-              icon: '',
+              icon: '📊',
             },
             {
               label: 'Calendario',
               route: '/calendario',
-              icon: '',
+              icon: '📅',
             },
             {
               label: 'Pagos',
               route: '/pagos',
-              icon: '',
+              icon: '💳',
             },
             {
               label: 'Usuarios',
               route: '/usuarios',
-              icon: '',
+              icon: '👥',
             },
             {
               label: 'Perfil',
               route: '/perfil',
-              icon: '',
+              icon: '👤',
             },
           ],
         },
@@ -106,17 +113,17 @@ export class App {
             {
               label: 'Dashboard',
               route: '/dashboard',
-              icon: '',
+              icon: '📊',
             },
             {
               label: 'Calendario',
               route: '/calendario',
-              icon: '',
+              icon: '📅',
             },
             {
               label: 'Perfil',
               route: '/perfil',
-              icon: '',
+              icon: '👤',
             },
           ],
         },
@@ -132,17 +139,17 @@ export class App {
             {
               label: 'Mis Citas',
               route: '/calendario',
-              icon: '',
+              icon: '📅',
             },
             {
               label: 'Mis Pagos',
               route: '/pagos',
-              icon: '',
+              icon: '💳',
             },
             {
               label: 'Perfil',
               route: '/perfil',
-              icon: '',
+              icon: '👤',
             },
           ],
         },
@@ -158,12 +165,12 @@ export class App {
             {
               label: 'Calendario',
               route: '/calendario',
-              icon: '',
+              icon: '📅',
             },
             {
               label: 'Perfil',
               route: '/perfil',
-              icon: '',
+              icon: '👤',
             },
           ],
         },

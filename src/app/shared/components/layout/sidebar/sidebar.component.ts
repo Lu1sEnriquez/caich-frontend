@@ -1,4 +1,4 @@
-import { Component, inject, input, signal, computed, output } from '@angular/core';
+import { Component, inject, input, signal, computed, output, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { of } from 'rxjs';
@@ -26,11 +26,19 @@ export class SidebarComponent {
   showLogout = input<boolean>(true);
   logoutLabel = input<string>('Cerrar sesión');
   logoutClick = output<void>();
+  collapsedChange = output<boolean>();
+
+  // Estado del sidebar colapsado (inicia colapsado para ser menos intrusivo)
+  isCollapsed = signal(true);
 
   authService = inject(AuthService);
   private router = inject(Router);
   private notificationsService = inject(NotificationsService);
   private reportsService = inject(ReportsService);
+  private elementRef = inject(ElementRef);
+
+  // Timeout para auto-collapse
+  private collapseTimeoutId: any = null;
 
   // Trigger para obtener notificaciones (1 = fetch on init)
   private notifTrigger = signal(1);
@@ -112,6 +120,121 @@ export class SidebarComponent {
    */
   goToDashboard(): void {
     this.router.navigate(['/dashboard']);
+  }
+
+  /**
+   * Toggle del estado colapsado del sidebar
+   */
+  toggleSidebar(): void {
+    this.isCollapsed.update(v => !v);
+    this.collapsedChange.emit(this.isCollapsed());
+  }
+
+  /**
+   * Expandir sidebar (para hover trigger)
+   */
+  expandSidebar(): void {
+    // Cancelar cualquier timeout de auto-collapse pendiente
+    if (this.collapseTimeoutId) {
+      clearTimeout(this.collapseTimeoutId);
+      this.collapseTimeoutId = null;
+    }
+
+    if (this.isCollapsed()) {
+      this.isCollapsed.set(false);
+      this.collapsedChange.emit(false);
+    }
+  }
+
+  /**
+   * Colapsar sidebar (para click fuera)
+   */
+  collapseSidebar(): void {
+    if (!this.isCollapsed()) {
+      this.isCollapsed.set(true);
+      this.collapsedChange.emit(true);
+    }
+  }
+
+  /**
+   * Cuando el mouse entra al sidebar
+   */
+  onSidebarMouseEnter(): void {
+    // Cancelar auto-collapse si estaba programado
+    if (this.collapseTimeoutId) {
+      clearTimeout(this.collapseTimeoutId);
+      this.collapseTimeoutId = null;
+    }
+
+    // Expandir si está colapsado
+    if (this.isCollapsed()) {
+      this.expandSidebar();
+    }
+  }
+
+  /**
+   * Cuando el mouse sale del sidebar - auto-colapsar
+   */
+  onSidebarMouseLeave(): void {
+    // NO colapsar si el panel de notificaciones está abierto
+    if (this.notificationsPanelOpen()) {
+      return;
+    }
+
+    // Auto-colapsar después de un pequeño delay
+    if (this.collapseTimeoutId) {
+      clearTimeout(this.collapseTimeoutId);
+    }
+
+    this.collapseTimeoutId = setTimeout(() => {
+      this.collapseSidebar();
+    }, 300);
+  }
+
+  /**
+   * Listener para clicks en el documento
+   * Auto-colapsa el sidebar cuando se hace click fuera (con un pequeño delay)
+   */
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const clickedInside = this.elementRef.nativeElement.contains(event.target);
+
+    // Si el click fue fuera del sidebar y el sidebar está expandido
+    if (!clickedInside && !this.isCollapsed()) {
+      // NO colapsar si el panel de notificaciones está abierto
+      if (this.notificationsPanelOpen()) {
+        return;
+      }
+
+      // Verificar que no fue un click en el hover trigger zone
+      const target = event.target as HTMLElement;
+      if (!target.classList.contains('sidebar-hover-trigger')) {
+        // Colapsar inmediatamente en click (sin delay)
+        this.collapseSidebar();
+      }
+    }
+  }
+
+  /**
+   * Cancelar auto-collapse cuando el mouse vuelve al sidebar
+   * NOTA: Ya no es necesario porque onSidebarMouseEnter lo maneja
+   */
+  /* @HostListener('mouseenter')
+  onMouseEnter(): void {
+    if (this.collapseTimeoutId) {
+      clearTimeout(this.collapseTimeoutId);
+      this.collapseTimeoutId = null;
+    }
+  } */
+
+  /**
+   * Listener para la tecla Escape - colapsa el sidebar
+   */
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    if (!this.isCollapsed()) {
+      this.collapseSidebar();
+    }
   }
 
   onLogoutClick(): void {

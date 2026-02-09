@@ -11,10 +11,17 @@
   flex-direction: column;
   margin-left: 240px; /* Espacio para el sidebar */
   overflow: hidden;
+  transition: margin-left 0.25s cubic-bezier(0.25, 0.1, 0.25, 1);
+  will-change: margin-left;
 
   /* Clase para cuando NO está autenticado */
   &.full-width {
     margin-left: 0; /* Sin sidebar, usa todo el ancho */
+  }
+
+  /* Clase para cuando el sidebar está colapsado */
+  &.sidebar-collapsed {
+    margin-left: 64px;
   }
 
   @media (max-width: 768px) {
