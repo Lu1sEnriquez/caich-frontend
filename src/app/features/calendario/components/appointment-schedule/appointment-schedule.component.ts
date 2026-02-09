@@ -41,13 +41,13 @@ export class AppointmentScheduleComponent implements AfterViewInit {
   private calendarService = inject(CalendarService);
   private authService = inject(AuthService);
   private dateUtilService = inject(DateUtilService);
-  private usersService = inject(UsersService); // <--- Inyectar servicio
+  private usersService = inject(UsersService);
 
   // Inputs y Outputs
   selectedDate = input.required<Date>();
   appointmentSaved = output<AppointmentSlot>();
 
-  // ✨ Exponer usuario actual para el template (role-based visibility)
+  // Exponer usuario actual para el template
   currentUser = computed(() => this.authService.currentUser());
   isAdminUser = computed(() => this.currentUser()?.rol === UserRole.ADMINISTRADOR);
 
@@ -64,7 +64,7 @@ export class AppointmentScheduleComponent implements AfterViewInit {
   selectedEspacioId = signal<number | null>(null);
   selectedEspacioIdModel: number | null = null;
 
-  // ✨ Separar horas temporales de las guardadas
+  // Separar horas temporales de las guardadas
   tempDisabledHours = signal<string[]>([]);
 
   // Formulario
@@ -83,7 +83,7 @@ export class AppointmentScheduleComponent implements AfterViewInit {
     notas: '',
   });
 
-  // RXResource para espacios
+  // RXResources
   espaciosResource = rxResource({
     params: () => ({ trigger: this.espaciosTrigger() }),
     stream: ({ params }) => {
@@ -92,7 +92,6 @@ export class AppointmentScheduleComponent implements AfterViewInit {
     },
   });
 
-  // RXResource para citas del día
   citasResource = rxResource({
     params: () => ({
       trigger: this.citasTrigger(),
@@ -100,7 +99,6 @@ export class AppointmentScheduleComponent implements AfterViewInit {
     }),
     stream: ({ params }) => {
       if (params.trigger === 0) return of(null);
-
       const fechaStr = params.fecha.toISOString().split('T')[0];
       return this.calendarService.getCitas({
         fechaInicio: fechaStr,
@@ -109,7 +107,6 @@ export class AppointmentScheduleComponent implements AfterViewInit {
     },
   });
 
-  // RXResource para configuración (ahora requiere espacioId)
   configResource = rxResource({
     params: () => ({
       trigger: this.configTrigger(),
@@ -118,31 +115,27 @@ export class AppointmentScheduleComponent implements AfterViewInit {
     }),
     stream: ({ params }) => {
       if (params.trigger === 0 || !params.espacioId) return of(null);
-
       const fechaStr = params.fecha.toISOString().split('T')[0];
       return this.calendarService.getConfiguracionHorarios(fechaStr, params.espacioId);
     },
   });
 
-  // Computed: Espacios mapeados
+  // Computeds
   cubiculos = computed(() => {
     const response = this.espaciosResource.value();
     if (!response?.data) return [];
-
     return response.data
       .map((dto) => this.calendarService.mapToCubiculo(dto))
       .filter((cubiculo) => cubiculo.disponible);
   });
 
-  // Computed: Citas del día mapeadas
   appointments = computed(() => {
     const response = this.citasResource.value();
     if (!response?.data) return [];
-
     return response.data.map((dto) => this.calendarService.mapToAppointmentSlot(dto));
   });
 
-  // Computed: Configuración del día
+  // --- CAMBIO 1: Configuración siempre forzada a intervalo de 30 ---
   scheduleConfig = computed(() => {
     const response = this.configResource.value();
 
@@ -150,7 +143,7 @@ export class AppointmentScheduleComponent implements AfterViewInit {
       fecha: this.selectedDate(),
       horaInicio: 7,
       horaFin: 18,
-      intervalo: 60,
+      intervalo: 30, // Siempre 30 minutos
       horasDeshabilitadas: [],
       esHorarioDefault: true,
     };
@@ -160,28 +153,28 @@ export class AppointmentScheduleComponent implements AfterViewInit {
     return {
       ...defaultConfig,
       horasDeshabilitadas: response.data.horasDeshabilitadas || [],
-      esHorarioDefault: false,
+      esHorarioDefault: false, // Esto ya no afecta la visualización de columnas
+      // Si la BD trae otro intervalo, lo sobrescribimos visualmente a 30 si así lo deseas,
+      // o usa response.data.intervalo si la BD ya lo trae bien. 
+      // Para este caso, forzamos 30:
+      intervalo: 30
     };
   });
 
-  // Computed: Horas mostradas en el encabezado
+  // --- CAMBIO 2: Generación de horas siempre cada 30 min ---
   hours = computed(() => {
     const config = this.scheduleConfig();
     const hours: string[] = [];
 
-    // Si es horario por defecto, mostrar todas las horas
-    if (config.esHorarioDefault) {
-      for (let h = config.horaInicio; h < config.horaFin; h++) {
-        hours.push(`${h.toString().padStart(2, '0')}:00`);
-      }
-    } else {
-      // Horario personalizado
-      for (let h = config.horaInicio; h <= config.horaFin; h++) {
-        hours.push(`${h.toString().padStart(2, '0')}:00`);
-        if (h < config.horaFin) {
-          hours.push(`${h.toString().padStart(2, '0')}:30`);
-        }
-      }
+    // Iteramos desde horaInicio hasta horaFin generando slots de :00 y :30
+    for (let h = config.horaInicio; h < config.horaFin; h++) {
+      const hourStr = h.toString().padStart(2, '0');
+      
+      // Slot en punto (ej. 07:00)
+      hours.push(`${hourStr}:00`);
+      
+      // Slot y media (ej. 07:30)
+      hours.push(`${hourStr}:30`);
     }
 
     return hours;
@@ -201,19 +194,16 @@ export class AppointmentScheduleComponent implements AfterViewInit {
   });
 
   constructor() {
-    // Auto-scroll al cambiar la fecha
     effect(() => {
       this.selectedDate();
       setTimeout(() => this.scrollToCurrentTime(), 100);
     });
 
-    // Recargar datos cuando cambie la fecha seleccionada
     effect(() => {
       this.selectedDate();
       this.citasTrigger.update((v) => v + 1);
     });
 
-    // Recargar configuración cuando cambie el espacio seleccionado
     effect(() => {
       if (this.selectedEspacioId()) {
         this.configTrigger.update((v) => v + 1);
@@ -227,14 +217,12 @@ export class AppointmentScheduleComponent implements AfterViewInit {
 
   scrollToCurrentTime(): void {
     if (!this.tableWrapper?.nativeElement) return;
-
     const currentHour = this.currentTime();
     const hourIndex = this.hours().findIndex((h) => h >= currentHour);
-
     if (hourIndex === -1) return;
-
-    const scrollPosition = 150 + hourIndex * 120 - 240;
-
+    
+    // Ajuste del scroll: 150 (ancho nombre cubículo) + index * ancho columna
+    const scrollPosition = 150 + hourIndex * 100 - 150; 
     this.tableWrapper.nativeElement.scrollTo({
       left: Math.max(0, scrollPosition),
       behavior: 'smooth',
@@ -242,7 +230,7 @@ export class AppointmentScheduleComponent implements AfterViewInit {
   }
 
   // ============================================
-  // MÉTODOS DE CONFIGURACIÓN DE HORARIOS
+  // MÉTODOS DE CONFIGURACIÓN
   // ============================================
 
   toggleConfigMode(espacioId?: number): void {
@@ -250,7 +238,6 @@ export class AppointmentScheduleComponent implements AfterViewInit {
       if (espacioId) {
         this.selectedEspacioId.set(espacioId);
       }
-      // ✨ Al entrar en modo config, copiar las horas guardadas a temporales
       this.tempDisabledHours.set([...this.scheduleConfig().horasDeshabilitadas]);
     }
     this.configMode.update((v) => !v);
@@ -258,22 +245,17 @@ export class AppointmentScheduleComponent implements AfterViewInit {
 
   toggleHourAvailability(hour: string): void {
     const disabled = this.tempDisabledHours();
-
     if (disabled.includes(hour)) {
-      // Remover de la lista
       this.tempDisabledHours.set(disabled.filter((h) => h !== hour));
     } else {
-      // Agregar a la lista
       this.tempDisabledHours.set([...disabled, hour]);
     }
   }
 
   isHourDisabled(hour: string): boolean {
-    // En modo configuración, usar horas temporales
     if (this.configMode()) {
       return this.tempDisabledHours().includes(hour);
     }
-    // Fuera de modo config, usar las guardadas
     return this.scheduleConfig().horasDeshabilitadas.includes(hour);
   }
 
@@ -284,7 +266,6 @@ export class AppointmentScheduleComponent implements AfterViewInit {
       return;
     }
 
-    // ✨ Guardar las horas temporales en la configuración permanente
     const configData = {
       espacioId: espacioId,
       fecha: this.selectedDate().toISOString().split('T')[0],
@@ -305,34 +286,24 @@ export class AppointmentScheduleComponent implements AfterViewInit {
   }
 
   cancelConfig(): void {
-    // ✨ Restaurar las horas temporales a las guardadas
     this.tempDisabledHours.set([...this.scheduleConfig().horasDeshabilitadas]);
     this.configMode.set(false);
     this.selectedEspacioId.set(null);
   }
 
   // ============================================
-  // MÉTODOS DE VALIDACIÓN
+  // VALIDACIÓN Y CRUD
   // ============================================
 
   private validateTimeSlot(): boolean {
     const form = this.appointmentForm();
     const editing = this.editingAppointment();
 
-    // 1. Validar campos requeridos
-    if (
-      !form.cubiculoId ||
-      !form.horaInicio ||
-      !form.horaFin ||
-      !form.pacienteNombre ||
-      !form.terapeutaNombre ||
-      !form.materia
-    ) {
+    if (!form.cubiculoId || !form.horaInicio || !form.horaFin || !form.pacienteNombre || !form.terapeutaNombre || !form.materia) {
       this.validationMessage.set('Por favor completa todos los campos requeridos');
       return false;
     }
 
-    // 2. Validar que hora fin > hora inicio
     const formStartMinutes = this.calendarService.timeToMinutes(form.horaInicio);
     const formEndMinutes = this.calendarService.timeToMinutes(form.horaFin);
 
@@ -341,107 +312,56 @@ export class AppointmentScheduleComponent implements AfterViewInit {
       return false;
     }
 
-    // 3. ✨ VALIDACIÓN COMPLETA: Verificar conflictos de horario
     const conflict = this.appointments().find((apt) => {
-      // Ignorar la cita actual si estamos editando
       if (editing && apt.id === editing.id) return false;
-
-      // Solo verificar mismo cubículo
       if (apt.cubiculoId !== form.cubiculoId) return false;
-
-      // Solo verificar misma fecha
       if (!this.isSameDay(apt.fecha, new Date(form.fecha))) return false;
 
-      // Calcular rangos de tiempo en minutos
       const aptStart = this.calendarService.timeToMinutes(apt.horaInicio);
       const aptEnd = this.calendarService.timeToMinutes(apt.horaFin);
 
-      const hasOverlap =
+      return (
         (formStartMinutes < aptEnd && formEndMinutes > aptStart) ||
         (formStartMinutes <= aptStart && formEndMinutes >= aptEnd) ||
-        (aptStart <= formStartMinutes && aptEnd >= formEndMinutes);
-
-      return hasOverlap;
+        (aptStart <= formStartMinutes && aptEnd >= formEndMinutes)
+      );
     });
 
     if (conflict) {
       this.validationMessage.set(
-        `⚠️ Ya existe una cita para "${conflict.pacienteNombre}" de ${conflict.horaInicio} a ${conflict.horaFin}. ` +
-          `No se pueden agendar citas que se solapen en el mismo cubículo.`,
+        `⚠️ Ya existe una cita para "${conflict.pacienteNombre}" de ${conflict.horaInicio} a ${conflict.horaFin}.`
       );
       return false;
     }
 
-    // ✅ Todo válido
     this.validationMessage.set('');
     return true;
   }
 
-  // ============================================
-  // MÉTODOS CRUD DE CITAS
-  // ============================================
-
-  /**
-   * Centralizado saveAppointment: Maneja creación y edición de citas
-   * - Para CREAR: Envía CrearCitaDTO al endpoint POST /citas
-   *   Backend crea la cita + pago pendiente transaccionalmente
-   * - Para EDITAR: Envía ActualizarCitaDTO al endpoint PUT /citas/{id}
-   */
   saveAppointment(): void {
-    if (!this.validateTimeSlot()) {
-      console.log('❌ Validación fallida:', this.validationMessage());
-      return;
-    }
+    if (!this.validateTimeSlot()) return;
 
     const form = this.appointmentForm();
     const editing = this.editingAppointment();
-
-    // Obtener IDs del usuario actual (auto-poblado desde AuthService)
     const currentUser = this.authService.currentUser();
     const isAdmin = currentUser?.rol === UserRole.ADMINISTRADOR;
-
-    // Calcular duración en minutos
     const duracion = this.calendarService.calculateDuration(form.horaInicio, form.horaFin);
 
-    // Crear fecha completa con hora de inicio
     const [y, m, d] = form.fecha.split('-').map(Number);
     const fechaCompleta = new Date(y, m - 1, d);
     const [hours, minutes] = form.horaInicio.split(':').map(Number);
     fechaCompleta.setHours(hours, minutes, 0, 0);
 
-    // ================== RAMA: CREAR o ACTUALIZAR ==================
     if (editing) {
-      // ✅ RAMA ACTUALIZAR: Cita existente
       this.performUpdateAppointment(editing, form, duracion, fechaCompleta);
     } else {
-      // ✅ RAMA CREAR: Nueva cita
-      // Backend maneja la creación de pago pendiente transaccionalmente
       this.performCreateAppointment(form, duracion, fechaCompleta, currentUser?.id, isAdmin);
     }
   }
 
-  /**
-   * Crear nueva cita: Backend creará automáticamente el pago pendiente
-   * //TODO: Backend debe crear pago pendiente al crear cita (transactional)
-   */
-  private performCreateAppointment(
-    form: any,
-    duracion: number,
-    fechaCompleta: Date,
-    currentUserId: string | undefined,
-    isAdmin: boolean,
-  ): void {
-    // Usar pacienteId del formulario si es admin, sino del usuario autenticado
-    const pacienteId = isAdmin
-      ? Number(form.pacienteId)
-      : currentUserId
-        ? Number(currentUserId)
-        : 1;
-
-    // //TODO: Obtener terapeutaId del formulario o de búsqueda por nombre
+  private performCreateAppointment(form: any, duracion: number, fechaCompleta: Date, currentUserId: string | undefined, isAdmin: boolean): void {
+    const pacienteId = isAdmin ? Number(form.pacienteId) : currentUserId ? Number(currentUserId) : 1;
     const terapeutaId = Number(form.terapeutaId) || 1;
-
-    // //TODO: Obtener cuentaDestinoId de configuración por defecto
     const cuentaDestinoId = 1;
 
     const citaData: CrearCitaDTO = {
@@ -460,31 +380,15 @@ export class AppointmentScheduleComponent implements AfterViewInit {
     this.calendarService.crearCita(citaData).subscribe({
       next: (response) => {
         const newAppointment = this.calendarService.mapToAppointmentSlot(response.data);
-        console.log('✅ Nueva cita creada:', newAppointment);
-        console.log('📝 Backend creó pago pendiente automáticamente');
-
         this.citasTrigger.update((v) => v + 1);
         this.appointmentSaved.emit(newAppointment);
         this.closeDialog();
-        // alert('✅ Cita agendada. Pago pendiente creado automáticamente.');
       },
-      error: (error: unknown) => {
-        // El HttpErrorInterceptor ya maneja el error y muestra mensajes
-        console.error('❌ Error al crear cita:', error);
-      },
+      error: (error) => console.error('❌ Error al crear cita:', error),
     });
   }
 
-  /**
-   * Actualizar cita existente
-   */
-  private performUpdateAppointment(
-    editing: AppointmentSlot,
-    form: any,
-    duracion: number,
-    fechaCompleta: Date,
-  ): void {
-    // //TODO: Obtener IDs reales desde el formulario o base de datos
+  private performUpdateAppointment(editing: AppointmentSlot, form: any, duracion: number, fechaCompleta: Date): void {
     const pacienteId = Number(form.pacienteId) || 1;
     const terapeutaId = Number(form.terapeutaId) || 1;
 
@@ -503,17 +407,12 @@ export class AppointmentScheduleComponent implements AfterViewInit {
     this.calendarService.actualizarCita(Number(editing.id), updateData).subscribe({
       next: (response) => {
         const updatedAppointment = this.calendarService.mapToAppointmentSlot(response.data);
-        console.log('✅ Cita actualizada:', updatedAppointment);
-
         this.citasTrigger.update((v) => v + 1);
         this.appointmentSaved.emit(updatedAppointment);
         this.closeDialog();
         alert('✅ Cita actualizada correctamente.');
       },
-      error: (error: unknown) => {
-        // El HttpErrorInterceptor ya maneja el error y muestra mensajes
-        console.error('❌ Error al actualizar cita:', error);
-      },
+      error: (error) => console.error('❌ Error al actualizar cita:', error),
     });
   }
 
@@ -521,23 +420,15 @@ export class AppointmentScheduleComponent implements AfterViewInit {
     const editing = this.editingAppointment();
     if (!editing) return;
 
-    const confirmation = confirm(
-      `¿Estás seguro de eliminar la cita?\n\n` +
-        `Paciente: ${editing.pacienteNombre}\n` +
-        `Fecha: ${this.formatDate(editing.fecha)}\n` +
-        `Hora: ${editing.horaInicio} - ${editing.horaFin}`,
-    );
-
-    if (confirmation) {
+    if (confirm(`¿Estás seguro de eliminar la cita?`)) {
       this.calendarService.eliminarCita(Number(editing.id)).subscribe({
         next: () => {
           this.citasTrigger.update((v) => v + 1);
           this.closeDialog();
-          console.log('🗑️ Cita eliminada:', editing);
         },
         error: (error) => {
-          console.error('❌ Error al eliminar cita:', error);
-          alert('Error al eliminar la cita');
+            console.error(error);
+            alert('Error al eliminar');
         },
       });
     }
@@ -546,8 +437,7 @@ export class AppointmentScheduleComponent implements AfterViewInit {
   openNewAppointment(): void {
     this.editingAppointment.set(null);
     const currentUser = this.authService.currentUser();
-    const pacienteIdDefault =
-      currentUser?.rol === UserRole.ADMINISTRADOR ? '' : currentUser?.id || '';
+    const pacienteIdDefault = currentUser?.rol === UserRole.ADMINISTRADOR ? '' : currentUser?.id || '';
 
     this.appointmentForm.set({
       cubiculoId: '',
@@ -567,29 +457,22 @@ export class AppointmentScheduleComponent implements AfterViewInit {
     this.showAppointmentDialog.set(true);
   }
 
- editAppointment(appointment: AppointmentSlot): void {
+  editAppointment(appointment: AppointmentSlot): void {
     this.editingAppointment.set(appointment);
-    
     this.appointmentForm.set({
       cubiculoId: appointment.cubiculoId,
       fecha: this.formatDateForInput(appointment.fecha),
       horaInicio: appointment.horaInicio,
       horaFin: appointment.horaFin,
-      
-      // ✅ CORRECCIÓN: Precargar IDs reales (convertidos a string para el select)
-      // Asegúrate de que AppointmentSlot tenga estas propiedades
       pacienteId: appointment.pacienteId?.toString() || '',
       pacienteNombre: appointment.pacienteNombre,
-      
       terapeutaId: appointment.terapeutaId?.toString() || '',
       terapeutaNombre: appointment.terapeutaNombre,
-      
       materia: appointment.materia || '',
       modalidad: appointment.modalidad || 'Presencial',
       estado: appointment.estado,
       notas: appointment.notas || '',
     });
-    
     this.validationMessage.set('');
     this.showAppointmentDialog.set(true);
   }
@@ -601,7 +484,7 @@ export class AppointmentScheduleComponent implements AfterViewInit {
   }
 
   // ============================================
-  // MÉTODOS DE TABLA
+  // MÉTODOS DE TABLA (Core de visualización)
   // ============================================
 
   shouldSkipCell(cubiculoId: string, hour: string): boolean {
@@ -615,7 +498,8 @@ export class AppointmentScheduleComponent implements AfterViewInit {
       const startMinutes = this.calendarService.timeToMinutes(apt.horaInicio);
       const endMinutes = this.calendarService.timeToMinutes(apt.horaFin);
 
-      // La celda está dentro del rango pero NO es el inicio
+      // Si la celda actual está dentro de una cita, pero NO es la hora de inicio,
+      // la saltamos porque la celda de inicio tendrá el colspan.
       return currentMinutes > startMinutes && currentMinutes < endMinutes;
     });
   }
@@ -632,27 +516,25 @@ export class AppointmentScheduleComponent implements AfterViewInit {
     );
   }
 
+  // --- CAMBIO 3: Cálculo del span fijo a 30 min ---
   getAppointmentSpan(appointment: AppointmentSlot): number {
     const start = this.calendarService.timeToMinutes(appointment.horaInicio);
     const end = this.calendarService.timeToMinutes(appointment.horaFin);
     const duration = end - start;
-    return Math.ceil(duration / 30); // Cada columna = 30 min
+    
+    // Como las columnas SIEMPRE son de 30 minutos, dividimos entre 30.
+    return Math.ceil(duration / 30);
   }
 
   onCellClick(cubiculoId: string, hour: string): void {
-    // No permitir agendar en horas deshabilitadas
     if (this.isHourDisabled(hour)) {
       alert('⚠️ Esta hora no está disponible para agendar');
       return;
     }
-
-    // No permitir agendar si ya hay una cita
     if (this.getAppointmentAt(cubiculoId, hour)) return;
 
-    // Abrir diálogo con datos precargados
     const currentUser = this.authService.currentUser();
-    const pacienteIdDefault =
-      currentUser?.rol === UserRole.ADMINISTRADOR ? '' : currentUser?.id || '';
+    const pacienteIdDefault = currentUser?.rol === UserRole.ADMINISTRADOR ? '' : currentUser?.id || '';
 
     this.appointmentForm.set({
       cubiculoId,
@@ -668,11 +550,11 @@ export class AppointmentScheduleComponent implements AfterViewInit {
       estado: 'Agendado',
       notas: '',
     });
-
     this.showAppointmentDialog.set(true);
   }
+
   // ============================================
-  // MÉTODOS AUXILIARES
+  // UTILIDADES
   // ============================================
 
   formatDate(date: Date): string {
@@ -690,6 +572,7 @@ export class AppointmentScheduleComponent implements AfterViewInit {
   private getNextSlot(hour: string): string {
     const hours = this.hours();
     const index = hours.indexOf(hour);
+    // Retorna el siguiente slot o la misma hora si es el final
     return hours[index + 1] || hour;
   }
 
@@ -707,58 +590,20 @@ export class AppointmentScheduleComponent implements AfterViewInit {
     return estadoMap[estado] || 'Agendado';
   }
 
-  // ============================================
-  // MÉTODOS PARA ESTADOS DE CARGA
-  // ============================================
-
-  isLoading = computed(() => {
-    return (
-      this.citasResource.isLoading() ||
-      this.espaciosResource.isLoading() ||
-      this.configResource.isLoading()
-    );
-  });
-
-  hasError = computed(() => {
-    return (
-      this.citasResource.error() || this.espaciosResource.error() || this.configResource.error()
-    );
-  });
-
-  reloadData(): void {
-    this.citasTrigger.update((v) => v + 1);
-    this.espaciosTrigger.update((v) => v + 1);
-    this.configTrigger.update((v) => v + 1);
-  }
-
-  onEspacioSelected(id: number | null) {
-    this.selectedEspacioId.set(id);
-  }
-
+  // Recursos de usuarios
   terapeutasResource = rxResource({
     stream: () => this.usersService.getActiveUsersByRole(UserRole.TERAPEUTA),
   });
 
-  // ✅ CORREGIDO: Usando 'stream' y lógica condicional
   pacientesResource = rxResource({
     stream: () => {
-      // Si no es admin, retornamos un observable vacío con la forma correcta
       if (!this.isAdminUser()) {
-        return of({
-          status: 'success',
-          data: [],
-          message: '',
-          timestamp: new Date().toISOString(),
-        });
+        return of({ status: 'success', data: [], message: '', timestamp: '' });
       }
-      // Si es admin, llamamos al servicio
       return this.usersService.getActiveUsersByRole(UserRole.PACIENTE);
     },
   });
 
-  // ... resto del código
-
-  // ✨ Helper para actualizar nombre cuando seleccionan un ID en el dropdown
   onTerapeutaChange(id: string) {
     const lista = this.terapeutasResource.value()?.data || [];
     const seleccionado = lista.find((t) => t.usuarioId?.toString() === id);
@@ -773,5 +618,19 @@ export class AppointmentScheduleComponent implements AfterViewInit {
     if (seleccionado?.nombreCompleto) {
       this.appointmentForm.update((f) => ({ ...f, pacienteNombre: seleccionado.nombreCompleto ?? '' }));
     }
+  }
+
+  // Estados
+  isLoading = computed(() => this.citasResource.isLoading() || this.espaciosResource.isLoading() || this.configResource.isLoading());
+  hasError = computed(() => this.citasResource.error() || this.espaciosResource.error() || this.configResource.error());
+
+  reloadData(): void {
+    this.citasTrigger.update((v) => v + 1);
+    this.espaciosTrigger.update((v) => v + 1);
+    this.configTrigger.update((v) => v + 1);
+  }
+
+  onEspacioSelected(id: number | null) {
+    this.selectedEspacioId.set(id);
   }
 }
