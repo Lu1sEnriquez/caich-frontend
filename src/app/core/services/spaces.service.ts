@@ -51,13 +51,6 @@ export class SpacesService {
   }
 
   /**
-   * Obtener tipos de espacios disponibles
-   */
-  getTypes(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/espacios/tipos`);
-  }
-
-  /**
    * Obtener espacio por ID
    */
   getById(espacioId: number): Observable<any> {
@@ -88,6 +81,13 @@ export class SpacesService {
   }
 
   /**
+   * Obtener tipos de espacios disponibles
+   */
+  getTypes(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/espacios/tipos`);
+  }
+
+  /**
    * Eliminar espacio
    */
   delete(espacioId: number): Observable<any> {
@@ -101,12 +101,5 @@ export class SpacesService {
     return this.http.get(`${this.apiUrl}/espacios/disponibles`, {
       params: { capacidadMinima },
     });
-  }
-
-  /**
-   * Contar espacios activos
-   */
-  countActive(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/espacios/stats/activos`);
   }
 }

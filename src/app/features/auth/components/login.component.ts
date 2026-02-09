@@ -45,7 +45,7 @@ export class LoginComponent implements OnDestroy {
   constructor() {
     // Si ya está autenticado, redirigir
     if (this.authService.isAuthenticatedSync()) {
-      console.log('✅ Usuario ya autenticado, redirigiendo...');
+      console.log('Usuario ya autenticado, redirigiendo...');
       const role = this.authService.currentRole();
       if (role) {
         this.router.navigate(['/dashboard']);
@@ -100,20 +100,20 @@ export class LoginComponent implements OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          console.log('✅ Login completado exitosamente');
+          console.log('Login completado exitosamente');
           this.isLoading.set(false);
 
           // La navegación ya se hace en el servicio
           // pero podemos forzarla aquí también como backup
           setTimeout(() => {
             if (this.router.url === '/login') {
-              console.log('🔄 Forzando navegación desde login');
+              console.log('Forzando navegacion desde login');
               this.router.navigate(['/dashboard']);
             }
           }, 100);
         },
         error: (error) => {
-          console.error('❌ Error en login:', error);
+          console.error('Error en login:', error);
           this.isLoading.set(false);
 
           // El errorHandler ya muestra el modal

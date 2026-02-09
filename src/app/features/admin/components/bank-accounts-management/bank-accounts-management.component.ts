@@ -76,7 +76,7 @@ export class BankAccountsManagementComponent {
 
   saveAccount() {
     if (this.form.invalid) {
-      alert('❌ Por favor completa todos los campos requeridos');
+      alert('Por favor completa todos los campos requeridos');
       return;
     }
 
@@ -96,14 +96,14 @@ export class BankAccountsManagementComponent {
     operation.subscribe({
       next: () => {
         alert(
-          `✅ Cuenta ${this.isEditing() ? 'actualizada' : 'creada'} exitosamente`
+          `Cuenta ${this.isEditing() ? 'actualizada' : 'creada'} exitosamente`
         );
         this.accountsTrigger.update((v) => v + 1);
         this.closeModal();
       },
       error: (error) => {
         console.error('Error:', error);
-        alert(`❌ Error: ${error.error?.message || 'Error desconocido'}`);
+        alert(`Error: ${error.error?.message || 'Error desconocido'}`);
       },
     });
   }
@@ -116,12 +116,12 @@ export class BankAccountsManagementComponent {
 
     this.accountsService.delete(account.cuentaId).subscribe({
       next: () => {
-        alert('✅ Cuenta eliminada exitosamente');
+        alert('Cuenta eliminada exitosamente');
         this.accountsTrigger.update((v) => v + 1);
       },
       error: (error) => {
         console.error('Error:', error);
-        alert(`❌ Error: ${error.error?.message || 'No se puede eliminar esta cuenta'}`);
+        alert(`Error: ${error.error?.message || 'No se puede eliminar esta cuenta'}`);
       },
     });
   }
@@ -130,12 +130,12 @@ export class BankAccountsManagementComponent {
     const newStatus = !account.estaActiva;
     this.accountsService.changeStatus(account.cuentaId, newStatus).subscribe({
       next: () => {
-        alert(`✅ Estado actualizado a ${newStatus ? 'Activa' : 'Inactiva'}`);
+        alert(`Estado actualizado a ${newStatus ? 'Activa' : 'Inactiva'}`);
         this.accountsTrigger.update((v) => v + 1);
       },
       error: (error) => {
         console.error('Error:', error);
-        alert(`❌ Error: ${error.error?.message || 'Error desconocido'}`);
+        alert(`Error: ${error.error?.message || 'Error desconocido'}`);
       },
     });
   }

@@ -100,11 +100,4 @@ export class BankAccountsService {
   delete(cuentaId: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/cuentas-bancarias/${cuentaId}`);
   }
-
-  /**
-   * Contar cuentas activas
-   */
-  countActive(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/cuentas-bancarias/stats/activas`);
-  }
 }

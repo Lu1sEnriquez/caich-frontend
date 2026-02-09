@@ -61,7 +61,7 @@ export function getUserRoleBadgeClass(role: UserRole): string {
 export function getUserRoleIcon(role: UserRole): string {
   switch (role) {
     case UserRole.ADMINISTRADOR:
-      return '🔐';
+      return '';
     case UserRole.TERAPEUTA:
       return '👨‍⚕️';
     case UserRole.ALUMNO:
@@ -69,7 +69,7 @@ export function getUserRoleIcon(role: UserRole): string {
     case UserRole.PACIENTE:
       return '🤕';
     default:
-      return '👤';
+      return '';
   }
 }
 
@@ -155,15 +155,15 @@ export function getTicketStatusBadgeClass(status: TicketStatus): string {
 export function getTicketStatusIcon(status: TicketStatus): string {
   switch (status) {
     case TicketStatus.AGENDADO:
-      return '📅';
+      return '';
     case TicketStatus.COMPLETADO:
-      return '✅';
+      return '';
     case TicketStatus.CANCELADO:
-      return '❌';
+      return '';
     case TicketStatus.NO_ASISTIO:
-      return '⚠️';
+      return '';
     default:
-      return '📋';
+      return '';
   }
 }
 
@@ -213,15 +213,15 @@ export function getPaymentStatusBadgeClass(status: PaymentStatus): string {
 export function getPaymentStatusIcon(status: PaymentStatus): string {
   switch (status) {
     case PaymentStatus.PENDIENTE:
-      return '⏳';
+      return '';
     case PaymentStatus.PAGADO:
-      return '✅';
+      return '';
     case PaymentStatus.VERIFICADO:
-      return '🔍';
+      return '';
     case PaymentStatus.RECHAZADO:
-      return '❌';
+      return '';
     default:
-      return '💳';
+      return '';
   }
 }
 
@@ -341,19 +341,19 @@ export function getNotificationTypeLabel(type: NotificationType): string {
 export function getNotificationTypeIcon(type: NotificationType): string {
   switch (type) {
     case NotificationType.CITA_PROXIMA:
-      return '📅';
+      return '';
     case NotificationType.PAGO_VERIFICADO:
-      return '✅';
+      return '';
     case NotificationType.PAGO_RECHAZADO:
-      return '❌';
+      return '';
     case NotificationType.MATERIAL_VENCIDO:
-      return '⚠️';
+      return '';
     case NotificationType.STOCK_BAJO:
-      return '📦';
+      return '';
     case NotificationType.GENERAL:
-      return 'ℹ️';
+      return '';
     default:
-      return '🔔';
+      return '';
   }
 }
 

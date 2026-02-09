@@ -23,10 +23,35 @@
   font-size: 20px;
   font-weight: 700;
   color: var(--color-foreground);
+  width: 100%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  padding: 8px;
+  margin: -8px;
+}
+
+.logo:hover {
+  background: var(--color-muted);
+  transform: translateX(2px);
+}
+
+.logo:hover .logo-icon {
+  transform: scale(1.1);
+  filter: drop-shadow(0 2px 4px rgba(102, 126, 234, 0.3));
+}
+
+.logo:active {
+  transform: translateX(0);
 }
 
 .logo-icon {
   font-size: 24px;
+  transition: all 0.2s ease;
 }
 
 .logo-notif-badge-btn {

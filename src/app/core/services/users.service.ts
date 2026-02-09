@@ -44,7 +44,7 @@ export class UsersService {
     return this.http
       .get<DataResponseDTO<Pagination<UsuarioDTO[]>>>(`${API_BASE}/usuarios`, { params })
       .pipe(
-        tap(() => console.log('✅ Usuarios obtenidos')),
+        tap(() => console.log('Usuarios obtenidos')),
         catchError((error) => {
           this.errorHandler.handleHttpError(error, 'Obtener usuarios');
           return throwError(() => error);
@@ -57,7 +57,7 @@ export class UsersService {
    */
   getUserById(usuarioId: number | string): Observable<DataResponseDTO<UsuarioDTO>> {
     return this.http.get<DataResponseDTO<UsuarioDTO>>(`${API_BASE}/usuarios/${usuarioId}`).pipe(
-      tap(() => console.log('✅ Usuario obtenido:', usuarioId)),
+      tap(() => console.log('Usuario obtenido:', usuarioId)),
       catchError((error) => {
         this.errorHandler.handleHttpError(error, 'Obtener usuario');
         return throwError(() => error);
@@ -81,7 +81,7 @@ export class UsersService {
     return this.http
       .get<DataResponseDTO<Pagination<UsuarioDTO[]>>>(`${API_BASE}/usuarios/search`, { params })
       .pipe(
-        tap(() => console.log('✅ Búsqueda completada:', searchTerm)),
+        tap(() => console.log('Busqueda completada:', searchTerm)),
         catchError((error) => {
           this.errorHandler.handleHttpError(error, 'Buscar usuarios');
           return throwError(() => error);
@@ -104,7 +104,7 @@ export class UsersService {
         params,
       })
       .pipe(
-        tap(() => console.log('✅ Usuarios por rol obtenidos:', rol)),
+        tap(() => console.log('Usuarios por rol obtenidos:', rol)),
         catchError((error) => {
           this.errorHandler.handleHttpError(error, 'Obtener usuarios por rol');
           return throwError(() => error);
@@ -119,7 +119,7 @@ export class UsersService {
     return this.http
       .get<DataResponseDTO<UsuarioDTO[]>>(`${API_BASE}/usuarios/rol/${rol}/activos`)
       .pipe(
-        tap(() => console.log('✅ Usuarios activos obtenidos:', rol)),
+        tap(() => console.log('Usuarios activos obtenidos:', rol)),
         catchError((error) => {
           this.errorHandler.handleHttpError(error, 'Obtener usuarios activos');
           return throwError(() => error);
@@ -133,8 +133,8 @@ export class UsersService {
   createUser(userData: CrearUsuarioDTO): Observable<DataResponseDTO<UsuarioDTO>> {
     return this.http.post<DataResponseDTO<UsuarioDTO>>(`${API_BASE}/usuarios`, userData).pipe(
       tap((response) => {
-        console.log('✅ Usuario creado:', response.data.email);
-        this.errorHandler.showSuccess('Usuario creado', 'El usuario se creó exitosamente');
+        console.log('Usuario creado:', response.data.email);
+        this.errorHandler.showSuccess('Usuario creado', 'El usuario se creo exitosamente');
       }),
       catchError((error) => {
         this.errorHandler.handleHttpError(error, 'Crear usuario');
@@ -154,7 +154,7 @@ export class UsersService {
       .put<DataResponseDTO<UsuarioDTO>>(`${API_BASE}/usuarios/${usuarioId}`, userData)
       .pipe(
         tap((response) => {
-          console.log('✅ Usuario actualizado:', usuarioId);
+          console.log('Usuario actualizado:', usuarioId);
           this.errorHandler.showSuccess(
             'Usuario actualizado',
             'Los cambios se guardaron correctamente'
@@ -173,7 +173,7 @@ export class UsersService {
   deleteUser(usuarioId: number | string): Observable<BaseResponseDTO> {
     return this.http.delete<BaseResponseDTO>(`${API_BASE}/usuarios/${usuarioId}`).pipe(
       tap(() => {
-        console.log('✅ Usuario eliminado:', usuarioId);
+        console.log('Usuario eliminado:', usuarioId);
         this.errorHandler.showSuccess('Usuario eliminado', 'El usuario se eliminó correctamente');
       }),
       catchError((error) => {
@@ -194,7 +194,7 @@ export class UsersService {
       .put<BaseResponseDTO>(`${API_BASE}/usuarios/${usuarioId}/password`, passwordData)
       .pipe(
         tap(() => {
-          console.log('✅ Contraseña cambiada');
+          console.log('Contrasena cambiada');
           this.errorHandler.showSuccess(
             'Contraseña actualizada',
             'Tu contraseña se cambió correctamente'
@@ -220,7 +220,7 @@ export class UsersService {
       .put<DataResponseDTO<UsuarioDTO>>(`${API_BASE}/usuarios/${usuarioId}/estado`, body)
       .pipe(
         tap(() => {
-          console.log('✅ Estado de usuario actualizado:', estado);
+          console.log('Estado de usuario actualizado:', estado);
           this.errorHandler.showSuccess('Estado actualizado', `El usuario ahora está: ${estado}`);
         }),
         catchError((error) => {
@@ -247,7 +247,7 @@ export class UsersService {
       )
       .pipe(
         tap(() => {
-          console.log('✅ Foto de perfil subida');
+          console.log('Foto de perfil subida');
           this.errorHandler.showSuccess(
             'Foto actualizada',
             'Tu foto de perfil se actualizó correctamente'
@@ -266,7 +266,7 @@ export class UsersService {
   deleteProfilePhoto(usuarioId: number | string): Observable<BaseResponseDTO> {
     return this.http.delete<BaseResponseDTO>(`${API_BASE}/usuarios/${usuarioId}/foto`).pipe(
       tap(() => {
-        console.log('✅ Foto de perfil eliminada');
+        console.log('Foto de perfil eliminada');
         this.errorHandler.showSuccess(
           'Foto eliminada',
           'Tu foto de perfil se eliminó correctamente'
@@ -284,7 +284,7 @@ export class UsersService {
    */
   obtenerUsuarioPorId(usuarioId: number): Observable<DataResponseDTO<UsuarioDTO>> {
     return this.http.get<DataResponseDTO<UsuarioDTO>>(`${API_BASE}/usuarios/${usuarioId}`).pipe(
-      tap(() => console.log('✅ Usuario obtenido')),
+      tap(() => console.log('Usuario obtenido')),
       catchError((error) => {
         this.errorHandler.handleHttpError(error, 'Obtener usuario');
         return throwError(() => error);
@@ -300,7 +300,7 @@ export class UsersService {
     // Endpoint sugerido: GET /api/usuarios/stats
     // Response: { total: number, activos: number, nuevosMes: number }
 
-    console.warn('⚠️ getUserStats: Endpoint no implementado en la API');
+    console.warn('getUserStats: Endpoint no implementado en la API');
     return throwError(() => new Error('Endpoint no implementado'));
   }
 }

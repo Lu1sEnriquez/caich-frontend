@@ -42,7 +42,7 @@ export class App {
       .subscribe((event) => {
         const navEvent = event as NavigationEnd;
         this.currentRoute.set(navEvent.urlAfterRedirects);
-        console.log('📍 Navegación:', navEvent.urlAfterRedirects);
+        console.log('Navegacion:', navEvent.urlAfterRedirects);
       });
   }
   openLogoutModal() {
@@ -70,34 +70,34 @@ export class App {
             {
               label: 'Dashboard',
               route: '/dashboard',
-              icon: '📊',
+              icon: '',
             },
             {
               label: 'Calendario',
               route: '/calendario',
-              icon: '📅',
+              icon: '',
             },
             {
               label: 'Pagos',
               route: '/pagos',
-              icon: '💳',
+              icon: '',
             },
             {
               label: 'Usuarios',
               route: '/usuarios',
-              icon: '👥',
+              icon: '',
             },
             {
               label: 'Perfil',
               route: '/perfil',
-              icon: '👤',
+              icon: '',
             },
           ],
         },
       ];
     }
 
-    // Menú para Terapeutas
+    // Menu para Terapeutas
     if (role === UserRole.TERAPEUTA) {
       return [
         {
@@ -106,24 +106,24 @@ export class App {
             {
               label: 'Dashboard',
               route: '/dashboard',
-              icon: '📊',
+              icon: '',
             },
             {
               label: 'Calendario',
               route: '/calendario',
-              icon: '📅',
+              icon: '',
             },
             {
               label: 'Perfil',
               route: '/perfil',
-              icon: '👤',
+              icon: '',
             },
           ],
         },
       ];
     }
 
-    // Menú para Pacientes
+    // Menu para Pacientes
     if (role === UserRole.PACIENTE) {
       return [
         {
@@ -132,44 +132,38 @@ export class App {
             {
               label: 'Mis Citas',
               route: '/calendario',
-              icon: '📅',
+              icon: '',
             },
             {
               label: 'Mis Pagos',
               route: '/pagos',
-              icon: '💳',
+              icon: '',
             },
             {
               label: 'Perfil',
               route: '/perfil',
-              icon: '👤',
+              icon: '',
             },
           ],
         },
       ];
     }
 
-    // Menú para Alumnos
+    // Menu para Alumnos
     if (role === UserRole.ALUMNO) {
-      //TODO: Definir menú específico para alumnos
       return [
         {
           title: 'General',
           items: [
             {
-              label: 'Mis Préstamos',
-              route: '/prestamos',
-              icon: '📦',
-            },
-            {
               label: 'Calendario',
               route: '/calendario',
-              icon: '📅',
+              icon: '',
             },
             {
               label: 'Perfil',
               route: '/perfil',
-              icon: '👤',
+              icon: '',
             },
           ],
         },

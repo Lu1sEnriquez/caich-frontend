@@ -73,7 +73,7 @@ export class TicketsService {
       .get<DataResponseDTO<Pagination<TicketFiltroDTO[]>>>(`${API_BASE}/tickets`, { params })
       .pipe(
         tap((response) =>
-          console.log('✅ Tickets obtenidos:', response.data.content.length, 'registros')
+          console.log('Tickets obtenidos:', response.data.content.length, 'registros')
         ),
         catchError((error) => {
           this.errorHandler.handleHttpError(error, 'Obtener tickets');
@@ -87,7 +87,7 @@ export class TicketsService {
    */
   getTicketById(ticketId: number | string): Observable<DataResponseDTO<TicketDTO>> {
     return this.http.get<DataResponseDTO<TicketDTO>>(`${API_BASE}/tickets/${ticketId}`).pipe(
-      tap((response) => console.log('✅ Ticket obtenido:', response.data.folio)),
+      tap((response) => console.log('Ticket obtenido:', response.data.folio)),
       catchError((error) => {
         this.errorHandler.handleHttpError(error, 'Obtener ticket');
         return throwError(() => error);
@@ -101,8 +101,8 @@ export class TicketsService {
   createTicket(ticketData: CrearTicketRequest): Observable<DataResponseDTO<TicketDTO>> {
     return this.http.post<DataResponseDTO<TicketDTO>>(`${API_BASE}/tickets`, ticketData).pipe(
       tap((response) => {
-        console.log('✅ Ticket creado:', response.data.folio);
-        this.errorHandler.showSuccess('Cita creada', 'La cita se registró exitosamente');
+        console.log('Ticket creado:', response.data.folio);
+        this.errorHandler.showSuccess('Cita creada', 'La cita se registro exitosamente');
       }),
       catchError((error) => {
         this.errorHandler.handleHttpError(error, 'Crear cita');
@@ -130,7 +130,7 @@ export class TicketsService {
       .put<DataResponseDTO<TicketDTO>>(`${API_BASE}/tickets/${ticketId}/estado`, null, { params })
       .pipe(
         tap(() => {
-          console.log('✅ Estado de ticket actualizado');
+          console.log('Estado de ticket actualizado');
           this.errorHandler.showSuccess(
             'Estado actualizado',
             'Los cambios se guardaron correctamente'
@@ -153,7 +153,7 @@ export class TicketsService {
       .post<BaseResponseDTO>(`${API_BASE}/tickets/${ticketId}/cancelar`, null, { params })
       .pipe(
         tap(() => {
-          console.log('✅ Ticket cancelado');
+          console.log('Ticket cancelado');
           this.errorHandler.showSuccess('Cita cancelada', 'La cita se canceló correctamente');
         }),
         catchError((error) => {
@@ -182,7 +182,7 @@ export class TicketsService {
 
     //TODO: Implementar endpoint GET /tickets/stats en la API
     // Response esperado: { total, agendados, completados, cancelados, ingresoTotal }
-    console.warn('⚠️ getTicketStats: Endpoint pendiente en la API');
+    console.warn('getTicketStats: Endpoint pendiente en la API');
 
     return this.http.get<any>(`${API_BASE}/tickets/stats`, { params }).pipe(
       catchError((error) => {

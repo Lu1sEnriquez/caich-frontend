@@ -61,6 +61,7 @@
       @if (showExportModal()) {
       <app-export-options-modal
         [availableFields]="exportFields"
+        [availableRoles]="availableRoles"
         (confirm)="onExportConfirmed($event)"
         (cancel)="showExportModal.set(false)"
       />
@@ -217,20 +218,19 @@
               />
             </div>
 
+            @if (userFormData().rol === UserRole.ALUMNO) {
             <div class="form-field">
-              <label>ID del Alumno</label>
+              <label>ID del Alumno *</label>
               <input
                 type="text"
                 class="select-input"
-                [placeholder]="
-                  userFormData().rol === UserRole.ALUMNO ? '00000248171 *' : 'Solo para Alumnos'
-                "
+                placeholder="00000248171"
                 [(ngModel)]="userFormData().idAlumno"
                 name="idAlumno"
-                [required]="userFormData().rol === UserRole.ALUMNO"
-                [disabled]="userFormData().rol !== UserRole.ALUMNO"
+                required
               />
             </div>
+            }
           </div>
 
           @if (!editingUser()) {
@@ -247,7 +247,7 @@
                 required
               />
               <button type="button" class="generate-btn" (click)="regeneratePassword()">
-                🔄 Regenerar
+                Regenerar
               </button>
             </div>
           </div>

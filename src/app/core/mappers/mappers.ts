@@ -296,7 +296,7 @@ function parseLoanStatus(value: string): LoanStatus {
     case 'PERDIDO':
       return LoanStatus.PERDIDO;
     default:
-      console.warn(`Estado de préstamo desconocido: ${value}, usando Activo por defecto`);
+      console.warn(`Estado de prestamo desconocido: ${value}, usando Activo por defecto`);
       return LoanStatus.ACTIVO;
   }
 }
@@ -323,7 +323,7 @@ function parseNotificationType(value: string): NotificationType {
     case 'GENERAL':
       return NotificationType.GENERAL;
     default:
-      console.warn(`Tipo de notificación desconocido: ${value}, usando General por defecto`);
+      console.warn(`Tipo de notificacion desconocido: ${value}, usando General por defecto`);
       return NotificationType.GENERAL;
   }
 }

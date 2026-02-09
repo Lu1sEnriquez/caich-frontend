@@ -50,7 +50,7 @@ export class RegisterComponent {
     { value: UserRole.ADMINISTRADOR, label: 'Administrador' },
   ];
 
-  // ✅ rxResource para el registro
+  // rxResource para el registro
   registerResource = rxResource({
     params: () => ({ trigger: this.registerTrigger() }),
     stream: ({ params }) => {
@@ -73,7 +73,7 @@ export class RegisterComponent {
   constructor() {
     // Si ya está autenticado, redirigir
     if (this.authService.isAuthenticatedSync()) {
-      console.log('✅ Usuario ya autenticado, redirigiendo...');
+      console.log('Usuario ya autenticado, redirigiendo...');
       this.router.navigate(['/dashboard']);
     }
   }
@@ -91,7 +91,7 @@ export class RegisterComponent {
     const checkResult = () => {
       if (this.registerResource.value()) {
         const response = this.registerResource.value()!;
-        console.log('✅ Registro completado exitosamente');
+        console.log('Registro completado exitosamente');
 
         // Si la API devolvió token, el AuthService ya navegó
         // Si no, mostrar mensaje de éxito
@@ -101,7 +101,7 @@ export class RegisterComponent {
       } else if (!this.registerResource.isLoading() && !this.registerResource.error()) {
         setTimeout(checkResult, 100);
       } else if (this.registerResource.error()) {
-        console.error('❌ Error en registro:', this.registerResource.error());
+        console.error('Error en registro:', this.registerResource.error());
         // El errorHandler ya muestra el modal
       }
     };
@@ -115,53 +115,53 @@ export class RegisterComponent {
   private validateForm(): boolean {
     // 1. Campos requeridos
     if (!this.nombreCompleto()) {
-      alert('❌ Nombre completo requerido');
+      alert('Nombre completo requerido');
       return false;
     }
 
     if (!this.email()) {
-      alert('❌ Email requerido');
+      alert('Email requerido');
       return false;
     }
 
     if (!this.password()) {
-      alert('❌ Contraseña requerida');
+      alert('Contrasena requerida');
       return false;
     }
 
     if (!this.confirmPassword()) {
-      alert('❌ Confirmar contraseña requerido');
+      alert('Confirmar contrasena requerido');
       return false;
     }
 
     // 2. Formato de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(this.email())) {
-      alert('❌ Email inválido');
+      alert('Email invalido');
       return false;
     }
 
     // 3. Longitud de contraseña
     if (this.password().length < 6) {
-      alert('❌ La contraseña debe tener al menos 6 caracteres');
+      alert('La contrasena debe tener al menos 6 caracteres');
       return false;
     }
 
     // 4. Contraseñas coinciden
     if (this.password() !== this.confirmPassword()) {
-      alert('❌ Las contraseñas no coinciden');
+      alert('Las contrasenas no coinciden');
       return false;
     }
 
     // 5. idAlumno obligatorio si es alumno
     if (this.rol() === UserRole.ALUMNO && !this.idAlumno()) {
-      alert('❌ ID del alumno es obligatorio para el rol de Alumno');
+      alert('ID del alumno es obligatorio para el rol de Alumno');
       return false;
     }
 
     // 6. Teléfono válido (si se proporciona)
     if (this.telefono() && !/^\d{10}$/.test(this.telefono())) {
-      alert('❌ El teléfono debe tener 10 dígitos');
+      alert('El telefono debe tener 10 digitos');
       return false;
     }
 

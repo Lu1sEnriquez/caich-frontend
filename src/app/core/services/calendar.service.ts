@@ -67,7 +67,7 @@ export class CalendarService {
     if (filters?.estado) params = params.set('estado', filters.estado);
 
     return this.http.get<DataResponseDTO<CitaDTO[]>>(`${API_BASE}/citas`, { params }).pipe(
-      tap(() => console.log('✅ Citas obtenidas')),
+      tap(() => console.log('Citas obtenidas')),
       catchError((error) => {
         this.errorHandler.handleHttpError(error, 'Obtener citas');
         return throwError(() => error);
@@ -80,7 +80,7 @@ export class CalendarService {
    */
   getEspacios(): Observable<DataResponseDTO<any[]>> {
     return this.http.get<DataResponseDTO<any[]>>(`${API_BASE}/espacios`).pipe(
-      tap(() => console.log('✅ Espacios obtenidos')),
+      tap(() => console.log('Espacios obtenidos')),
       catchError((error) => {
         this.errorHandler.handleHttpError(error, 'Obtener espacios');
         return throwError(() => error);
@@ -94,8 +94,8 @@ export class CalendarService {
   crearCita(citaData: CrearCitaDTO): Observable<DataResponseDTO<CitaDTO>> {
     return this.http.post<DataResponseDTO<CitaDTO>>(`${API_BASE}/citas`, citaData).pipe(
       tap(() => {
-        console.log('✅ Cita creada');
-        this.errorHandler.showSuccess('Cita creada', 'La cita se agendó correctamente');
+        console.log('Cita creada');
+        this.errorHandler.showSuccess('Cita creada', 'La cita se agendo correctamente');
       }),
       catchError((error) => {
         this.errorHandler.handleHttpError(error, 'Crear cita');
@@ -113,7 +113,7 @@ export class CalendarService {
   ): Observable<DataResponseDTO<CitaDTO>> {
     return this.http.put<DataResponseDTO<CitaDTO>>(`${API_BASE}/citas/${citaId}`, citaData).pipe(
       tap(() => {
-        console.log('✅ Cita actualizada');
+        console.log('Cita actualizada');
         this.errorHandler.showSuccess('Cita actualizada', 'Los cambios se guardaron correctamente');
       }),
       catchError((error) => {
@@ -129,8 +129,8 @@ export class CalendarService {
   eliminarCita(citaId: number): Observable<BaseResponseDTO> {
     return this.http.delete<BaseResponseDTO>(`${API_BASE}/citas/${citaId}`).pipe(
       tap(() => {
-        console.log('✅ Cita eliminada');
-        this.errorHandler.showSuccess('Cita eliminada', 'La cita se eliminó correctamente');
+        console.log('Cita eliminada');
+        this.errorHandler.showSuccess('Cita eliminada', 'La cita se elimino correctamente');
       }),
       catchError((error) => {
         this.errorHandler.handleHttpError(error, 'Eliminar cita');
@@ -151,7 +151,7 @@ export class CalendarService {
         params: { fecha, espacioId: espacioId.toString() },
       })
       .pipe(
-        tap(() => console.log('✅ Configuración de horarios obtenida')),
+        tap(() => console.log('Configuracion de horarios obtenida')),
         catchError((error) => {
           this.errorHandler.handleHttpError(error, 'Obtener configuración horarios');
           return throwError(() => error);
@@ -174,9 +174,9 @@ export class CalendarService {
       )
       .pipe(
         tap(() => {
-          console.log('✅ Configuración guardada');
+          console.log('Configuracion guardada');
           this.errorHandler.showSuccess(
-            'Configuración guardada',
+            'Configuracion guardada',
             'Los horarios se actualizaron correctamente'
           );
         }),
@@ -340,6 +340,7 @@ export class CalendarService {
       horaInicio: horaInicio,
       horaFin: horaFin,
       cubiculoId: String(dto.espacioId),
+      espacioNombre: dto.espacioNombre,
       pacienteNombre: dto.pacienteNombre,
       pacienteId: Number(dto.pacienteId),
       terapeutaId: Number(dto.terapeutaId),
@@ -448,7 +449,7 @@ export class CalendarService {
    */
   obtenerCitaPorId(citaId: number): Observable<DataResponseDTO<CitaDTO>> {
     return this.http.get<DataResponseDTO<CitaDTO>>(`${API_BASE}/citas/${citaId}`).pipe(
-      tap(() => console.log('✅ Cita obtenida')),
+      tap(() => console.log('Cita obtenida')),
       catchError((error) => {
         this.errorHandler.handleHttpError(error, 'Obtener cita');
         return throwError(() => error);
@@ -461,7 +462,7 @@ export class CalendarService {
    */
   obtenerCitasPorTerapeuta(terapeutaId: number): Observable<DataResponseDTO<CitaDTO[]>> {
     return this.http.get<DataResponseDTO<CitaDTO[]>>(`${API_BASE}/citas/terapeuta/${terapeutaId}`).pipe(
-      tap(() => console.log('✅ Citas del terapeuta obtenidas')),
+      tap(() => console.log('Citas del terapeuta obtenidas')),
       catchError((error) => {
         this.errorHandler.handleHttpError(error, 'Obtener citas del terapeuta');
         return throwError(() => error);
@@ -474,7 +475,7 @@ export class CalendarService {
    */
   obtenerCitasPorPaciente(pacienteId: number): Observable<DataResponseDTO<CitaDTO[]>> {
     return this.http.get<DataResponseDTO<CitaDTO[]>>(`${API_BASE}/citas/paciente/${pacienteId}`).pipe(
-      tap(() => console.log('✅ Citas del paciente obtenidas')),
+      tap(() => console.log('Citas del paciente obtenidas')),
       catchError((error) => {
         this.errorHandler.handleHttpError(error, 'Obtener citas del paciente');
         return throwError(() => error);

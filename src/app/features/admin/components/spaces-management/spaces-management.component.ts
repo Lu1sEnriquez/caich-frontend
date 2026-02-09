@@ -73,7 +73,10 @@ export class SpacesManagementComponent {
 
   // Computed
   spaces = computed(() => this.spacesResource.value()?.data || []);
-  spaceTypes = computed(() => this.typesResource.value()?.data || []);
+  spaceTypes = computed(() => {
+    const value = this.typesResource.value() as any;
+    return value?.data || [];
+  });
 
   openModal() {
     this.showModal.set(true);
@@ -96,7 +99,7 @@ export class SpacesManagementComponent {
 
   saveSpace() {
     if (this.form.invalid) {
-      alert('❌ Por favor completa todos los campos requeridos');
+      alert('Por favor completa todos los campos requeridos');
       return;
     }
 
@@ -117,14 +120,14 @@ export class SpacesManagementComponent {
     operation.subscribe({
       next: () => {
         alert(
-          `✅ Espacio ${this.isEditing() ? 'actualizado' : 'creado'} exitosamente`
+          `Espacio ${this.isEditing() ? 'actualizado' : 'creado'} exitosamente`
         );
         this.spacesTrigger.update((v) => v + 1);
         this.closeModal();
       },
       error: (error) => {
         console.error('Error:', error);
-        alert(`❌ Error: ${error.error?.message || 'Error desconocido'}`);
+        alert(`Error: ${error.error?.message || 'Error desconocido'}`);
       },
     });
   }
@@ -137,12 +140,12 @@ export class SpacesManagementComponent {
 
     this.spacesService.delete(space.espacioId).subscribe({
       next: () => {
-        alert('✅ Espacio eliminado exitosamente');
+        alert('Espacio eliminado exitosamente');
         this.spacesTrigger.update((v) => v + 1);
       },
       error: (error) => {
         console.error('Error:', error);
-        alert(`❌ Error: ${error.error?.message || 'No se puede eliminar este espacio'}`);
+        alert(`Error: ${error.error?.message || 'No se puede eliminar este espacio'}`);
       },
     });
   }
@@ -151,12 +154,12 @@ export class SpacesManagementComponent {
     const newStatus = !space.estaActivo;
     this.spacesService.changeStatus(space.espacioId, newStatus).subscribe({
       next: () => {
-        alert(`✅ Estado actualizado a ${newStatus ? 'Activo' : 'Inactivo'}`);
+        alert(`Estado actualizado a ${newStatus ? 'Activo' : 'Inactivo'}`);
         this.spacesTrigger.update((v) => v + 1);
       },
       error: (error) => {
         console.error('Error:', error);
-        alert(`❌ Error: ${error.error?.message || 'Error desconocido'}`);
+        alert(`Error: ${error.error?.message || 'Error desconocido'}`);
       },
     });
   }

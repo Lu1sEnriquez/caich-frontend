@@ -14,37 +14,41 @@
   </div>
   } @else {
   <div class="stats-grid">
-    <div class="stat-card">
+    <button class="stat-card clickable" (click)="handleCitasHoyClick()">
       <div class="stat-header">
         <span class="stat-label">Citas hoy</span>
         <span class="stat-icon">📅</span>
       </div>
       <div class="stat-value">{{ stats().citasHoy }}</div>
-    </div>
+      <div class="stat-hint">Click para ver detalles</div>
+    </button>
 
-    <div class="stat-card">
+    <button class="stat-card clickable" (click)="handlePagosPendientesClick()">
       <div class="stat-header">
         <span class="stat-label">Pagos pendientes</span>
         <span class="stat-icon">💰</span>
       </div>
       <div class="stat-value">{{ stats().pagosPendientes }}</div>
-    </div>
+      <div class="stat-hint">Click para ir a pagos</div>
+    </button>
 
-    <div class="stat-card">
+    <button class="stat-card clickable" (click)="handleNuevosPacientesClick()">
       <div class="stat-header">
         <span class="stat-label">Nuevos pacientes</span>
         <span class="stat-icon">👥</span>
       </div>
       <div class="stat-value">{{ stats().nuevosPacientes }}</div>
-    </div>
+      <div class="stat-hint">Click para ver lista</div>
+    </button>
 
-    <div class="stat-card">
+    <button class="stat-card clickable" (click)="handleCitasMesClick()">
       <div class="stat-header">
         <span class="stat-label">Citas este mes</span>
         <span class="stat-icon">📊</span>
       </div>
       <div class="stat-value">{{ stats().citasEsteMes }}</div>
-    </div>
+      <div class="stat-hint">Click para detalles</div>
+    </button>
 
     <div class="stat-card">
       <div class="stat-header">
@@ -181,7 +185,7 @@
         <div class="payments-preview">
           @for (payment of pendingPayments().slice(0, 3); track payment.id) {
           <div class="payment-item-compact">
-            <strong>{{ payment.nombre }}</strong>
+            <strong>{{ payment.paciente }}</strong>
             <span>${{ payment.monto.toFixed(2) }}</span>
           </div>
           }
@@ -260,3 +264,104 @@
     </app-card>
   </div>
 </div>
+
+<!-- Modales informativos -->
+
+<!-- Modal: Citas Hoy -->
+<app-info-modal
+  [isOpen]="showCitasHoyModal()"
+  title="Citas de Hoy"
+  icon="📅"
+  description="Detalles de las citas programadas para hoy"
+  [actions]="getCitasHoyActions()"
+  (closed)="showCitasHoyModal.set(false)"
+>
+  @if (citasHoy().length > 0) {
+  <div class="modal-list">
+    @for (cita of citasHoy(); track cita.id) {
+    <div class="modal-list-item">
+      <div class="item-header">
+        <strong>{{ cita.horaInicio }} - {{ cita.horaFin }}</strong>
+        <span class="badge">{{ cita.estado }}</span>
+      </div>
+      <div class="item-details">
+        <p><strong>Paciente:</strong> {{ cita.pacienteNombre }}</p>
+        <p><strong>Terapeuta:</strong> {{ cita.terapeutaNombre }}</p>
+        <p><strong>Espacio:</strong> {{ cita.espacioNombre }}</p>
+      </div>
+    </div>
+    }
+  </div>
+  } @else {
+  <div class="modal-empty">
+    <p>No hay citas programadas para hoy</p>
+  </div>
+  }
+</app-info-modal>
+
+<!-- Modal: Nuevos Pacientes -->
+<app-info-modal
+  [isOpen]="showNuevosPacientesModal()"
+  title="Nuevos Pacientes"
+  icon="👥"
+  description="Pacientes registrados recientemente"
+  [actions]="getNuevosPacientesActions()"
+  (closed)="showNuevosPacientesModal.set(false)"
+>
+  @if (nuevosPacientes().length > 0) {
+  <div class="modal-list">
+    @for (paciente of nuevosPacientes(); track paciente.id) {
+    <div class="modal-list-item">
+      <div class="item-header">
+        <strong>{{ paciente.nombre }}</strong>
+        <span class="badge-role">{{ paciente.rol }}</span>
+      </div>
+      <div class="item-details">
+        <p><strong>Email:</strong> {{ paciente.email }}</p>
+        @if (paciente.fechaCreacion) {
+        <p><strong>Registrado:</strong> {{ paciente.fechaCreacion | date: 'dd/MM/yyyy' }}</p>
+        }
+      </div>
+    </div>
+    }
+  </div>
+  } @else {
+  <div class="modal-empty">
+    <p>No hay nuevos pacientes</p>
+  </div>
+  }
+</app-info-modal>
+
+<!-- Modal: Citas del Mes -->
+<app-info-modal
+  [isOpen]="showCitasMesModal()"
+  title="Citas del Mes"
+  icon="📊"
+  [description]="'Total de citas este mes: ' + stats().citasEsteMes"
+  [actions]="getCitasMesActions()"
+  (closed)="showCitasMesModal.set(false)"
+>
+  <div class="modal-stats-grid">
+    <div class="modal-stat-item">
+      <div class="stat-icon-large">📅</div>
+      <div class="stat-content">
+        <div class="stat-value-large">{{ appointmentsStats().agendadas }}</div>
+        <div class="stat-label-small">Agendadas</div>
+      </div>
+    </div>
+    <div class="modal-stat-item success">
+      <div class="stat-icon-large">✅</div>
+      <div class="stat-content">
+        <div class="stat-value-large">{{ appointmentsStats().completadas }}</div>
+        <div class="stat-label-small">Completadas</div>
+      </div>
+    </div>
+    <div class="modal-stat-item warning">
+      <div class="stat-icon-large">❌</div>
+      <div class="stat-content">
+        <div class="stat-value-large">{{ appointmentsStats().canceladas }}</div>
+        <div class="stat-label-small">Canceladas</div>
+      </div>
+    </div>
+  </div>
+</app-info-modal>

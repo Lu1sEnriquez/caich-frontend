@@ -6,6 +6,7 @@ import { ButtonComponent } from '../../../shared/components/ui/button/button.com
 import { BadgeComponent } from '../../../shared/components/ui/badge/badge.component';
 
 import { PaymentsService, RegistrarPagoDTO } from '../../../core/services/payments.service';
+import { TicketsService } from '../../../core/services/tickets.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserRole } from '../../../core/models/enums';
 import { rxResource } from '@angular/core/rxjs-interop';
@@ -21,6 +22,7 @@ import { formatDisplayDate, formatMonto } from '../../../core/utils';
   styleUrls: ['./payments.component.css'],
 })
 export class PaymentsComponent {
+  private ticketsService = inject(TicketsService);
   private paymentsService = inject(PaymentsService);
   private authService = inject(AuthService);
 
@@ -78,7 +80,7 @@ export class PaymentsComponent {
   });
 
   // ============================================
-  // ✅ RXRESOURCE: OBTENER PAGOS (CON FILTROS DE FECHA)
+  // RXRESOURCE: OBTENER PAGOS (CON FILTROS DE FECHA)
   // ============================================
   paymentsResource = rxResource({
     params: () => ({
@@ -93,15 +95,15 @@ export class PaymentsComponent {
       // Si es paciente, solo sus pagos
       //TODO: mandar el id correcto
       if (this.isPaciente()) {
-        return this.paymentsService.getTickets({ pacienteId: 1 });
+        return this.ticketsService.getTickets({ pacienteId: 1 });
       }
 
       // Si es admin, filtros opcionales
       if (params.filters.estado) {
-        filters.estadoPago = this.paymentsService.mapStatusToAPI(params.filters.estado as any);
+        filters.estadoPago = params.filters.estado as any;
       }
 
-      // ✅ Agregar filtros de fecha
+      // Agregar filtros de fecha
       if (params.filters.fechaInicio) {
         filters.fechaInicio = params.filters.fechaInicio;
       }
@@ -110,7 +112,7 @@ export class PaymentsComponent {
         filters.fechaFin = params.filters.fechaFin;
       }
 
-      return this.paymentsService.getTickets(filters);
+      return this.ticketsService.getTickets(filters);
     },
   });
 
@@ -119,30 +121,41 @@ export class PaymentsComponent {
     const response = this.paymentsResource.value();
     if (!response) return [];
 
-    return response.data.content.map((dto) => this.paymentsService.mapToPayment(dto));
+    const responseData = response as any;
+    return responseData.data.content.map((dto: any) => ({
+      id: dto.ticketId,
+      folio: dto.folio,
+      paciente: dto.pacienteNombre,
+      terapeuta: dto.terapeutaNombre,
+      monto: dto.costoTotal || 0,
+      fechaPago: new Date(dto.fecha),
+      status: dto.estadoPago,
+      metodoPago: dto.metodoPago,
+      cuenta: dto.cuentaDestinoNombre,
+    }));
   });
 
   // Resumen de pagos
   summary = computed(() => {
     const allPayments = this.payments();
     return {
-      pendientes: allPayments.filter((p) => p.status === 'Pendiente').length,
-      aprobados: allPayments.filter((p) => p.status === 'Pagado').length,
-      rechazados: allPayments.filter((p) => p.status === 'Rechazado').length,
+      pendientes: allPayments.filter((p: any) => p.status === 'Pendiente').length,
+      aprobados: allPayments.filter((p: any) => p.status === 'Pagado').length,
+      rechazados: allPayments.filter((p: any) => p.status === 'Rechazado').length,
       totalPendiente: allPayments
-        .filter((p) => p.status === 'Pendiente')
-        .reduce((sum, p) => sum + p.monto, 0),
+        .filter((p: any) => p.status === 'Pendiente')
+        .reduce((sum: any, p: any) => sum + p.monto, 0),
     };
   });
 
-  // Pagos filtrados por búsqueda
+  // Pagos filtrados por busqueda
   filteredPayments = computed(() => {
     const query = this.searchQuery().toLowerCase();
     const allPayments = this.payments();
 
     if (!query) return allPayments;
 
-    return allPayments.filter((payment) => {
+    return allPayments.filter((payment: any) => {
       return (
         payment.nombre?.toLowerCase().includes(query) ||
         // payment.email?.toLowerCase().includes(query) || //TODO: checar esta propiedad
@@ -185,7 +198,7 @@ export class PaymentsComponent {
       const payment = this.selectedPayment();
       if (!payment) return of(null);
 
-      const estadoPago = this.paymentsService.mapStatusToAPI(this.newStatus() as any);
+      const estadoPago = this.newStatus() as any;
 
       return this.paymentsService.updatePaymentStatus(
         payment.id,
@@ -198,7 +211,7 @@ export class PaymentsComponent {
   });
 
   // ============================================
-  // ✅ MÉTODO: ENVIAR PAGO (CON VALIDACIÓN Y SUBIDA DE COMPROBANTE)
+  // METODO: ENVIAR PAGO (CON VALIDACION Y SUBIDA DE COMPROBANTE)
   // ============================================
   submitPayment(): void {
     if (!this.canSubmit()) {
@@ -208,10 +221,10 @@ export class PaymentsComponent {
 
     console.log('💰 Registrando pago...');
 
-    // ✅ Validar formato de fecha
+    // Validar formato de fecha
     const fechaPago = this.uploadForm().fechaPago;
     if (!fechaPago) {
-      alert('❌ La fecha de pago es requerida');
+      alert('La fecha de pago es requerida');
       return;
     }
 
@@ -219,51 +232,51 @@ export class PaymentsComponent {
 
     const checkResult = () => {
       if (this.createPaymentResource.value()) {
-        console.log('✅ Pago registrado exitosamente');
+        console.log('Pago registrado exitosamente');
 
         const response = this.createPaymentResource.value()!;
         const ticketId = response.data?.ticketId;
 
         if (!ticketId) {
-          alert('✅ Pago registrado pero no se pudo obtener el ID del ticket');
+          alert('Pago registrado pero no se pudo obtener el ID del ticket');
           this.resetForm();
           this.paymentsTrigger.update((v) => v + 1);
           return;
         }
 
-        // ✅ Subir comprobante si hay archivo
+        // Subir comprobante si hay archivo
         const file = this.uploadedFile();
 
         if (file) {
           console.log('📎 Subiendo comprobante...');
           this.paymentsService.uploadComprobante(ticketId, file).subscribe({
             next: () => {
-              console.log('✅ Comprobante subido');
-              alert('✅ Pago registrado y comprobante subido exitosamente');
+              console.log('Comprobante subido');
+              alert('Pago registrado y comprobante subido exitosamente');
               this.resetForm();
               this.paymentsTrigger.update((v) => v + 1);
             },
             error: (error) => {
-              console.error('❌ Error al subir comprobante:', error);
+              console.error('Error al subir comprobante:', error);
               alert(
-                '⚠️ Pago registrado, pero hubo un error al subir el comprobante.\n\nPuedes intentar subirlo más tarde desde la sección de detalles del pago.'
+                'Pago registrado, pero hubo un error al subir el comprobante.\n\nPuedes intentar subirlo mas tarde desde la seccion de detalles del pago.'
               );
               this.resetForm();
               this.paymentsTrigger.update((v) => v + 1);
             },
           });
         } else {
-          alert('✅ Pago registrado exitosamente');
+          alert('Pago registrado exitosamente');
           this.resetForm();
           this.paymentsTrigger.update((v) => v + 1);
         }
       } else if (!this.createPaymentResource.isLoading() && !this.createPaymentResource.error()) {
         setTimeout(checkResult, 100);
       } else if (this.createPaymentResource.error()) {
-        console.error('❌ Error:', this.createPaymentResource.error());
+        console.error('Error:', this.createPaymentResource.error());
         const errorMsg =
           (this.createPaymentResource.error() as any)?.message || 'Error al registrar pago';
-        alert(`❌ ${errorMsg}`);
+        alert(`${errorMsg}`);
       }
     };
 
@@ -271,7 +284,7 @@ export class PaymentsComponent {
   }
 
   // ============================================
-  // ✅ MÉTODO: MANEJO DE ARCHIVO
+  // METODO: MANEJO DE ARCHIVO
   // ============================================
   handleFileUpload(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -287,10 +300,10 @@ export class PaymentsComponent {
   }
 
   // ============================================
-  // ✅ MÉTODO: APLICAR FILTROS
+  // METODO: APLICAR FILTROS
   // ============================================
   applyFilters(): void {
-    console.log('🔍 Aplicando filtros:', this.filterOptions());
+    console.log('Aplicando filtros:', this.filterOptions());
     this.paymentsTrigger.update((v) => v + 1);
   }
 
@@ -308,11 +321,11 @@ export class PaymentsComponent {
   }
 
   // ============================================
-  // ✅ MÉTODO: EXPORTAR A EXCEL (CON VALIDACIÓN COMPLETA)
+  // METODO: EXPORTAR A EXCEL (CON VALIDACION COMPLETA)
   // ============================================
   exportToExcel(): void {
     if (!this.canExport()) {
-      alert('❌ Selecciona un rango de fechas para exportar');
+      alert('Selecciona un rango de fechas para exportar');
       return;
     }
 
@@ -321,28 +334,28 @@ export class PaymentsComponent {
 
     // Aplicar filtros
     if (filters.estado) {
-      dataToExport = dataToExport.filter((p) => p.status === filters.estado);
+      dataToExport = dataToExport.filter((p: any) => p.status === filters.estado);
     }
 
     if (filters.fechaInicio) {
       const startDate = new Date(filters.fechaInicio);
-      dataToExport = dataToExport.filter((p) => p.fechaPago >= startDate);
+      dataToExport = dataToExport.filter((p: any) => p.fechaPago >= startDate);
     }
 
     if (filters.fechaFin) {
       const endDate = new Date(filters.fechaFin);
-      dataToExport = dataToExport.filter((p) => p.fechaPago <= endDate);
+      dataToExport = dataToExport.filter((p: any) => p.fechaPago <= endDate);
     }
 
     if (filters.paciente) {
-      dataToExport = dataToExport.filter((p) =>
+      dataToExport = dataToExport.filter((p: any) =>
         p.nombre?.toLowerCase().includes(filters.paciente.toLowerCase())
       );
     }
 
-    // ✅ Validar que haya datos
+    // Validar que haya datos
     if (dataToExport.length === 0) {
-      alert('❌ No hay datos para exportar con los filtros seleccionados');
+      alert('No hay datos para exportar con los filtros seleccionados');
       return;
     }
 
@@ -358,7 +371,7 @@ export class PaymentsComponent {
       'Fecha de Registro',
     ];
 
-    const rows = dataToExport.map((p) => [
+    const rows = dataToExport.map((p: any) => [
       p.nombre,
       p.folio,
       p.banco,
@@ -371,7 +384,7 @@ export class PaymentsComponent {
 
     const csvContent = [
       headers.join(','),
-      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(',')),
+      ...rows.map((row: any) => row.map((cell: any) => `"${cell}"`).join(',')),
     ].join('\n');
 
     // Descargar archivo
@@ -387,7 +400,7 @@ export class PaymentsComponent {
     document.body.removeChild(link);
 
     this.closeExportDialog();
-    alert(`✅ Se exportaron ${dataToExport.length} registros`);
+    alert(`Se exportaron ${dataToExport.length} registros`);
   }
 
   bankAccountsResource = rxResource({
@@ -420,13 +433,13 @@ export class PaymentsComponent {
     navigator.clipboard
       .writeText(accountInfo)
       .then(() => {
-        console.log('✅ Información bancaria copiada');
+        console.log('Informacion bancaria copiada');
         // Puedes mostrar un toast o alerta de éxito
-        alert('Información bancaria copiada al portapapeles');
+        alert('Informacion bancaria copiada al portapapeles');
       })
       .catch((err) => {
-        console.error('❌ Error al copiar:', err);
-        alert('Error al copiar la información');
+        console.error('Error al copiar:', err);
+        alert('Error al copiar la informacion');
       });
   }
 
@@ -456,7 +469,7 @@ export class PaymentsComponent {
         setTimeout(() => window.URL.revokeObjectURL(url), 1000);
       },
       error: (error) => {
-        console.error('❌ Error al obtener comprobante:', error);
+        console.error('Error al obtener comprobante:', error);
         alert('Error al cargar el comprobante');
       },
     });
@@ -466,16 +479,16 @@ export class PaymentsComponent {
   // MÉTODOS AUXILIARES
   // ============================================
   private processFile(file: File): void {
-    // ✅ Validar tipo de archivo
+    // Validar tipo de archivo
     const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
     if (!validTypes.includes(file.type)) {
-      alert('❌ Solo se permiten archivos PDF, JPG o PNG');
+      alert('Solo se permiten archivos PDF, JPG o PNG');
       return;
     }
 
-    // ✅ Validar tamaño (5MB máximo)
+    // Validar tamano (5MB maximo)
     if (file.size > 5 * 1024 * 1024) {
-      alert('❌ El archivo no debe superar los 5MB');
+      alert('El archivo no debe superar los 5MB');
       return;
     }
 
@@ -555,21 +568,21 @@ export class PaymentsComponent {
     let result = this.payments();
 
     if (filters.estado) {
-      result = result.filter((p) => p.status === filters.estado);
+      result = result.filter((p: any) => p.status === filters.estado);
     }
 
     if (filters.fechaInicio) {
       const startDate = new Date(filters.fechaInicio);
-      result = result.filter((p) => p.fechaPago >= startDate);
+      result = result.filter((p: any) => p.fechaPago >= startDate);
     }
 
     if (filters.fechaFin) {
       const endDate = new Date(filters.fechaFin);
-      result = result.filter((p) => p.fechaPago <= endDate);
+      result = result.filter((p: any) => p.fechaPago <= endDate);
     }
 
     if (filters.paciente) {
-      result = result.filter((p) =>
+      result = result.filter((p: any) =>
         p.nombre?.toLowerCase().includes(filters.paciente.toLowerCase())
       );
     }
@@ -645,20 +658,20 @@ export class PaymentsComponent {
     const payment = this.selectedPayment();
     if (!payment) return;
 
-    console.log('🔄 Actualizando estado del pago...');
+    console.log('Actualizando estado del pago...');
     this.updateStatusTrigger.update((v) => v + 1);
 
     const checkResult = () => {
       if (this.updateStatusResource.value()) {
-        console.log('✅ Estado actualizado exitosamente');
-        alert('✅ Estado actualizado exitosamente');
+        console.log('Estado actualizado exitosamente');
+        alert('Estado actualizado exitosamente');
         this.closeStatusDialog();
         this.paymentsTrigger.update((v) => v + 1);
       } else if (!this.updateStatusResource.isLoading() && !this.updateStatusResource.error()) {
         setTimeout(checkResult, 100);
       } else if (this.updateStatusResource.error()) {
-        console.error('❌ Error:', this.updateStatusResource.error());
-        alert('❌ Error al actualizar estado');
+        console.error('Error:', this.updateStatusResource.error());
+        alert('Error al actualizar estado');
       }
     };
 
@@ -675,9 +688,9 @@ export class PaymentsComponent {
       // Validar que sea un archivo permitido (PDF, imagen)
       if (['application/pdf', 'image/jpeg', 'image/png'].includes(file.type)) {
         this.statusComprobante.set(file);
-        console.log('✅ Comprobante seleccionado:', file.name);
+        console.log('Comprobante seleccionado:', file.name);
       } else {
-        alert('❌ Solo se permiten archivos PDF o imágenes (JPEG, PNG)');
+        alert('Solo se permiten archivos PDF o imagenes (JPEG, PNG)');
       }
     }
   }

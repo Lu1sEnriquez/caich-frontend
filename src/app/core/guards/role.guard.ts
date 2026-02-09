@@ -33,19 +33,19 @@ export const roleGuard = (allowedRoles: string[]): CanActivateFn => {
 
     // 1. Si no hay rol, significa que no está autenticado
     if (!userRole) {
-      console.log('❌ No hay rol (usuario no autenticado), redirigiendo a login');
+      console.log('No hay rol (usuario no autenticado), redirigiendo a login');
       router.navigate(['/login']);
       return false;
     }
 
     // 2. Verificar si el rol del usuario está en la lista permitida
     if (allowedRoles.includes(userRole)) {
-      console.log('✅ Rol permitido, acceso concedido');
+      console.log('Rol permitido, acceso concedido');
       return true;
     }
 
     // 3. Rol no autorizado para esta ruta
-    console.log('❌ Rol no autorizado para esta ruta');
+    console.log('Rol no autorizado para esta ruta');
     console.log('   Redirigiendo a dashboard');
     router.navigate(['/dashboard']);
     return false;

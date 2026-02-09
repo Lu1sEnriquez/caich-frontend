@@ -47,7 +47,7 @@ export class AppointmentScheduleComponent implements AfterViewInit {
   selectedDate = input.required<Date>();
   appointmentSaved = output<AppointmentSlot>();
 
-  // ✨ Exponer usuario actual para el template (role-based visibility)
+  // Exponer usuario actual para el template (role-based visibility)
   currentUser = computed(() => this.authService.currentUser());
   isAdminUser = computed(() => this.currentUser()?.rol === UserRole.ADMINISTRADOR);
 
@@ -64,7 +64,7 @@ export class AppointmentScheduleComponent implements AfterViewInit {
   selectedEspacioId = signal<number | null>(null);
   selectedEspacioIdModel: number | null = null;
 
-  // ✨ Separar horas temporales de las guardadas
+  // Separar horas temporales de las guardadas
   tempDisabledHours = signal<string[]>([]);
 
   // Formulario
@@ -250,7 +250,7 @@ export class AppointmentScheduleComponent implements AfterViewInit {
       if (espacioId) {
         this.selectedEspacioId.set(espacioId);
       }
-      // ✨ Al entrar en modo config, copiar las horas guardadas a temporales
+      // Al entrar en modo config, copiar las horas guardadas a temporales
       this.tempDisabledHours.set([...this.scheduleConfig().horasDeshabilitadas]);
     }
     this.configMode.update((v) => !v);
@@ -280,11 +280,11 @@ export class AppointmentScheduleComponent implements AfterViewInit {
   saveConfig(): void {
     const espacioId = this.selectedEspacioId();
     if (!espacioId) {
-      alert('❌ Debes seleccionar un espacio primero');
+      alert('Debes seleccionar un espacio primero');
       return;
     }
 
-    // ✨ Guardar las horas temporales en la configuración permanente
+    // Guardar las horas temporales en la configuracion permanente
     const configData = {
       espacioId: espacioId,
       fecha: this.selectedDate().toISOString().split('T')[0],
@@ -295,17 +295,17 @@ export class AppointmentScheduleComponent implements AfterViewInit {
       next: () => {
         this.configTrigger.update((v) => v + 1);
         this.configMode.set(false);
-        console.log('✅ Configuración guardada:', configData.horasDeshabilitadas);
+        console.log('Configuracion guardada:', configData.horasDeshabilitadas);
       },
       error: (error) => {
-        console.error('❌ Error al guardar configuración:', error);
-        alert('Error al guardar la configuración');
+        console.error('Error al guardar configuracion:', error);
+        alert('Error al guardar la configuracion');
       },
     });
   }
 
   cancelConfig(): void {
-    // ✨ Restaurar las horas temporales a las guardadas
+    // Restaurar las horas temporales a las guardadas
     this.tempDisabledHours.set([...this.scheduleConfig().horasDeshabilitadas]);
     this.configMode.set(false);
     this.selectedEspacioId.set(null);
@@ -341,7 +341,7 @@ export class AppointmentScheduleComponent implements AfterViewInit {
       return false;
     }
 
-    // 3. ✨ VALIDACIÓN COMPLETA: Verificar conflictos de horario
+    // 3. VALIDACION COMPLETA: Verificar conflictos de horario
     const conflict = this.appointments().find((apt) => {
       // Ignorar la cita actual si estamos editando
       if (editing && apt.id === editing.id) return false;
@@ -366,13 +366,13 @@ export class AppointmentScheduleComponent implements AfterViewInit {
 
     if (conflict) {
       this.validationMessage.set(
-        `⚠️ Ya existe una cita para "${conflict.pacienteNombre}" de ${conflict.horaInicio} a ${conflict.horaFin}. ` +
+        `Ya existe una cita para "${conflict.pacienteNombre}" de ${conflict.horaInicio} a ${conflict.horaFin}. ` +
           `No se pueden agendar citas que se solapen en el mismo cubículo.`,
       );
       return false;
     }
 
-    // ✅ Todo válido
+    // Todo valido
     this.validationMessage.set('');
     return true;
   }
@@ -389,7 +389,7 @@ export class AppointmentScheduleComponent implements AfterViewInit {
    */
   saveAppointment(): void {
     if (!this.validateTimeSlot()) {
-      console.log('❌ Validación fallida:', this.validationMessage());
+      console.log('Validacion fallida:', this.validationMessage());
       return;
     }
 
@@ -411,10 +411,10 @@ export class AppointmentScheduleComponent implements AfterViewInit {
 
     // ================== RAMA: CREAR o ACTUALIZAR ==================
     if (editing) {
-      // ✅ RAMA ACTUALIZAR: Cita existente
+      // RAMA ACTUALIZAR: Cita existente
       this.performUpdateAppointment(editing, form, duracion, fechaCompleta);
     } else {
-      // ✅ RAMA CREAR: Nueva cita
+      // RAMA CREAR: Nueva cita
       // Backend maneja la creación de pago pendiente transaccionalmente
       this.performCreateAppointment(form, duracion, fechaCompleta, currentUser?.id, isAdmin);
     }
@@ -460,17 +460,17 @@ export class AppointmentScheduleComponent implements AfterViewInit {
     this.calendarService.crearCita(citaData).subscribe({
       next: (response) => {
         const newAppointment = this.calendarService.mapToAppointmentSlot(response.data);
-        console.log('✅ Nueva cita creada:', newAppointment);
-        console.log('📝 Backend creó pago pendiente automáticamente');
+        console.log('Nueva cita creada:', newAppointment);
+        console.log('Backend creo pago pendiente automaticamente');
 
         this.citasTrigger.update((v) => v + 1);
         this.appointmentSaved.emit(newAppointment);
         this.closeDialog();
-        // alert('✅ Cita agendada. Pago pendiente creado automáticamente.');
+        // alert('Cita agendada. Pago pendiente creado automaticamente.');
       },
       error: (error: unknown) => {
         // El HttpErrorInterceptor ya maneja el error y muestra mensajes
-        console.error('❌ Error al crear cita:', error);
+        console.error('Error al crear cita:', error);
       },
     });
   }
@@ -503,16 +503,16 @@ export class AppointmentScheduleComponent implements AfterViewInit {
     this.calendarService.actualizarCita(Number(editing.id), updateData).subscribe({
       next: (response) => {
         const updatedAppointment = this.calendarService.mapToAppointmentSlot(response.data);
-        console.log('✅ Cita actualizada:', updatedAppointment);
+        console.log('Cita actualizada:', updatedAppointment);
 
         this.citasTrigger.update((v) => v + 1);
         this.appointmentSaved.emit(updatedAppointment);
         this.closeDialog();
-        alert('✅ Cita actualizada correctamente.');
+        alert('Cita actualizada correctamente.');
       },
       error: (error: unknown) => {
         // El HttpErrorInterceptor ya maneja el error y muestra mensajes
-        console.error('❌ Error al actualizar cita:', error);
+        console.error('Error al actualizar cita:', error);
       },
     });
   }
@@ -533,10 +533,10 @@ export class AppointmentScheduleComponent implements AfterViewInit {
         next: () => {
           this.citasTrigger.update((v) => v + 1);
           this.closeDialog();
-          console.log('🗑️ Cita eliminada:', editing);
+          console.log('Cita eliminada:', editing);
         },
         error: (error) => {
-          console.error('❌ Error al eliminar cita:', error);
+          console.error('Error al eliminar cita:', error);
           alert('Error al eliminar la cita');
         },
       });
@@ -576,7 +576,7 @@ export class AppointmentScheduleComponent implements AfterViewInit {
       horaInicio: appointment.horaInicio,
       horaFin: appointment.horaFin,
       
-      // ✅ CORRECCIÓN: Precargar IDs reales (convertidos a string para el select)
+      // CORRECCION: Precargar IDs reales (convertidos a string para el select)
       // Asegúrate de que AppointmentSlot tenga estas propiedades
       pacienteId: appointment.pacienteId?.toString() || '',
       pacienteNombre: appointment.pacienteNombre,
@@ -642,7 +642,7 @@ export class AppointmentScheduleComponent implements AfterViewInit {
   onCellClick(cubiculoId: string, hour: string): void {
     // No permitir agendar en horas deshabilitadas
     if (this.isHourDisabled(hour)) {
-      alert('⚠️ Esta hora no está disponible para agendar');
+      alert('Esta hora no esta disponible para agendar');
       return;
     }
 
@@ -739,7 +739,7 @@ export class AppointmentScheduleComponent implements AfterViewInit {
     stream: () => this.usersService.getActiveUsersByRole(UserRole.TERAPEUTA),
   });
 
-  // ✅ CORREGIDO: Usando 'stream' y lógica condicional
+  // CORREGIDO: Usando 'stream' y logica condicional
   pacientesResource = rxResource({
     stream: () => {
       // Si no es admin, retornamos un observable vacío con la forma correcta
@@ -758,7 +758,7 @@ export class AppointmentScheduleComponent implements AfterViewInit {
 
   // ... resto del código
 
-  // ✨ Helper para actualizar nombre cuando seleccionan un ID en el dropdown
+  // Helper para actualizar nombre cuando seleccionan un ID en el dropdown
   onTerapeutaChange(id: string) {
     const lista = this.terapeutasResource.value()?.data || [];
     const seleccionado = lista.find((t) => t.usuarioId?.toString() === id);

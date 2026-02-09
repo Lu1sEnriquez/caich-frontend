@@ -43,7 +43,7 @@ export class InventoryService {
    */
   getAllProducts(): Observable<DataResponseDTO<Producto[]>> {
     return this.http.get<DataResponseDTO<Producto[]>>(`${API_BASE}/inventario/productos`).pipe(
-      tap((response) => console.log('✅ Productos obtenidos:', response.data.length, 'registros')),
+      tap((response) => console.log('Productos obtenidos:', response.data.length, 'registros')),
       catchError((error) => {
         this.errorHandler.handleHttpError(error, 'Obtener productos');
         return throwError(() => error);
@@ -58,7 +58,7 @@ export class InventoryService {
     return this.http
       .get<DataResponseDTO<Producto>>(`${API_BASE}/inventario/productos/${productoId}`)
       .pipe(
-        tap((response) => console.log('✅ Producto obtenido:', response.data.nombre)),
+        tap((response) => console.log('Producto obtenido:', response.data.nombre)),
         catchError((error) => {
           this.errorHandler.handleHttpError(error, 'Obtener producto');
           return throwError(() => error);
@@ -74,8 +74,8 @@ export class InventoryService {
       .post<DataResponseDTO<Producto>>(`${API_BASE}/inventario/productos`, productData)
       .pipe(
         tap((response) => {
-          console.log('✅ Producto creado:', response.data.nombre);
-          this.errorHandler.showSuccess('Producto creado', 'El producto se agregó al inventario');
+          console.log('Producto creado:', response.data.nombre);
+          this.errorHandler.showSuccess('Producto creado', 'El producto se agrego al inventario');
         }),
         catchError((error) => {
           this.errorHandler.handleHttpError(error, 'Crear producto');
@@ -95,7 +95,7 @@ export class InventoryService {
       .put<DataResponseDTO<Producto>>(`${API_BASE}/inventario/productos/${productoId}`, productData)
       .pipe(
         tap(() => {
-          console.log('✅ Producto actualizado');
+          console.log('Producto actualizado');
           this.errorHandler.showSuccess('Producto actualizado', 'Los cambios se guardaron');
         }),
         catchError((error) => {
@@ -111,10 +111,10 @@ export class InventoryService {
   deleteProduct(productoId: number | string): Observable<BaseResponseDTO> {
     return this.http.delete<BaseResponseDTO>(`${API_BASE}/inventario/productos/${productoId}`).pipe(
       tap(() => {
-        console.log('✅ Producto eliminado');
+        console.log('Producto eliminado');
         this.errorHandler.showSuccess(
           'Producto eliminado',
-          'El producto se eliminó del inventario'
+          'El producto se elimino del inventario'
         );
       }),
       catchError((error) => {
@@ -140,7 +140,7 @@ export class InventoryService {
       })
       .pipe(
         tap(() => {
-          console.log('✅ Stock ajustado');
+          console.log('Stock ajustado');
           this.errorHandler.showSuccess('Stock actualizado', `Nuevo stock: ${nuevoStock}`);
         }),
         catchError((error) => {
@@ -169,7 +169,7 @@ export class InventoryService {
         params,
       })
       .pipe(
-        tap(() => console.log('✅ Stock reducido:', cantidad)),
+        tap(() => console.log('Stock reducido:', cantidad)),
         catchError((error) => {
           this.errorHandler.handleHttpError(error, 'Reducir stock');
           return throwError(() => error);
@@ -199,7 +199,7 @@ export class InventoryService {
       )
       .pipe(
         tap(() => {
-          console.log('✅ Stock incrementado:', cantidad);
+          console.log('Stock incrementado:', cantidad);
           this.errorHandler.showSuccess('Stock actualizado', `Se agregaron ${cantidad} unidades`);
         }),
         catchError((error) => {
@@ -217,7 +217,7 @@ export class InventoryService {
       .get<DataResponseDTO<Producto[]>>(`${API_BASE}/inventario/productos/stock-bajo`)
       .pipe(
         tap((response) => {
-          console.log('✅ Productos con stock bajo:', response.data.length);
+          console.log('Productos con stock bajo:', response.data.length);
           if (response.data.length > 0) {
             this.errorHandler.showWarning(
               'Stock bajo',
@@ -240,7 +240,7 @@ export class InventoryService {
       .get<DataResponseDTO<Producto[]>>(`${API_BASE}/inventario/productos/sin-stock`)
       .pipe(
         tap((response) => {
-          console.log('✅ Productos sin stock:', response.data.length);
+          console.log('Productos sin stock:', response.data.length);
           if (response.data.length > 0) {
             this.errorHandler.showWarning(
               'Sin stock',
@@ -265,7 +265,7 @@ export class InventoryService {
       .get<DataResponseDTO<Producto[]>>(`${API_BASE}/inventario/productos/buscar`, { params })
       .pipe(
         tap((response) =>
-          console.log('✅ Búsqueda completada:', response.data.length, 'resultados')
+          console.log('Busqueda completada:', response.data.length, 'resultados')
         ),
         catchError((error) => {
           this.errorHandler.handleHttpError(error, 'Buscar productos');
@@ -279,7 +279,7 @@ export class InventoryService {
    */
   getProductMovementHistory(productoId: number | string): Observable<DataResponseDTO<any[]>> {
     //TODO: Implementar endpoint GET /inventario/productos/{id}/movimientos en la API
-    console.warn('⚠️ getProductMovementHistory: Endpoint pendiente en la API');
+    console.warn('getProductMovementHistory: Endpoint pendiente en la API');
 
     return this.http
       .get<DataResponseDTO<any[]>>(`${API_BASE}/inventario/productos/${productoId}/movimientos`)

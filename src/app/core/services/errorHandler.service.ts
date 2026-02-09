@@ -123,7 +123,7 @@ export class ErrorHandlerService {
     this.showError(title, message);
 
     // Log detallado para desarrollo
-    console.error('❌ Error HTTP:', {
+    console.error('Error HTTP:', {
       status: error.status,
       statusText: error.statusText,
       message: error.message,

@@ -401,6 +401,7 @@ export interface AppointmentSlot {
   horaInicio: string;
   horaFin: string;
   cubiculoId: string;
+  espacioNombre?: string;
   pacienteId: number; // nuevo
   pacienteNombre: string;
   terapeutaId: number; // nuevo

@@ -26,17 +26,17 @@ export const authGuard: CanActivateFn = (
   const router = inject(Router);
   const errorHandler = inject(ErrorHandlerService);
 
-  console.log('🛡️ AuthGuard: Verificando autenticación');
+  console.log('AuthGuard: Verificando autenticacion');
   console.log('   Ruta solicitada:', state.url);
 
   // Verificar si está autenticado
   if (authService.isAuthenticatedSync()) {
-    console.log('✅ Usuario autenticado, permitiendo acceso');
+    console.log('Usuario autenticado, permitiendo acceso');
     return true;
   }
 
   // No autenticado
-  console.log('❌ Usuario NO autenticado, redirigiendo a /login');
+  console.log('Usuario NO autenticado, redirigiendo a /login');
 
   // Mostrar mensaje al usuario
   errorHandler.showWarning('Acceso denegado', 'Debes iniciar sesión para acceder a esta página');
@@ -79,7 +79,7 @@ export const roleGuard = (allowedRoles: UserRole[]): CanActivateFn => {
 
     // 1. Si no hay rol, redirigir a login
     if (!userRole) {
-      console.log('❌ No hay rol (usuario no autenticado)');
+      console.log('No hay rol (usuario no autenticado)');
       errorHandler.showWarning(
         'Acceso denegado',
         'Debes iniciar sesión para acceder a esta página'
@@ -92,12 +92,12 @@ export const roleGuard = (allowedRoles: UserRole[]): CanActivateFn => {
 
     // 2. Verificar si el rol está permitido
     if (allowedRoles.includes(userRole)) {
-      console.log('✅ Rol permitido, acceso concedido');
+      console.log('Rol permitido, acceso concedido');
       return true;
     }
 
     // 3. Rol no autorizado - redirigir inteligentemente
-    console.log('❌ Rol no autorizado para esta ruta');
+    console.log('Rol no autorizado para esta ruta');
 
     // Mostrar mensaje al usuario
     errorHandler.showWarning(
@@ -125,7 +125,7 @@ function getDefaultRouteForRole(role: UserRole): string {
     case UserRole.PACIENTE:
       return '/calendario';
     case UserRole.ALUMNO:
-      return '/prestamos'; //TODO: Definir ruta por defecto para alumnos
+      return '/calendario';
     default:
       return '/dashboard';
   }
@@ -151,14 +151,14 @@ export const guestGuard: CanActivateFn = (
 
   // Si está autenticado, redirigir al dashboard
   if (authService.isAuthenticatedSync()) {
-    console.log('✅ Usuario ya autenticado, redirigiendo a dashboard');
+    console.log('Usuario ya autenticado, redirigiendo a dashboard');
     const role = authService.currentRole();
     const redirectRoute = role ? getDefaultRouteForRole(role) : '/dashboard';
     router.navigate([redirectRoute]);
     return false;
   }
 
-  console.log('✅ Usuario no autenticado, permitiendo acceso a ruta pública');
+  console.log('Usuario no autenticado, permitiendo acceso a ruta publica');
   return true;
 };
 
@@ -192,7 +192,7 @@ export const permissionGuard = (permission: Permission): CanActivateFn => {
     const userRole = authService.currentRole();
 
     if (!userRole) {
-      console.log('❌ No hay rol');
+      console.log('No hay rol');
       errorHandler.showWarning('Acceso denegado', 'Debes iniciar sesión');
       router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
       return false;
@@ -216,11 +216,11 @@ export const permissionGuard = (permission: Permission): CanActivateFn => {
     }
 
     if (hasPermission) {
-      console.log('✅ Permiso concedido');
+      console.log('Permiso concedido');
       return true;
     }
 
-    console.log('❌ Permiso denegado');
+    console.log('Permiso denegado');
     errorHandler.showWarning(
       'Acceso denegado',
       'No tienes los permisos necesarios para realizar esta acción'
