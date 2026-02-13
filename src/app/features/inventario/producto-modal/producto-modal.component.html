@@ -1,0 +1,98 @@
+<p-dialog
+  [visible]="visible()"
+  (visibleChange)="visible.set($event)"
+  [modal]="true"
+  [header]="product ? 'Editar producto' : 'Nuevo producto'"
+  [style]="{ width: '90vw', maxWidth: '650px' }"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="product-dialog"
+>
+  <form [formGroup]="productForm" id="productForm" (ngSubmit)="saveProduct()" class="product-form">
+    
+    <div class="form-group">
+      <label for="codigo" class="form-label">Código del producto <span class="required">*</span></label>
+      <app-input
+        id="codigo"
+        formControlName="codigo"
+        placeholder="Ej: PROD-001"
+      />
+      @if (productForm.get('codigo')?.invalid && productForm.get('codigo')?.touched) {
+        <small class="p-error">Este campo es obligatorio</small>
+      }
+    </div>
+
+    <div class="form-group">
+      <label for="nombre" class="form-label">Nombre completo <span class="required">*</span></label>
+      <app-input
+        id="nombre"
+        formControlName="nombre"
+        placeholder="Nombre comercial del producto"
+      />
+    </div>
+
+  <div class="form-group">
+  <label for="categoria" class="form-label">Categoría de inventario <span class="required">*</span></label>
+  <div class="select-wrapper">
+    <select id="categoria" formControlName="categoria" class="custom-select">
+      <option value="" disabled selected>Selecciona una categoría...</option>
+      <option value="Material">Material</option>
+      <option value="Libro">Libro</option>
+      <option value="Test">Test</option>
+      <option value="Equipo">Equipo</option>
+      <option value="Otro">Otro</option>
+    </select>
+    <span class="select-arrow">▼</span>
+  </div>
+</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Precio</label>
+        <app-input id="precio" formControlName="precio" type="number" placeholder="0.00" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Stock actual</label>
+        <app-input id="stock" formControlName="stock" type="number" placeholder="0" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Stock mín.</label>
+        <app-input id="stockMinimo" formControlName="stockMinimo" type="number" placeholder="0" />
+      </div>
+    </div>
+
+<div class="form-row-checkboxes">
+  <div class="form-group-checkbox">
+    <p-checkbox 
+      formControlName="esVendible" 
+      [binary]="true" 
+      inputId="checkVendible"
+    ></p-checkbox>
+    <label for="checkVendible" class="checkbox-label">Disponible para venta</label>
+  </div>
+
+  <div class="form-group-checkbox">
+    <p-checkbox 
+      formControlName="esPrestable" 
+      [binary]="true" 
+      inputId="checkPrestable"
+    ></p-checkbox>
+    <label for="checkPrestable" class="checkbox-label">Disponible para préstamo</label>
+  </div>
+</div>
+  </form>
+
+  <ng-template pTemplate="footer">
+    <div class="dialog-footer">
+      <app-button variant="outline" (clicked)="hideDialog()">Cancelar</app-button>
+      <app-button
+        (clicked)="saveProduct()"
+        variant="primary"
+        type="submit"
+        form="productForm"
+        [disabled]="productForm.invalid"
+      >
+        {{ product ? 'Guardar Cambios' : 'Registrar Producto' }}
+      </app-button>
+    </div>
+  </ng-template>
+</p-dialog>

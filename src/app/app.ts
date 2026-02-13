@@ -95,6 +95,11 @@ export class App {
               icon: '👥',
             },
             {
+              label: 'Inventario',
+              route: '/inventario',
+              icon: '📦',
+            },
+            {
               label: 'Perfil',
               route: '/perfil',
               icon: '👤',

@@ -15,20 +15,9 @@
     </span>
     }
 
-    <input
-      [id]="id()"
-      [type]="type()"
-      [placeholder]="placeholder()"
-      [disabled]="disabled()"
-      [required]="required()"
-      [readonly]="readonly()"
-      [(ngModel)]="value"
-      (blur)="onBlur()"
-      (focus)="onFocus()"
-      [class.has-prefix]="prefixIcon()"
-      [class.has-suffix]="suffixIcon()"
-      [class.error]="error()"
-    />
+    <input [id]="id()" [type]="type()" [value]="value()" [placeholder]="placeholder()" [disabled]="disabled()"
+      [required]="required()" [readonly]="readonly()" (input)="onInputChange($event)" (blur)="onBlur()"
+      (focus)="onFocus()" [class.has-prefix]="prefixIcon()" [class.has-suffix]="suffixIcon()" [class.error]="error()" />
 
     @if (suffixIcon()) {
     <span class="input-icon input-icon-suffix">
@@ -39,7 +28,8 @@
 
   @if (error()) {
   <span class="error-message">{{ error() }}</span>
-  } @if (hint()) {
+  }
+  @if (hint()) {
   <span class="hint-message">{{ hint() }}</span>
   }
 </div>

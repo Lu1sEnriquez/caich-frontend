@@ -8,9 +8,7 @@
     [appName]="'MindCare'"
     [menuGroups]="menuGroups()"
     [userRole]="authService.currentUser()?.rol || 'Paciente'"
-    [userRoleLabel]="'Rol actual:'"
     (logoutClick)="openLogoutModal()"
-    (collapsedChange)="onSidebarCollapsedChange($event)"
   />
   }
 

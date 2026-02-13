@@ -72,16 +72,21 @@ export interface TicketFiltroDTO extends TicketDTO {
 
 export interface Producto {
   productoId?: number;
-  codigo?: string;
-  nombre?: string;
+  codigo: string;       // Obligatorio para evitar el error de SQL
+  nombre: string;
   descripcion?: string;
-  categoria?: string;
-  precio?: number;
-  stock?: number;
-  stockMinimo?: number;
-  esVendible?: boolean;
-  esPrestable?: boolean;
+  categoria: string;
+  precio: number;
+  stock: number;
+  stockMinimo: number;
+  esVendible: boolean;
+  esPrestable: boolean;
+  estaActivo?: boolean; // Importante para el borrado lógico
 }
+
+export interface CrearProductoRequest extends Omit<Producto, 'productoId'> {}
+
+export interface ActualizarProductoRequest extends Producto {}
 
 export interface PrestamoDTO {
   prestamoId?: number;

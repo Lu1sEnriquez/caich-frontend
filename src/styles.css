@@ -1,8 +1,7 @@
-/* You can add global styles to this file, and also import other style files */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import "primeicons/primeicons.css";
 
 :root {
-   /* Colors */
   --color-background: #f6fbff;
   --color-foreground: #0f1724;
   --color-border: #e6eef6;
@@ -27,13 +26,11 @@
   --color-sidebar-primary: #3b82f6;
   --color-sidebar-primary-foreground: #ffffff;
 
-  /* Roundness */
   --radius-sm: 6px;
   --radius-md: 12px;
   --radius-lg: 24px;
   --radius-xl: 48px;
 
-  /* Spacing */
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 16px;
@@ -42,13 +39,11 @@
   --space-2xl: 48px;
   --space-3xl: 64px;
 
-  /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 
-  /* Typography */
   --font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
@@ -72,7 +67,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;

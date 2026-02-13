@@ -1,0 +1,158 @@
+/* --- Contenedor del Diálogo --- */
+:host ::ng-deep .product-dialog .p-dialog {
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  background: #ffffff;
+}
+
+:host ::ng-deep .product-dialog .p-dialog-header {
+  padding: 1.5rem 2rem;
+  background: #ffffff;
+  border-bottom: 1px solid #f1f5f9;
+  color: #0f172a;
+}
+
+:host ::ng-deep .product-dialog .p-dialog-header-title {
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+:host ::ng-deep .product-dialog .p-dialog-content {
+  padding: 2rem !important;
+  background: #ffffff;
+}
+
+/* --- Formulario y Layout --- */
+.product-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.required {
+  color: #ef4444;
+  margin-left: 2px;
+}
+
+/* Grid de 3 columnas para valores numéricos */
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+/* --- Select Personalizado --- */
+.select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.custom-select {
+  appearance: none;
+  width: 100%;
+  height: 40px;
+  padding: 0 1rem;
+  font-size: 0.875rem;
+  color: #1e293b;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.custom-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.select-arrow {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.7rem;
+  color: #64748b;
+  pointer-events: none;
+}
+
+/* --- Panel de Checkboxes (Lo más feo en la imagen) --- */
+/* Contenedor de Checkboxes mejorado */
+.form-row-checkboxes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  padding: 1.25rem;
+  background-color: #f8fafc; /* Fondo sutil para agrupar */
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.form-group-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Estilo para la etiqueta */
+.checkbox-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer; /* Indica que es clicable */
+  user-select: none; /* Evita seleccionar el texto por accidente */
+}
+
+/* Alineación profunda de PrimeNG */
+:host ::ng-deep .p-checkbox {
+  display: flex;
+  align-items: center;
+}
+
+:host ::ng-deep .p-checkbox .p-checkbox-box {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1.5px solid #cbd5e1;
+  transition: all 0.2s;
+}
+
+:host ::ng-deep .p-checkbox .p-checkbox-box.p-highlight {
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+}
+
+/* --- Footer --- */
+:host ::ng-deep .product-dialog .p-dialog-footer {
+  padding: 1.25rem 2rem !important;
+  border-top: 1px solid #f1f5f9;
+  background: #ffffff;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+/* --- Errores --- */
+.p-error {
+  color: #ef4444;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  font-weight: 500;
+}

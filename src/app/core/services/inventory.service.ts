@@ -6,30 +6,9 @@ import { catchError, tap } from 'rxjs/operators';
 import { ErrorHandlerService } from './errorHandler.service';
 import { API_BASE } from './api.config';
 
-import { DataResponseDTO, BaseResponseDTO, Producto } from '../models/api-models';
+import { DataResponseDTO, BaseResponseDTO, Producto, CrearProductoRequest, ActualizarProductoRequest } from '../models/api-models';
 
-export interface CrearProductoRequest {
-  codigo: string;
-  nombre: string;
-  descripcion?: string;
-  categoria: 'Material' | 'Libro' | 'Test' | 'Equipo' | 'Otro';
-  precio: number;
-  stock: number;
-  stockMinimo: number;
-  esVendible: boolean;
-  esPrestable: boolean;
-}
 
-export interface ActualizarProductoRequest {
-  nombre?: string;
-  descripcion?: string;
-  categoria?: 'Material' | 'Libro' | 'Test' | 'Equipo' | 'Otro';
-  precio?: number;
-  stockMinimo?: number;
-  esVendible?: boolean;
-  esPrestable?: boolean;
-  estaActivo?: boolean;
-}
 
 @Injectable({
   providedIn: 'root',
@@ -38,54 +17,61 @@ export class InventoryService {
   private http = inject(HttpClient);
   private errorHandler = inject(ErrorHandlerService);
 
-  /**
-   * Obtener todos los productos
+ /**
+   * Obtener productos paginados (Actualizado para coincidir con el controlador)
    */
-  getAllProducts(): Observable<DataResponseDTO<Producto[]>> {
-    return this.http.get<DataResponseDTO<Producto[]>>(`${API_BASE}/inventario/productos`).pipe(
-      tap((response) => console.log('Productos obtenidos:', response.data.length, 'registros')),
-      catchError((error) => {
-        this.errorHandler.handleHttpError(error, 'Obtener productos');
-        return throwError(() => error);
-      })
-    );
-  }
+ /**
+ * Obtener productos paginados con filtros avanzados
+ */
+getAllProductsPaginable(
+  page: number = 0, 
+  size: number = 10, 
+  filters: {
+    nombre?: string,
+    categoria?: string,
+    estaActivo?: boolean,
+    esPrestable?: boolean,
+    esVendible?: boolean
+  } = {}
+): Observable<DataResponseDTO<any>> {
+  let params = new HttpParams()
+    .set('page', page.toString())
+    .set('size', size.toString());
+
+  // Agregar filtros dinámicamente si existen
+  if (filters.nombre) params = params.set('nombre', filters.nombre);
+  if (filters.categoria) params = params.set('categoria', filters.categoria);
+  if (filters.estaActivo !== undefined) params = params.set('estaActivo', filters.estaActivo);
+  if (filters.esPrestable !== undefined) params = params.set('esPrestable', filters.esPrestable);
+  if (filters.esVendible !== undefined) params = params.set('esVendible', filters.esVendible);
+
+  return this.http.get<DataResponseDTO<any>>(`${API_BASE}/inventario/productos`, { params }).pipe(
+    catchError((error) => {
+      this.errorHandler.handleHttpError(error, 'Obtener productos');
+      return throwError(() => error);
+    })
+  );
+}
 
   /**
-   * Obtener producto por ID
+   * Crear nuevo producto 
+   * @route POST /inventario/productos
    */
-  getProductById(productoId: number | string): Observable<DataResponseDTO<Producto>> {
-    return this.http
-      .get<DataResponseDTO<Producto>>(`${API_BASE}/inventario/productos/${productoId}`)
-      .pipe(
-        tap((response) => console.log('Producto obtenido:', response.data.nombre)),
-        catchError((error) => {
-          this.errorHandler.handleHttpError(error, 'Obtener producto');
-          return throwError(() => error);
-        })
-      );
-  }
-
-  /**
-   * Crear nuevo producto
-   */
-  createProduct(productData: CrearProductoRequest): Observable<DataResponseDTO<Producto>> {
+createProduct(productData: CrearProductoRequest): Observable<DataResponseDTO<Producto>> {
     return this.http
       .post<DataResponseDTO<Producto>>(`${API_BASE}/inventario/productos`, productData)
       .pipe(
-        tap((response) => {
-          console.log('Producto creado:', response.data.nombre);
-          this.errorHandler.showSuccess('Producto creado', 'El producto se agrego al inventario');
-        }),
+        tap(() => this.errorHandler.showSuccess('Éxito', 'Producto registrado')),
         catchError((error) => {
-          this.errorHandler.handleHttpError(error, 'Crear producto');
+          this.errorHandler.handleHttpError(error, 'Error al crear');
           return throwError(() => error);
         })
       );
   }
 
   /**
-   * Actualizar producto
+   * Actualizar producto 
+   * @route PUT /inventario/productos/{id}
    */
   updateProduct(
     productoId: number | string,
@@ -94,31 +80,25 @@ export class InventoryService {
     return this.http
       .put<DataResponseDTO<Producto>>(`${API_BASE}/inventario/productos/${productoId}`, productData)
       .pipe(
-        tap(() => {
-          console.log('Producto actualizado');
-          this.errorHandler.showSuccess('Producto actualizado', 'Los cambios se guardaron');
-        }),
+        tap(() => this.errorHandler.showSuccess('Éxito', 'Producto actualizado')),
         catchError((error) => {
-          this.errorHandler.handleHttpError(error, 'Actualizar producto');
+          this.errorHandler.handleHttpError(error, 'Error al actualizar');
           return throwError(() => error);
         })
       );
   }
 
   /**
-   * Eliminar producto
+   * Desactivar producto (Borrado lógico)
+   * @route DELETE /inventario/productos/{id}
    */
-  deleteProduct(productoId: number | string): Observable<BaseResponseDTO> {
+  deactivateProduct(productoId: number | string): Observable<BaseResponseDTO> {
     return this.http.delete<BaseResponseDTO>(`${API_BASE}/inventario/productos/${productoId}`).pipe(
       tap(() => {
-        console.log('Producto eliminado');
-        this.errorHandler.showSuccess(
-          'Producto eliminado',
-          'El producto se elimino del inventario'
-        );
+        this.errorHandler.showSuccess('Desactivado', 'El producto ha sido marcado como inactivo');
       }),
       catchError((error) => {
-        this.errorHandler.handleHttpError(error, 'Eliminar producto');
+        this.errorHandler.handleHttpError(error, 'Desactivar producto');
         return throwError(() => error);
       })
     );

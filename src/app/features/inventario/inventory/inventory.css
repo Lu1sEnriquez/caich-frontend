@@ -1,0 +1,290 @@
+:host {
+  display: block;
+}
+.inventory-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: var(--space-xl);
+  max-width: 1600px;
+  margin: 0 auto;
+  min-height: 100vh;
+
+  @media (max-width: 1024px) {
+    padding: var(--space-lg);
+  }
+}
+
+.inventory-header {
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 var(--space-lg);
+    color: var(--color-foreground);
+  }
+}
+
+.header-actions {
+  display: flex;
+  gap: var(--space-md);
+  align-items: center;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    width: 100%;
+  }
+}
+
+.table-container {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: calc(100vh - 400px);
+  border-radius: var(--radius-md);
+}
+
+.products-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+
+  thead {
+    position: sticky;
+    top: 0;
+    background: var(--color-card);
+    z-index: 10;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+    th {
+      padding: var(--space-md) var(--space-lg);
+      text-align: left;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-muted-foreground);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid var(--color-border);
+      white-space: nowrap;
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid var(--color-border);
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background-color: var(--color-muted);
+      }
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      td {
+        padding: var(--space-md) var(--space-lg);
+        font-size: 14px;
+        color: var(--color-foreground);
+        vertical-align: middle;
+      }
+    }
+  }
+}
+
+.action-buttons {
+  display: flex;
+  gap: var(--space-xs);
+  justify-content: flex-end;
+}
+
+.table-footer {
+  padding: var(--space-lg);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-muted);
+}
+
+.stats {
+  display: flex;
+  gap: var(--space-xl);
+  justify-content: center;
+  flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    gap: var(--space-md);
+  }
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  padding: var(--space-md);
+  background: var(--color-card);
+  border-radius: var(--radius-sm);
+  min-width: 120px;
+
+  .stat-label {
+    font-size: 13px;
+    color: var(--color-muted-foreground);
+  }
+
+  .stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--color-foreground);
+  }
+}
+
+.loading-container,
+.empty-container {
+  padding: var(--space-xl);
+  text-align: center;
+  color: var(--color-muted-foreground);
+  font-size: 16px;
+}
+
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.empty-container {
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-checkmark {
+  color: var(--color-success);
+  font-weight: bold;
+}
+
+.icon-cross {
+  color: var(--color-destructive);
+  font-weight: bold;
+}
+
+/* En inventory.css */
+.paginator-container {
+  padding: 1rem;
+  border-top: 1px solid var(--border-color, #eee);
+  display: flex;
+  justify-content: center;
+}
+
+/* Opcional: Personalizar el estilo de PrimeNG para que use tus variables de color */
+:host ::ng-deep .p-paginator {
+  background: transparent;
+  border: none;
+}
+
+:host ::ng-deep .p-paginator .p-paginator-pages .p-paginator-page.p-highlight {
+  background: var(--primary-color, #007bff);
+  color: white;
+}
+
+
+.filters-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  align-items: flex-end;
+  padding: 1.25rem 1.5rem;
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-md);
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 160px;
+}
+
+.filter-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* --- Estilización del Select Nativo --- */
+.select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.custom-select {
+  appearance: none; /* Elimina el estilo por defecto del sistema */
+  -webkit-appearance: none;
+  width: 100%;
+  height: 38px;
+  padding: 0 2rem 0 12px;
+  font-size: 14px;
+  color: var(--color-foreground);
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.custom-select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.select-arrow {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 9px;
+  color: var(--color-muted-foreground);
+  pointer-events: none; /* Crucial para que el click pase al select */
+}
+
+/* --- Alineación de Checkboxes --- */
+.toggle-filters {
+  display: flex;
+  gap: 1.5rem;
+  padding-bottom: 8px;
+}
+
+.filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  
+  label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-foreground);
+    cursor: pointer;
+  }
+}
+
+/* --- Personalización de p-checkbox --- */
+:host ::ng-deep .p-checkbox .p-checkbox-box {
+  border: 2px solid var(--color-border);
+  border-radius: 4px;
+  width: 20px;
+  height: 20px;
+}
+
+:host ::ng-deep .p-checkbox .p-checkbox-box.p-highlight {
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+.filter-actions {
+  margin-left: auto;
+  padding-bottom: 4px;
+}

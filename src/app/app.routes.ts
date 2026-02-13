@@ -10,6 +10,7 @@ import { LoginComponent } from './features/auth/components/login.component';
 import { RegisterComponent } from './features/auth/components/register.component';
 import { SpacesManagementComponent } from './features/admin/components/spaces-management/spaces-management.component';
 import { BankAccountsManagementComponent } from './features/admin/components/bank-accounts-management/bank-accounts-management.component';
+import { Inventory } from './features/inventario/inventory/inventory';
 import { authGuard, roleGuard, guestGuard, permissionGuard } from './core/guards/guards';
 import { UserRole } from './core/models/enums';
 
@@ -95,6 +96,14 @@ export const routes: Routes = [
     loadComponent: () => UserDetailComponent,
     canActivate: [authGuard, permissionGuard('manageUsers')],
     title: 'Detalle de Usuario - MindCare',
+  },
+
+  // Inventario - Solo Administradores
+  {
+    path: 'inventario',
+    loadComponent: () => Inventory,
+    canActivate: [authGuard, roleGuard([UserRole.ADMINISTRADOR])],
+    title: 'Inventario - MindCare',
   },
 
   // ==========================================

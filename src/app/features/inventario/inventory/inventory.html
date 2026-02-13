@@ -1,0 +1,186 @@
+<div class="inventory-container">
+  <div class="inventory-header">
+    <h1>Gestión de Inventario</h1>
+    <div class="header-actions">
+      <app-input placeholder="Buscar por nombre o código" [(value)]="searchQuery" [prefixIcon]="true">
+        <span prefix>🔍</span>
+      </app-input>
+      <app-button variant="primary" (clicked)="openNew()"> Nuevo producto </app-button>
+    </div>
+  </div>
+
+  <div class="filters-bar">
+  <div class="filter-group">
+    <label class="filter-label">Categoría</label>
+    <div class="select-wrapper">
+      <select class="custom-select" 
+              [ngModel]="selectedCategoria()" 
+              (ngModelChange)="selectedCategoria.set($event); currentPage.set(0)">
+        <option value="">Todas</option>
+        <option value="Material">Material</option>
+        <option value="Libro">Libro</option>
+        <option value="Test">Test</option>
+        <option value="Equipo">Equipo</option>
+        <option value="Otro">Otro</option>
+      </select>
+      <span class="select-arrow">▼</span>
+    </div>
+  </div>
+
+  <div class="filter-group">
+    <label class="filter-label">Estado</label>
+    <div class="select-wrapper">
+      <select class="custom-select" 
+              [ngModel]="filterActivo()" 
+              (ngModelChange)="filterActivo.set($event === 'true' ? true : ($event === 'false' ? false : undefined)); currentPage.set(0)">
+        <option value="undefined">Cualquiera</option>
+        <option value="true">Activos</option>
+        <option value="false">Inactivos</option>
+      </select>
+      <span class="select-arrow">▼</span>
+    </div>
+  </div>
+
+  <div class="toggle-filters">
+    <div class="filter-checkbox">
+      <p-checkbox 
+      [binary]="true" 
+        [ngModel]="filterPrestable()" 
+        (ngModelChange)="filterPrestable.set($event ? true : undefined); currentPage.set(0)"
+        inputId="prestable">
+      </p-checkbox>
+      <label for="prestable">Solo Prestables</label>
+    </div>
+    
+    <div class="filter-checkbox">
+      <p-checkbox 
+      [binary]="true" 
+        [ngModel]="filterVendible()" 
+        (ngModelChange)="filterVendible.set($event ? true : undefined); currentPage.set(0)"
+        inputId="vendible">
+      </p-checkbox>
+      <label for="vendible">Solo Vendibles</label>
+    </div>
+  </div>
+
+  <div class="filter-actions">
+    <app-button variant="ghost" size="sm" (clicked)="resetFilters()">
+      <span class="btn-content">🧹 Limpiar Filtros</span>
+    </app-button>
+  </div>
+</div>
+
+
+  <app-card [padding]="'none'">
+    <!-- Loading State -->
+    @if (productsResource.isLoading()) {
+    <div class="loading-container">
+      <p>Cargando inventario...</p>
+    </div>
+    }
+    <!-- Empty State -->
+    @else if (filteredProducts().length === 0) {
+    <div class="empty-container">
+      <p>No se encontraron productos</p>
+    </div>
+    }
+    <!-- Table -->
+    @else {
+    <div class="table-container">
+      <table class="products-table">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Categoría</th>
+            <th>Precio</th>
+            <th>Stock</th>
+            <th>Stock Mínimo</th>
+            <th>Vendible</th>
+            <th>Prestable</th>
+            <th>Activo</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (product of filteredProducts(); track product.productoId) {
+          <tr>
+            <td>{{ product.codigo }}</td>
+            <td>
+              <strong>{{ product.nombre }}</strong>
+            </td>
+            <td>
+              <app-badge variant="secondary">{{ product.categoria }}</app-badge>
+            </td>
+            <td>${{ product.precio?.toFixed(2) }}</td>
+            <td>
+              <app-badge [status]="getStockBadgeVariant(product.stock)">
+                {{ product.stock }}
+              </app-badge>
+            </td>
+            <td>{{ product.stockMinimo }}</td>
+            <td>
+              @if (product.esVendible) {
+              <span class="icon-checkmark">✓</span>
+              } @else {
+              <span class="icon-cross">✕</span>
+              }
+            </td>
+            <td>
+              @if (product.esPrestable) {
+              <span class="icon-checkmark">✓</span>
+              } @else {
+              <span class="icon-cross">✕</span>
+              }
+            </td>
+             <td>
+              @if (product.estaActivo) {
+              <span class="icon-checkmark">✓</span>
+              } @else {
+              <span class="icon-cross">✕</span>
+              }
+            </td>
+            <td>
+              <div class="action-buttons">
+                <app-button variant="ghost" size="sm" (clicked)="editProduct(product)">
+                  Editar
+                </app-button>
+                <app-button variant="ghost" size="sm" (clicked)="deactivateProduct(product)">
+                  Desactivar
+                </app-button>
+              </div>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="paginator-container">
+      <p-paginator [rows]="pageSize()" [totalRecords]="totalRecords()" [rowsPerPageOptions]="[5, 10, 20, 50]"
+        (onPageChange)="onPageChange($event)" [first]="currentPage() * pageSize()">
+      </p-paginator>
+    </div>
+    }
+
+    <!-- Stats -->
+    <div class="table-footer">
+      <div class="stats">
+        <div class="stat-item">
+          <span class="stat-label">Total de productos</span>
+          <span class="stat-value">{{ stats().total }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Con stock</span>
+          <span class="stat-value">{{ stats().conStock }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Sin stock</span>
+          <span class="stat-value">{{ stats().sinStock }}</span>
+        </div>
+      </div>
+    </div>
+  </app-card>
+
+  <!-- Product Modal Component -->
+  <app-producto-modal (productSaved)="onProductSaved()" />
+</div>
