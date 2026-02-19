@@ -310,7 +310,7 @@
           </div>
           <div class="detail-item">
             <label>Fecha de pago:</label>
-            <span>{{ formatDate(selectedPayment()!.fechaPago) }}</span>
+            <span>{{ formatDate(selectedPayment()?.fechaPago) }}</span>
           </div>
           <div class="detail-item">
             <label>Monto:</label>
@@ -318,22 +318,22 @@
           </div>
           <div class="detail-item">
             <label>Estado:</label>
-            <app-badge [status]="selectedPayment()!.status">
-              {{ selectedPayment()!.status }}
+            <app-badge [status]="selectedPayment()?.status ?? 'PENDIENTE_REVISION'">
+              {{ selectedPayment()?.status ?? 'PENDIENTE_REVISION' }}
             </app-badge>
           </div>
           <div class="detail-item">
             <label>Fecha de registro:</label>
-            <span>{{ formatDate(selectedPayment()!.fechaRegistro) }}</span>
+            <span>{{ formatDate(selectedPayment()?.fechaCreacion) }}</span>
           </div>
         </div>
 
         <div class="comprobante-section">
           <h4>Comprobante de pago</h4>
-          @if (selectedPayment()!.comprobante) {
+          @if (selectedPayment()?.comprobanteUrl) {
           <div class="comprobante-preview">
             <div class="file-icon">📄</div>
-            <span>{{ selectedPayment()!.comprobante }}</span>
+            <span>{{ selectedPayment()?.comprobanteUrl }}</span>
             <!-- <app-button variant="outline" size="sm" (clicked)="viewComprobante()"> -->
             <app-button variant="outline" size="sm" (clicked)="viewComprobante()">
               Ver comprobante

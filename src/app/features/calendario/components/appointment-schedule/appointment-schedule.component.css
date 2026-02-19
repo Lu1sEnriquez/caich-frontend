@@ -292,6 +292,15 @@
     letter-spacing: 0.3px;
   }
 
+  .cubicle-name {
+    font-size: 12px;
+    opacity: 0.85;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .appointment-time {
     font-size: 13px;
     opacity: 0.95;
@@ -591,4 +600,366 @@
     color: var(--color-muted-foreground);
     margin: 0 0 var(--space-md);
   }
+}
+
+/* ✨ Estilos para la sección de productos */
+.products-section {
+  margin-top: var(--space-lg);
+  padding: var(--space-lg);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+  h5 {
+    margin: 0 0 var(--space-md);
+    color: var(--color-foreground);
+    font-size: 16px;
+    font-weight: 600;
+  }
+}
+
+/* Tabla de productos */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  margin-bottom: 0;
+
+  thead {
+    background: var(--color-muted);
+    border-bottom: 2px solid var(--color-border);
+
+    th {
+      padding: var(--space-md);
+      text-align: left;
+      font-weight: 600;
+      color: var(--color-foreground);
+      vertical-align: middle;
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid var(--color-border);
+      transition: background 0.2s ease;
+
+      &:hover {
+        background: rgba(59, 130, 246, 0.05);
+      }
+
+      td {
+        padding: var(--space-md);
+        vertical-align: middle;
+        color: var(--color-foreground);
+      }
+    }
+  }
+}
+
+.table-sm {
+  font-size: 13px;
+
+  thead th,
+  tbody td {
+    padding: var(--space-sm) var(--space-md);
+  }
+}
+
+/* Inputs en tabla */
+.form-control {
+  display: block;
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-foreground);
+  background: var(--color-input);
+  background-clip: padding-box;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  appearance: none;
+
+  &:focus {
+    border-color: var(--color-primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  &:disabled {
+    background-color: var(--color-muted);
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+}
+
+.form-control-sm {
+  padding: var(--space-xs) var(--space-sm);
+  font-size: 13px;
+  border-radius: var(--radius-sm);
+}
+
+/* Botones */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  border: none;
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+  
+  &:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+}
+
+.btn-sm {
+  padding: var(--space-xs) var(--space-sm);
+  font-size: 12px;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: white;
+
+  &:hover:not(:disabled) {
+    background: hsl(217, 91%, 52%);
+  }
+}
+
+.btn-success {
+  background: #10b981;
+  color: white;
+
+  &:hover:not(:disabled) {
+    background: #059669;
+  }
+
+  &:active:not(:disabled) {
+    background: #047857;
+  }
+}
+
+.btn-danger {
+  background: var(--color-destructive);
+  color: white;
+
+  &:hover:not(:disabled) {
+    background: hsl(0, 84%, 50%);
+  }
+
+  &:active:not(:disabled) {
+    background: hsl(0, 84%, 40%);
+  }
+}
+
+.btn-warning {
+  background: #f59e0b;
+  color: white;
+
+  &:hover:not(:disabled) {
+    background: #d97706;
+  }
+}
+
+.btn-secondary {
+  background: var(--color-muted);
+  color: var(--color-foreground);
+  border: 1px solid var(--color-border);
+
+  &:hover:not(:disabled) {
+    background: var(--color-secondary);
+    border-color: var(--color-secondary);
+  }
+}
+
+/* Utilidades de espaciado */
+.mb-3 {
+  margin-bottom: var(--space-lg);
+}
+
+.mb-2 {
+  margin-bottom: var(--space-md);
+}
+
+.mb-1 {
+  margin-bottom: var(--space-sm);
+}
+
+.mt-2 {
+  margin-top: var(--space-md);
+}
+
+.mt-3 {
+  margin-top: var(--space-lg);
+}
+
+/* Alineación de acciones en tabla */
+.table-actions {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+
+  button {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 12px;
+  }
+}
+
+/* Estado sin productos */
+.no-products-message {
+  text-align: center;
+  padding: var(--space-lg);
+  color: var(--color-muted-foreground);
+  background: var(--color-muted);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+}
+/* ============================================
+   SECCIONES DE PRESENCIALES Y ONLINE
+   ============================================ */
+
+.presenciales-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.online-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--color-muted);
+  border-radius: var(--radius-md);
+  border-left: 4px solid #3b82f6;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--color-foreground);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.empty-section {
+  padding: var(--space-md);
+  text-align: center;
+  color: var(--color-muted-foreground);
+  font-size: 14px;
+  font-style: italic;
+}
+
+/* Lista de citas online */
+.online-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.online-item {
+  padding: var(--space-md);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+
+  &.estado-agendada {
+    border-left: 4px solid #10b981;
+  }
+
+  &.estado-completada {
+    border-left: 4px solid #6366f1;
+  }
+
+  &.estado-cancelada {
+    border-left: 4px solid #ef4444;
+  }
+
+  &.estado-progreso {
+    border-left: 4px solid #f59e0b;
+    background: rgba(245, 158, 11, 0.05);
+  }
+}
+
+.online-item-content {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--space-md);
+  align-items: center;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+  }
+}
+
+.online-time {
+  font-weight: 600;
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+.online-item-content .patient-name {
+  font-weight: 600;
+  color: var(--color-foreground);
+}
+
+.online-item-content .therapist {
+  font-size: 13px;
+  color: var(--color-muted-foreground);
+}
+
+.progress-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: var(--radius-xs);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.notes-preview {
+  grid-column: 1 / -1;
+  font-size: 13px;
+  color: var(--color-muted-foreground);
+  margin: var(--space-sm) 0 0;
+  padding: var(--space-sm);
+  background: var(--color-muted);
+  border-radius: var(--radius-xs);
+  border-left: 2px solid var(--color-primary);
 }

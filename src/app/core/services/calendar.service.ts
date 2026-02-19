@@ -10,6 +10,7 @@ import {
   CitaDTO,
   ConfiguracionHorariosDTO,
   EspacioDTO,
+  TicketResponseDTO,
 } from '../models/api-models';
 import { AppointmentSlot, Cubiculo, DayScheduleConfig } from '../models/models';
 import { ErrorHandlerService } from './errorHandler.service';
@@ -24,6 +25,8 @@ export interface CrearCitaDTO {
   modalidad: 'Presencial' | 'Online';
   notas?: string;
   montoPagado?: number;
+  costoAdicional?: number;
+  productos?: ProductoCitaRequest[];
   cuentaDestinoId: number;
 }
 
@@ -37,6 +40,17 @@ export interface ActualizarCitaDTO {
   modalidad?: 'Presencial' | 'Online';
   estadoTicket?: string;
   notas?: string;
+  costoAdicional?: number;
+  productos?: ProductoCitaRequest[];
+}
+
+export interface ProductoCitaRequest {
+  productoId: number;
+  cantidad: number;
+  precioUnitario?: number;
+  tipoUso: 'Venta' | 'Prestamo' | 'Uso';
+  fechaDevolucionEstimada?: string;
+  observaciones?: string;
 }
 
 @Injectable({
@@ -52,6 +66,8 @@ export class CalendarService {
   getCitas(filters?: {
     fechaInicio?: string;
     fechaFin?: string;
+    timeStart?: string;
+    timeEnd?: string;
     espacioId?: number;
     terapeutaId?: number;
     pacienteId?: number;
@@ -59,15 +75,47 @@ export class CalendarService {
   }): Observable<DataResponseDTO<CitaDTO[]>> {
     let params = new HttpParams();
 
-    if (filters?.fechaInicio) params = params.set('fechaInicio', filters.fechaInicio);
-    if (filters?.fechaFin) params = params.set('fechaFin', filters.fechaFin);
+    // Usar timeStart/timeEnd si se proporcionan, sino construir desde fecha
+    let timeStart = filters?.timeStart;
+    let timeEnd = filters?.timeEnd;
+
+    if (!timeStart && filters?.fechaInicio) {
+      timeStart = !filters.fechaInicio.includes('T') 
+        ? `${filters.fechaInicio}T00:00:00` 
+        : filters.fechaInicio;
+    }
+    if (!timeEnd && filters?.fechaFin) {
+      timeEnd = !filters.fechaFin.includes('T') 
+        ? `${filters.fechaFin}T23:59:59` 
+        : filters.fechaFin;
+    }
+
+    if (timeStart) params = params.set('timeStart', timeStart);
+    if (timeEnd) params = params.set('timeEnd', timeEnd);
     if (filters?.espacioId) params = params.set('espacioId', filters.espacioId.toString());
     if (filters?.terapeutaId) params = params.set('terapeutaId', filters.terapeutaId.toString());
     if (filters?.pacienteId) params = params.set('pacienteId', filters.pacienteId.toString());
     if (filters?.estado) params = params.set('estado', filters.estado);
 
-    return this.http.get<DataResponseDTO<CitaDTO[]>>(`${API_BASE}/citas`, { params }).pipe(
-      tap(() => console.log('Citas obtenidas')),
+    return this.http.get<DataResponseDTO<any>>(`${API_BASE}/tickets`, { params }).pipe(
+      map((response) => {
+        console.log('📦 Response del backend:', response);
+        const data = response.data as any;
+        // El backend retorna una Page<TicketFiltroDTO> con propiedad 'content'
+        const items = Array.isArray(data) ? data : data?.content ?? [];
+        console.log('📋 Items extraídos del response:', items);
+        
+        const citas = items
+          .map((ticket: any) => this.mapTicketToCitaDTO(ticket))
+          .filter((item: CitaDTO | null): item is CitaDTO => item !== null);
+
+        console.log('🎬 Citas finales mapeadas:', citas);
+        return {
+          ...response,
+          data: citas,
+        } as DataResponseDTO<CitaDTO[]>;
+      }),
+      tap(() => console.log('Citas obtenidas con filtros:', { timeStart, timeEnd })),
       catchError((error) => {
         this.errorHandler.handleHttpError(error, 'Obtener citas');
         return throwError(() => error);
@@ -334,7 +382,8 @@ export class CalendarService {
     const horaInicio = this.formatTime(fecha);
     const horaFin = this.calculateEndTime(fecha, dto.duracion);
 
-    return {
+    const appointmentSlot: AppointmentSlot = {
+      citaId: dto.ticketId,
       id: String(dto.ticketId),
       fecha: fecha,
       horaInicio: horaInicio,
@@ -345,12 +394,14 @@ export class CalendarService {
       pacienteId: Number(dto.pacienteId),
       terapeutaId: Number(dto.terapeutaId),
       terapeutaNombre: dto.terapeutaNombre,
-      estado: this.mapEstadoCita(dto.estadoTicket),
+      estado: this.mapEstadoCita(dto.estadoTicket) as any,
       notas: dto.notas,
-      // Añadir estas propiedades
       modalidad: dto.modalidad,
       materia: dto.materia,
     };
+    
+    console.log('🎯 AppointmentSlot mapeado:', appointmentSlot);
+    return appointmentSlot;
   }
 
   /**
@@ -360,7 +411,6 @@ export class CalendarService {
     return {
       id: String(dto.espacioId),
       nombre: dto.nombre,
-      tipo: dto.tipo,
       disponible: dto.estaActivo,
       // disponible: dto.estaActivo, //Hay que agregar un && para validar tambien si la hora esta disponible
       costoPorHora: dto.costoPorHora,
@@ -424,24 +474,80 @@ export class CalendarService {
       );
   }
 
-  private mapEstadoCita(estado: string): 'Agendado' | 'Completado' | 'Cancelado' | 'NoAsistio' {
+  private mapEstadoCita(estado: string): 'AGENDADO' | 'COMPLETADO' | 'CANCELADO' | 'BORRADOR' | 'EN_PROGRESO' {
     const estadoMap: Record<string, any> = {
-      Agendado: 'Agendado',
-      Completado: 'Completado',
-      Cancelado: 'Cancelado',
-      NoAsistio: 'NoAsistio',
+      BORRADOR: 'BORRADOR',
+      AGENDADO: 'AGENDADO',
+      EN_PROGRESO: 'EN_PROGRESO',
+      COMPLETADO: 'COMPLETADO',
+      CANCELADO: 'CANCELADO',
     };
-    return estadoMap[estado] || 'Agendado';
+    return estadoMap[estado] || 'BORRADOR';
   }
 
   private mapEstadoToAPI(estado: string): string {
     const estadoMap: Record<string, string> = {
-      Agendado: 'Agendado',
-      Completado: 'Completado',
-      Cancelado: 'Cancelado',
-      NoAsistio: 'NoAsistio',
+      BORRADOR: 'BORRADOR',
+      AGENDADO: 'AGENDADO',
+      EN_PROGRESO: 'EN_PROGRESO',
+      COMPLETADO: 'COMPLETADO',
+      CANCELADO: 'CANCELADO',
     };
-    return estadoMap[estado] || 'Agendado';
+    return estadoMap[estado] || 'BORRADOR';
+  }
+
+  private mapTicketToCitaDTO(ticket: any): CitaDTO | null {
+    // El backend retorna TicketFiltroDTO con estructura simplificada
+    // Campos disponibles: ticketId, folio, pacienteNombre, terapeutaNombre, 
+    // fechaInicioCita, estadoTicket, etc.
+    
+    // ⭐ Validaciones críticas
+    if (!ticket || !ticket.pacienteNombre) {
+      console.warn('⚠️ Ticket sin pacienteNombre:', ticket);
+      return null;
+    }
+
+    // Buscar fecha en diferentes lugares
+    let citaFecha = null;
+    if (ticket.fechaInicioCita) {
+      citaFecha = new Date(ticket.fechaInicioCita);
+      console.log('📅 Usando fechaInicioCita:', ticket.fechaInicioCita);
+    } else if (ticket.fecha) {
+      citaFecha = new Date(ticket.fecha);
+      console.log('📅 Usando fecha:', ticket.fecha);
+    } else if (ticket.fechaCreacion) {
+      citaFecha = new Date(ticket.fechaCreacion);
+      console.log('📅 Usando fechaCreacion como fallback:', ticket.fechaCreacion);
+    } else {
+      console.warn('⚠️ Ticket sin fecha válida:', ticket.ticketId);
+      return null;
+    }
+
+    // ⭐ CRÍTICO: Si no hay espacioId, no se puede mostrar en calendario
+    if (!ticket.espacioId || ticket.espacioId === 0) {
+      console.warn('⚠️ Ticket sin espacioId:', ticket.ticketId, '- No se mostrará en calendario');
+      return null;
+    }
+
+    const citaDTO: CitaDTO = {
+      ticketId: ticket.ticketId || 0,
+      espacioId: ticket.espacioId || 0,
+      espacioNombre: ticket.espacioNombre || 'Cubículo sin nombre',
+      fecha: citaFecha,
+      duracion: ticket.duracion || 60, // Duración por defecto en minutos
+      pacienteId: ticket.pacienteId || 0,
+      pacienteNombre: ticket.pacienteNombre || 'Sin paciente',
+      terapeutaId: ticket.terapeutaId || 0,
+      terapeutaNombre: ticket.terapeutaNombre || 'Sin terapeuta',
+      materia: ticket.materia || '',
+      modalidad: ticket.modalidad || 'Presencial',
+      estadoTicket: ticket.estadoTicket || 'BORRADOR',
+      notas: ticket.notas || '',
+      fechaCreacion: ticket.fechaCreacion ? new Date(ticket.fechaCreacion) : new Date(),
+    };
+    
+    console.log('✅ CitaDTO mapeada exitosamente:', citaDTO);
+    return citaDTO;
   }
 
   /**
@@ -478,6 +584,23 @@ export class CalendarService {
       tap(() => console.log('Citas del paciente obtenidas')),
       catchError((error) => {
         this.errorHandler.handleHttpError(error, 'Obtener citas del paciente');
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Obtener slots de tiempo disponibles para un espacio y fecha específicos
+   */
+  getSlotsDisponibles(espacioId: number, fecha: string): Observable<DataResponseDTO<any>> {
+    let params = new HttpParams()
+      .set('espacioId', espacioId.toString())
+      .set('fecha', fecha);
+
+    return this.http.get<DataResponseDTO<any>>(`${API_BASE}/configuracion-horarios/slots-disponibles`, { params }).pipe(
+      tap(() => console.log('Slots disponibles obtenidos')),
+      catchError((error) => {
+        this.errorHandler.handleHttpError(error, 'Obtener slots disponibles');
         return throwError(() => error);
       })
     );

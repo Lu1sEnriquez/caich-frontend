@@ -27,24 +27,47 @@ export enum UserStatus {
 
 /**
  * Estados de ticket según la API
- * API values: "Agendado", "Completado", "Cancelado", "NoAsistio"
+ * API values: "BORRADOR", "AGENDADO", "EN_PROGRESO", "COMPLETADO", "CANCELADO"
  */
 export enum TicketStatus {
-  AGENDADO = 'Agendado',
-  COMPLETADO = 'Completado',
-  CANCELADO = 'Cancelado',
-  NO_ASISTIO = 'NoAsistio',
+  BORRADOR = 'BORRADOR',
+  AGENDADO = 'AGENDADO',
+  EN_PROGRESO = 'EN_PROGRESO',
+  COMPLETADO = 'COMPLETADO',
+  CANCELADO = 'CANCELADO',
 }
 
 /**
- * Estados de pago según la API
- * API values: "Pendiente", "Pagado", "Verificado", "Rechazado"
+ * Estados financieros del ticket según la API
+ * API values: "PENDIENTE", "PAGO_PARCIAL", "EN_REVISION", "PAGADO", "REEMBOLSADO"
  */
-export enum PaymentStatus {
-  PENDIENTE = 'Pendiente',
-  PAGADO = 'Pagado',
-  VERIFICADO = 'Verificado',
-  RECHAZADO = 'Rechazado',
+export enum FinancialStatus {
+  PENDIENTE = 'PENDIENTE',
+  PAGO_PARCIAL = 'PAGO_PARCIAL',
+  EN_REVISION = 'EN_REVISION',
+  PAGADO = 'PAGADO',
+  REEMBOLSADO = 'REEMBOLSADO',
+}
+
+/**
+ * Estados de la transaccion de pago según la API
+ * API values: "PENDIENTE_REVISION", "APROBADO", "RECHAZADO"
+ */
+export enum TransactionStatus {
+  PENDIENTE_REVISION = 'PENDIENTE_REVISION',
+  APROBADO = 'APROBADO',
+  RECHAZADO = 'RECHAZADO',
+}
+
+/**
+ * Metodos de pago según la API
+ * API values: "EFECTIVO", "TRANSFERENCIA", "DEPOSITO", "TARJETA"
+ */
+export enum PaymentMethod {
+  EFECTIVO = 'EFECTIVO',
+  TRANSFERENCIA = 'TRANSFERENCIA',
+  DEPOSITO = 'DEPOSITO',
+  TARJETA = 'TARJETA',
 }
 
 /**
@@ -158,45 +181,89 @@ export function parseUserStatus(value: string): UserStatus {
 export function parseTicketStatus(value: string): TicketStatus {
   const normalized = value.trim();
   switch (normalized) {
+    case 'BORRADOR':
+      return TicketStatus.BORRADOR;
     case 'Agendado':
     case 'AGENDADO':
       return TicketStatus.AGENDADO;
+    case 'EN_PROGRESO':
+      return TicketStatus.EN_PROGRESO;
     case 'Completado':
     case 'COMPLETADO':
       return TicketStatus.COMPLETADO;
     case 'Cancelado':
     case 'CANCELADO':
       return TicketStatus.CANCELADO;
-    case 'NoAsistio':
-    case 'NO_ASISTIO':
-      return TicketStatus.NO_ASISTIO;
     default:
-      console.warn(`Estado de ticket desconocido: ${value}, usando Agendado por defecto`);
-      return TicketStatus.AGENDADO;
+      console.warn(`Estado de ticket desconocido: ${value}, usando BORRADOR por defecto`);
+      return TicketStatus.BORRADOR;
   }
 }
 
 /**
- * Convierte un valor de estado de pago de la API al enum
+ * Convierte un valor de estado financiero de la API al enum
  */
-export function parsePaymentStatus(value: string): PaymentStatus {
+export function parseFinancialStatus(value: string): FinancialStatus {
   const normalized = value.trim();
   switch (normalized) {
     case 'Pendiente':
     case 'PENDIENTE':
-      return PaymentStatus.PENDIENTE;
+      return FinancialStatus.PENDIENTE;
+    case 'PagoParcial':
+    case 'Pago Parcial':
+    case 'PAGO_PARCIAL':
+      return FinancialStatus.PAGO_PARCIAL;
+    case 'EnRevision':
+    case 'En Revision':
+    case 'EN_REVISION':
+      return FinancialStatus.EN_REVISION;
     case 'Pagado':
     case 'PAGADO':
-      return PaymentStatus.PAGADO;
-    case 'Verificado':
-    case 'VERIFICADO':
-      return PaymentStatus.VERIFICADO;
-    case 'Rechazado':
-    case 'RECHAZADO':
-      return PaymentStatus.RECHAZADO;
+      return FinancialStatus.PAGADO;
+    case 'Reembolsado':
+    case 'REEMBOLSADO':
+      return FinancialStatus.REEMBOLSADO;
     default:
-      console.warn(`Estado de pago desconocido: ${value}, usando Pendiente por defecto`);
-      return PaymentStatus.PENDIENTE;
+      console.warn(`Estado financiero desconocido: ${value}, usando PENDIENTE por defecto`);
+      return FinancialStatus.PENDIENTE;
+  }
+}
+
+/**
+ * Convierte un valor de estado de transaccion de la API al enum
+ */
+export function parseTransactionStatus(value: string): TransactionStatus {
+  const normalized = value.trim();
+  switch (normalized) {
+    case 'PENDIENTE_REVISION':
+      return TransactionStatus.PENDIENTE_REVISION;
+    case 'APROBADO':
+      return TransactionStatus.APROBADO;
+    case 'RECHAZADO':
+      return TransactionStatus.RECHAZADO;
+    default:
+      console.warn(`Estado de transaccion desconocido: ${value}, usando PENDIENTE_REVISION por defecto`);
+      return TransactionStatus.PENDIENTE_REVISION;
+  }
+}
+
+/**
+ * Convierte un valor de metodo de pago de la API al enum
+ */
+export function parsePaymentMethod(value: string): PaymentMethod {
+  const normalized = value.trim();
+  switch (normalized) {
+    case 'EFECTIVO':
+      return PaymentMethod.EFECTIVO;
+    case 'TRANSFERENCIA':
+      return PaymentMethod.TRANSFERENCIA;
+    case 'DEPOSITO':
+      return PaymentMethod.DEPOSITO;
+    case 'TARJETA':
+      return PaymentMethod.TARJETA;
+    default:
+      console.warn(`Metodo de pago desconocido: ${value}, usando EFECTIVO por defecto`);
+      return PaymentMethod.EFECTIVO;
   }
 }
 

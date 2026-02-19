@@ -77,6 +77,11 @@
           <p class="section-subtitle">{{ formatMonthYear(currentMonth()) }}</p>
         </div>
         <div class="month-nav">
+          @if (isAdmin()) {
+          <app-button variant="outline" size="sm" (clicked)="goToEspacios()">
+            🧩 Gestionar cubículos
+          </app-button>
+          }
           <button class="nav-btn" (click)="previousMonth()">Mes anterior</button>
           <button class="nav-btn" (click)="nextMonth()">Siguiente mes</button>
         </div>

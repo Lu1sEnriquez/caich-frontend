@@ -11,6 +11,7 @@ import { RegisterComponent } from './features/auth/components/register.component
 import { SpacesManagementComponent } from './features/admin/components/spaces-management/spaces-management.component';
 import { BankAccountsManagementComponent } from './features/admin/components/bank-accounts-management/bank-accounts-management.component';
 import { Inventory } from './features/inventario/inventory/inventory';
+import { TicketsComponent } from './features/tickets/tickets.component';
 import { authGuard, roleGuard, guestGuard, permissionGuard } from './core/guards/guards';
 import { UserRole } from './core/models/enums';
 
@@ -49,6 +50,24 @@ export const routes: Routes = [
     loadComponent: () => CalendarComponent,
     canActivate: [authGuard],
     title: 'Calendario - MindCare',
+  },
+
+  // Tickets - Todos los usuarios autenticados
+  {
+    path: 'tickets',
+    loadComponent: () => TicketsComponent,
+    canActivate: [authGuard],
+    title: 'Gestión de Tickets - MindCare',
+  },
+
+  {
+    path: 'tickets/nuevo',
+    loadComponent: () =>
+      import('./features/tickets/components/ticket-create/ticket-create.component').then(
+        (m) => m.TicketCreateComponent
+      ),
+    canActivate: [authGuard, roleGuard([UserRole.ADMINISTRADOR, UserRole.TERAPEUTA])],
+    title: 'Nueva Operación - MindCare',
   },
 
   // Detalle de Cita - Todos los usuarios autenticados

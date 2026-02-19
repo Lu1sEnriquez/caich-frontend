@@ -1,0 +1,356 @@
+<div class="ticket-builder">
+  <!-- HEADER -->
+  <header class="page-header">
+    <button class="btn-back" (click)="goBack()">
+      <span>←</span> Volver
+    </button>
+    <div class="header-title">
+      <p class="kicker">NUEVO TICKET</p>
+      <h1>Constructor Modular</h1>
+      <span class="subtitle">Agrega módulos dinámicamente según necesites</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn-secondary" (click)="saveTicket('BORRADOR')" [disabled]="loading()">
+        💾 Borrador
+      </button>
+      <button class="btn-primary" (click)="saveTicket('AGENDADO')" [disabled]="loading()">
+        ✅ Generar y Cobrar
+      </button>
+    </div>
+  </header>
+
+  <!-- BUILDER GRID: 70% Canvas + 30% Sidebar -->
+  <div class="builder-grid">
+    
+    <!-- CANVAS (70%) -->
+    <div class="canvas">
+      
+      <!-- MODULE ACTIONS TOOLBAR -->
+      <div class="module-toolbar">
+        <h3>Agregar módulos</h3>
+        <div class="module-actions">
+          <button class="btn-module" (click)="addModule('CITA')" [disabled]="hasCitaModule()">
+            📅 Cita
+          </button>
+          <button class="btn-module" (click)="addModule('VENTA')">
+            🛒 Venta
+          </button>
+          <button class="btn-module" (click)="addModule('ESPACIO')">
+            📍 Espacio
+          </button>
+          <button class="btn-module" (click)="addModule('PRESTAMO')">
+            📦 Préstamo
+          </button>
+        </div>
+        <p class="hint" *ngIf="hasPresencialCita()">
+          💡 Cita presencial detectada: asegúrate de reservar un cubículo
+        </p>
+      </div>
+
+      <!-- DYNAMIC MODULE CARDS -->
+      <div class="active-cards">
+        
+        @for (module of activeModules(); track module.id) {
+          
+          <!-- CITA CARD -->
+          @if (module.type === 'CITA') {
+            <div class="card card-cita">
+              <div class="card-header">
+                <h4>📅 Agendar Cita</h4>
+                <button class="btn-remove" (click)="removeModule(module.id)">🗑️</button>
+              </div>
+              <div class="card-body">
+                @let data = $any(module.data);
+                
+                <div class="form-row">
+                  <label>
+                    Modalidad
+                    <select [(ngModel)]="data.modalidad" (ngModelChange)="updateModuleData(module.id, data)">
+                      <option value="Presencial">📍 Presencial</option>
+                      <option value="Online">💻 Online</option>
+                    </select>
+                  </label>
+                  
+                  <label>
+                    Paciente *
+                    <select [(ngModel)]="data.pacienteId" (ngModelChange)="updateModuleData(module.id, data)">
+                      <option [ngValue]="0">Seleccionar...</option>
+                      @for (p of pacientes(); track p.usuarioId) {
+                        <option [ngValue]="p.usuarioId">{{ p.nombreCompleto }}</option>
+                      }
+                    </select>
+                  </label>
+                  
+                  <label>
+                    Terapeuta *
+                    <select [(ngModel)]="data.terapeutaId" (ngModelChange)="updateModuleData(module.id, data)">
+                      <option [ngValue]="0">Seleccionar...</option>
+                      @for (t of terapeutas(); track t.usuarioId) {
+                        <option [ngValue]="t.usuarioId">{{ t.nombreCompleto }}</option>
+                      }
+                    </select>
+                  </label>
+                </div>
+                
+                <div class="form-row">
+                  <label>
+                    Fecha y Hora Inicio *
+                    <input type="datetime-local" [(ngModel)]="data.fechaInicio" (ngModelChange)="updateModuleData(module.id, data)" />
+                  </label>
+                  
+                  <label>
+                    Fecha y Hora Fin *
+                    <input type="datetime-local" [(ngModel)]="data.fechaFin" (ngModelChange)="updateModuleData(module.id, data)" />
+                  </label>
+                  
+                  <label>
+                    Precio Cobrado
+                    <input type="number" min="0" [(ngModel)]="data.precioCobrado" (ngModelChange)="updateModuleData(module.id, data)" />
+                  </label>
+                </div>
+                
+                <div class="form-row full">
+                  <label>
+                    Notas de Terapia
+                    <textarea rows="3" [(ngModel)]="data.notasTerapia" (ngModelChange)="updateModuleData(module.id, data)"></textarea>
+                  </label>
+                </div>
+                
+                @if (data.modalidad === 'Presencial' && !hasEspacioModule()) {
+                  <div class="alert alert-warning">
+                    ⚠️ Las citas presenciales requieren un cubículo. Agrega un módulo de "Espacio".
+                  </div>
+                }
+              </div>
+            </div>
+          }
+          
+          <!-- VENTA CARD -->
+          @if (module.type === 'VENTA') {
+            <div class="card card-venta">
+              <div class="card-header">
+                <h4>🛒 Venta de Productos</h4>
+                <button class="btn-remove" (click)="removeModule(module.id)">🗑️</button>
+              </div>
+              <div class="card-body">
+                @let data = $any(module.data);
+                
+                <button class="btn-add-row" (click)="addVentaRow(module.id)">+ Agregar producto</button>
+                
+                @for (item of data.items; track $index; let i = $index) {
+                  <div class="product-row">
+                    <select [(ngModel)]="item.productoId" (ngModelChange)="onProductoVentaChange(module.id, i, $event)">
+                      <option [ngValue]="0">Producto...</option>
+                      @for (p of productosCatalogo(); track p.productoId) {
+                        <option [ngValue]="p.productoId">{{ p.nombre }} ({{ p.precio | currency }})</option>
+                      }
+                    </select>
+                    
+                    <input type="number" min="1" [(ngModel)]="item.cantidad" placeholder="Cant." (ngModelChange)="updateModuleData(module.id, data)" />
+                    
+                    <input type="number" min="0" [(ngModel)]="item.precioUnitario" placeholder="Precio" (ngModelChange)="updateModuleData(module.id, data)" />
+                    
+                    <span class="subtotal">{{ (item.cantidad * item.precioUnitario) | currency }}</span>
+                    
+                    <button class="btn-remove-row" (click)="removeVentaRow(module.id, i)">🗑️</button>
+                  </div>
+                }
+                
+                @if (data.items.length === 0) {
+                  <p class="empty-state">No hay productos agregados</p>
+                }
+              </div>
+            </div>
+          }
+          
+          <!-- ESPACIO CARD -->
+          @if (module.type === 'ESPACIO') {
+            <div class="card card-espacio">
+              <div class="card-header">
+                <h4>📍 Reserva de Espacio</h4>
+                <button class="btn-remove" (click)="removeModule(module.id)">🗑️</button>
+              </div>
+              <div class="card-body">
+                @let data = $any(module.data);
+                
+                <div class="form-row">
+                  <label>
+                    Espacio / Cubículo *
+                    <select [(ngModel)]="data.espacioId" (ngModelChange)="onEspacioChanged(module.id, $event)">
+                      <option [ngValue]="0">Seleccionar...</option>
+                      @for (e of espaciosCatalogo(); track e.espacioId) {
+                        <option [ngValue]="e.espacioId">{{ e.nombre }}</option>
+                      }
+                    </select>
+                  </label>
+                  
+                  <label>
+                    Fecha *
+                    <input type="date" [(ngModel)]="data.fecha" (ngModelChange)="onEspacioFechaChanged(module.id, $event)" />
+                  </label>
+                  
+                  <label>
+                    Costo Cobrado
+                    <input type="number" min="0" [(ngModel)]="data.costoCobrado" (ngModelChange)="updateModuleData(module.id, data)" />
+                  </label>
+                </div>
+                
+                <!-- TIME SLOTS FROM API -->
+                @if (data.espacioId && data.fecha) {
+                  <div class="form-row">
+                    <label>
+                      Hora Inicio *
+                      @if (data.loadingSlots) {
+                        <span class="loading">Cargando horarios...</span>
+                      } @else {
+                        <select [(ngModel)]="data.horaInicio" (ngModelChange)="updateModuleData(module.id, data)">
+                          <option value="">Seleccionar...</option>
+                          @for (slot of data.availableSlots; track slot.horaInicio) {
+                            <option [value]="slot.horaInicio">{{ slot.horaInicio }} - {{ slot.horaFin }}</option>
+                          }
+                        </select>
+                      }
+                      @if (!data.loadingSlots && data.availableSlots.length === 0) {
+                        <span class="no-slots">Sin horarios disponibles</span>
+                      }
+                    </label>
+                    
+                    <label>
+                      Hora Fin *
+                      @if (data.loadingSlots) {
+                        <span class="loading">Cargando horarios...</span>
+                      } @else {
+                        <select [(ngModel)]="data.horaFin" (ngModelChange)="updateModuleData(module.id, data)">
+                          <option value="">Seleccionar...</option>
+                          @for (slot of data.availableSlots; track slot.horaFin) {
+                            <option [value]="slot.horaFin">{{ slot.horaFin }}</option>
+                          }
+                        </select>
+                      }
+                    </label>
+                  </div>
+                } @else {
+                  <p class="hint">Selecciona un espacio y fecha para ver horarios disponibles</p>
+                }
+              </div>
+            </div>
+          }
+          
+          <!-- PRESTAMO CARD -->
+          @if (module.type === 'PRESTAMO') {
+            <div class="card card-prestamo">
+              <div class="card-header">
+                <h4>📦 Préstamo de Equipo</h4>
+                <button class="btn-remove" (click)="removeModule(module.id)">🗑️</button>
+              </div>
+              <div class="card-body">
+                @let data = $any(module.data);
+                
+                <button class="btn-add-row" (click)="addPrestamoRow(module.id)">+ Agregar préstamo</button>
+                
+                @for (item of data.items; track $index; let i = $index) {
+                  <div class="prestamo-row">
+                    <select [(ngModel)]="item.productoId" (ngModelChange)="updateModuleData(module.id, data)">
+                      <option [ngValue]="0">Producto...</option>
+                      @for (p of productosCatalogo(); track p.productoId) {
+                        <option [ngValue]="p.productoId">{{ p.nombre }}</option>
+                      }
+                    </select>
+                    
+                    <select [(ngModel)]="item.responsableId" (ngModelChange)="updateModuleData(module.id, data)">
+                      <option [ngValue]="0">Responsable...</option>
+                      @for (pac of pacientes(); track pac.usuarioId) {
+                        <option [ngValue]="pac.usuarioId">{{ pac.nombreCompleto }}</option>
+                      }
+                    </select>
+                    
+                    <input type="datetime-local" [(ngModel)]="item.fechaPrestamo" placeholder="Préstamo" (ngModelChange)="updateModuleData(module.id, data)" />
+                    
+                    <input type="datetime-local" [(ngModel)]="item.fechaDevolucionEstimada" placeholder="Devolución" (ngModelChange)="updateModuleData(module.id, data)" />
+                    
+                    <button class="btn-remove-row" (click)="removePrestamoRow(module.id, i)">🗑️</button>
+                  </div>
+                }
+                
+                @if (data.items.length === 0) {
+                  <p class="empty-state">No hay préstamos agregados</p>
+                }
+              </div>
+            </div>
+          }
+        }
+        
+        @if (activeModules().length === 0) {
+          <div class="empty-builder">
+            <div class="empty-icon">📋</div>
+            <h3>Canvas vacío</h3>
+            <p>Comienza agregando módulos con los botones de arriba</p>
+          </div>
+        }
+      </div>
+    </div>
+    
+    <!-- SIDEBAR RESUMEN (30%) -->
+    <aside class="sidebar">
+      <div class="sidebar-sticky">
+        <h3>📊 Resumen</h3>
+        
+        <div class="summary-section">
+          <div class="summary-row">
+            <span>Cita</span>
+            <span class="amount">{{ totalCita() | currency }}</span>
+          </div>
+          
+          <div class="summary-row">
+            <span>Ventas</span>
+            <span class="amount">{{ totalVentas() | currency }}</span>
+          </div>
+          
+          <div class="summary-row">
+            <span>Espacios</span>
+            <span class="amount">{{ totalEspacios() | currency }}</span>
+          </div>
+          
+          <hr />
+          
+          <div class="summary-row">
+            <label>
+              Costo Adicional
+              <input type="number" min="0" [(ngModel)]="costoAdicional" (ngModelChange)="costoAdicional.set($event)" />
+            </label>
+          </div>
+          
+          <div class="summary-row">
+            <label>
+              Motivo
+              <input type="text" [(ngModel)]="motivoCostoAdicional" (ngModelChange)="motivoCostoAdicional.set($event)" placeholder="Opcional" />
+            </label>
+          </div>
+          
+          <hr />
+          
+          <div class="summary-total">
+            <span>TOTAL</span>
+            <span class="total-amount">{{ totalGeneral() | currency }}</span>
+          </div>
+        </div>
+        
+        @if (errorMessage()) {
+          <div class="alert alert-error">
+            {{ errorMessage() }}
+          </div>
+        }
+        
+        <div class="sidebar-actions">
+          <button class="btn-secondary full-width" (click)="saveTicket('BORRADOR')" [disabled]="loading()">
+            💾 Guardar Borrador
+          </button>
+          <button class="btn-primary full-width" (click)="saveTicket('AGENDADO')" [disabled]="loading()">
+            ✅ Generar y Cobrar
+          </button>
+        </div>
+      </div>
+    </aside>
+    
+  </div>
+</div>

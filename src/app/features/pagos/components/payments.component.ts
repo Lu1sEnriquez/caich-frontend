@@ -5,7 +5,7 @@ import { CardComponent } from '../../../shared/components/ui/card/card.component
 import { ButtonComponent } from '../../../shared/components/ui/button/button.component';
 import { BadgeComponent } from '../../../shared/components/ui/badge/badge.component';
 
-import { PaymentsService, RegistrarPagoDTO } from '../../../core/services/payments.service';
+import { PaymentsService } from '../../../core/services/payments.service';
 import { TicketsService } from '../../../core/services/tickets.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserRole } from '../../../core/models/enums';
@@ -13,6 +13,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
 import { BankAccount, FilterOptions, Payment } from '../../../core/models/models';
 import { formatDisplayDate, formatMonto } from '../../../core/utils';
+import { PagoRequestDTO } from '../../../core/models/api-models';
 
 @Component({
   selector: 'app-payments',
@@ -35,7 +36,7 @@ export class PaymentsComponent {
   showNewPaymentDialog = signal(false);
   uploadedFile = signal<File | null>(null);
   selectedPayment = signal<Payment | null>(null);
-  newStatus = signal('Pendiente');
+  newStatus = signal('PENDIENTE_REVISION');
   statusNotes = signal('');
   statusComprobante = signal<File | null>(null);
   statusConcepto = signal('');
@@ -92,18 +93,26 @@ export class PaymentsComponent {
 
       const filters: any = {};
 
-      // Si es paciente, solo sus pagos
-      //TODO: mandar el id correcto
       if (this.isPaciente()) {
-        return this.ticketsService.getTickets({ pacienteId: 1 });
+        return of({
+          status: 'success',
+          data: {
+            content: [],
+            totalElements: 0,
+            totalPages: 0,
+            size: 0,
+            number: 0,
+            first: true,
+            last: true,
+            empty: true,
+          },
+        } as any);
       }
 
-      // Si es admin, filtros opcionales
       if (params.filters.estado) {
-        filters.estadoPago = params.filters.estado as any;
+        filters.estado = params.filters.estado as any;
       }
 
-      // Agregar filtros de fecha
       if (params.filters.fechaInicio) {
         filters.fechaInicio = params.filters.fechaInicio;
       }
@@ -112,7 +121,7 @@ export class PaymentsComponent {
         filters.fechaFin = params.filters.fechaFin;
       }
 
-      return this.ticketsService.getTickets(filters);
+      return this.paymentsService.getPayments(filters);
     },
   });
 
@@ -122,16 +131,23 @@ export class PaymentsComponent {
     if (!response) return [];
 
     const responseData = response as any;
-    return responseData.data.content.map((dto: any) => ({
-      id: dto.ticketId,
-      folio: dto.folio,
-      paciente: dto.pacienteNombre,
-      terapeuta: dto.terapeutaNombre,
-      monto: dto.costoTotal || 0,
-      fechaPago: new Date(dto.fecha),
-      status: dto.estadoPago,
+    return (responseData.data.content || []).map((dto: any) => ({
+      id: String(dto.pagoId),
+      folio: dto.ticketFolio,
+      nombre: dto.ticketFolio,
+      status: dto.estado,
+      pagoId: dto.pagoId,
+      ticketId: dto.ticketId,
+      ticketFolio: dto.ticketFolio,
+      monto: dto.monto || 0,
       metodoPago: dto.metodoPago,
-      cuenta: dto.cuentaDestinoNombre,
+      comprobanteUrl: dto.comprobanteUrl,
+      referencia: dto.referencia,
+      estado: dto.estado,
+      motivoRechazo: dto.motivoRechazo,
+      verificadoPorNombre: dto.verificadoPorNombre,
+      fechaPago: dto.fechaPago ? new Date(dto.fechaPago) : undefined,
+      fechaCreacion: dto.fechaCreacion ? new Date(dto.fechaCreacion) : undefined,
     }));
   });
 
@@ -139,11 +155,11 @@ export class PaymentsComponent {
   summary = computed(() => {
     const allPayments = this.payments();
     return {
-      pendientes: allPayments.filter((p: any) => p.status === 'Pendiente').length,
-      aprobados: allPayments.filter((p: any) => p.status === 'Pagado').length,
-      rechazados: allPayments.filter((p: any) => p.status === 'Rechazado').length,
+      pendientes: allPayments.filter((p: any) => p.estado === 'PENDIENTE_REVISION').length,
+      aprobados: allPayments.filter((p: any) => p.estado === 'APROBADO').length,
+      rechazados: allPayments.filter((p: any) => p.estado === 'RECHAZADO').length,
       totalPendiente: allPayments
-        .filter((p: any) => p.status === 'Pendiente')
+        .filter((p: any) => p.estado === 'PENDIENTE_REVISION')
         .reduce((sum: any, p: any) => sum + p.monto, 0),
     };
   });
@@ -172,20 +188,14 @@ export class PaymentsComponent {
 
       const form = this.uploadForm();
 
-      const data: RegistrarPagoDTO = {
+      const data: PagoRequestDTO = {
         ticketId: form.ticketId,
         monto: form.monto,
         metodoPago: form.metodoPago,
-        fechaPago: form.fechaPago,
-        notas: form.notas || undefined,
+        referencia: form.notas || undefined,
       };
 
-      //TODO: Ajustar el else
-      // if (this.isPaciente()) {
-      return this.paymentsService.registerOwnPayment(data);
-      // } else {
-      // return this.paymentsService.createTicket(data);
-      // }
+      return this.paymentsService.registerPayment(data);
     },
   });
 
@@ -198,15 +208,13 @@ export class PaymentsComponent {
       const payment = this.selectedPayment();
       if (!payment) return of(null);
 
-      const estadoPago = this.newStatus() as any;
+      const estadoPago = this.newStatus();
 
-      return this.paymentsService.updatePaymentStatus(
-        payment.id,
-        estadoPago,
-        this.statusNotes(),
-        this.statusComprobante() || undefined,
-        this.statusConcepto() || undefined
-      );
+      if (estadoPago === 'APROBADO') {
+        return this.paymentsService.approvePayment(payment.pagoId);
+      }
+
+      return this.paymentsService.rejectPayment(payment.pagoId, this.statusNotes() || '');
     },
   });
 
@@ -221,13 +229,6 @@ export class PaymentsComponent {
 
     console.log('💰 Registrando pago...');
 
-    // Validar formato de fecha
-    const fechaPago = this.uploadForm().fechaPago;
-    if (!fechaPago) {
-      alert('La fecha de pago es requerida');
-      return;
-    }
-
     this.createPaymentTrigger.update((v) => v + 1);
 
     const checkResult = () => {
@@ -235,41 +236,9 @@ export class PaymentsComponent {
         console.log('Pago registrado exitosamente');
 
         const response = this.createPaymentResource.value()!;
-        const ticketId = response.data?.ticketId;
-
-        if (!ticketId) {
-          alert('Pago registrado pero no se pudo obtener el ID del ticket');
-          this.resetForm();
-          this.paymentsTrigger.update((v) => v + 1);
-          return;
-        }
-
-        // Subir comprobante si hay archivo
-        const file = this.uploadedFile();
-
-        if (file) {
-          console.log('📎 Subiendo comprobante...');
-          this.paymentsService.uploadComprobante(ticketId, file).subscribe({
-            next: () => {
-              console.log('Comprobante subido');
-              alert('Pago registrado y comprobante subido exitosamente');
-              this.resetForm();
-              this.paymentsTrigger.update((v) => v + 1);
-            },
-            error: (error) => {
-              console.error('Error al subir comprobante:', error);
-              alert(
-                'Pago registrado, pero hubo un error al subir el comprobante.\n\nPuedes intentar subirlo mas tarde desde la seccion de detalles del pago.'
-              );
-              this.resetForm();
-              this.paymentsTrigger.update((v) => v + 1);
-            },
-          });
-        } else {
-          alert('Pago registrado exitosamente');
-          this.resetForm();
-          this.paymentsTrigger.update((v) => v + 1);
-        }
+        alert('Pago registrado exitosamente');
+        this.resetForm();
+        this.paymentsTrigger.update((v) => v + 1);
       } else if (!this.createPaymentResource.isLoading() && !this.createPaymentResource.error()) {
         setTimeout(checkResult, 100);
       } else if (this.createPaymentResource.error()) {
@@ -454,25 +423,12 @@ export class PaymentsComponent {
 
   viewComprobante(): void {
     const payment = this.selectedPayment();
-    if (!payment || !payment.comprobante) {
+    if (!payment?.comprobanteUrl) {
       alert('No hay comprobante disponible');
       return;
     }
 
-    this.paymentsService.viewComprobante(payment.id).subscribe({
-      next: (blob) => {
-        // Crear URL para el blob y abrir en nueva pestaña
-        const url = window.URL.createObjectURL(blob);
-        window.open(url, '_blank');
-
-        // Limpiar la URL después de un tiempo
-        setTimeout(() => window.URL.revokeObjectURL(url), 1000);
-      },
-      error: (error) => {
-        console.error('Error al obtener comprobante:', error);
-        alert('Error al cargar el comprobante');
-      },
-    });
+    window.open(payment.comprobanteUrl, '_blank');
   }
 
   // ============================================
@@ -590,7 +546,11 @@ export class PaymentsComponent {
     return result.length;
   }
 
-  formatDate(date: Date): string {
+  formatDate(date?: Date): string {
+    if (!date) {
+      return '-';
+    }
+
     return formatDisplayDate(date);
   }
 
@@ -635,7 +595,7 @@ export class PaymentsComponent {
     }
 
     this.selectedPayment.set(payment);
-    this.newStatus.set(payment.status);
+    this.newStatus.set(payment.status || 'PENDIENTE_REVISION');
     this.statusNotes.set('');
     this.showStatusDialog.set(true);
   }
@@ -643,7 +603,7 @@ export class PaymentsComponent {
   closeStatusDialog(): void {
     this.showStatusDialog.set(false);
     this.selectedPayment.set(null);
-    this.newStatus.set('Pendiente');
+    this.newStatus.set('PENDIENTE_REVISION');
     this.statusNotes.set('');
     this.statusComprobante.set(null);
     this.statusConcepto.set('');

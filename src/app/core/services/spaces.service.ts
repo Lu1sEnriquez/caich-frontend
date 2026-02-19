@@ -2,11 +2,11 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_BASE } from './api.config';
+import { DataResponseDTO } from '../models/api-models';
 
 export interface EspacioDTO {
   espacioId?: number;
   nombre: string;
-  tipo: string;
   descripcion?: string;
   capacidad: number;
   costoPorHora: number;
@@ -15,12 +15,17 @@ export interface EspacioDTO {
 
 export interface CrearEspacioDTO {
   nombre: string;
-  tipo: string;
   descripcion?: string;
   capacidad: number;
   costoPorHora: number;
   estaActivo?: boolean;
 }
+
+export interface ActualizarEspacioDTO extends Partial<CrearEspacioDTO> {}
+
+// Respuestas tipadas del API
+export interface EspacioResponse extends DataResponseDTO<EspacioDTO> {}
+export interface EspaciosListResponse extends DataResponseDTO<EspacioDTO[]> {}
 
 @Injectable({
   providedIn: 'root',
@@ -32,73 +37,59 @@ export class SpacesService {
   /**
    * Obtener todos los espacios
    */
-  getAll(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/espacios`);
+  getAll(): Observable<EspaciosListResponse> {
+    return this.http.get<EspaciosListResponse>(`${this.apiUrl}/espacios`);
   }
 
   /**
    * Obtener espacios activos
    */
-  getActive(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/espacios/activos`);
-  }
-
-  /**
-   * Obtener espacios por tipo
-   */
-  getByType(tipo: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/espacios/tipo/${tipo}`);
+  getActive(): Observable<EspaciosListResponse> {
+    return this.http.get<EspaciosListResponse>(`${this.apiUrl}/espacios/activos`);
   }
 
   /**
    * Obtener espacio por ID
    */
-  getById(espacioId: number): Observable<any> {
-    return this.http.get(`${this.apiUrl}/espacios/${espacioId}`);
+  getById(espacioId: number): Observable<EspacioResponse> {
+    return this.http.get<EspacioResponse>(`${this.apiUrl}/espacios/${espacioId}`);
   }
 
   /**
    * Crear nuevo espacio
    */
-  create(data: CrearEspacioDTO): Observable<any> {
-    return this.http.post(`${this.apiUrl}/espacios`, data);
+  create(data: CrearEspacioDTO): Observable<EspacioResponse> {
+    return this.http.post<EspacioResponse>(`${this.apiUrl}/espacios`, data);
   }
 
   /**
    * Actualizar espacio
    */
-  update(espacioId: number, data: Partial<EspacioDTO>): Observable<any> {
-    return this.http.put(`${this.apiUrl}/espacios/${espacioId}`, data);
+  update(espacioId: number, data: ActualizarEspacioDTO): Observable<EspacioResponse> {
+    return this.http.put<EspacioResponse>(`${this.apiUrl}/espacios/${espacioId}`, data);
   }
 
   /**
    * Cambiar estado del espacio
    */
-  changeStatus(espacioId: number, estaActivo: boolean): Observable<any> {
-    return this.http.put(`${this.apiUrl}/espacios/${espacioId}/estado`, null, {
+  changeStatus(espacioId: number, estaActivo: boolean): Observable<EspacioResponse> {
+    return this.http.put<EspacioResponse>(`${this.apiUrl}/espacios/${espacioId}/estado`, null, {
       params: { estaActivo },
     });
-  }
-
-  /**
-   * Obtener tipos de espacios disponibles
-   */
-  getTypes(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/espacios/tipos`);
   }
 
   /**
    * Eliminar espacio
    */
   delete(espacioId: number): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/espacios/${espacioId}`);
+    return this.http.delete<any>(`${this.apiUrl}/espacios/${espacioId}`);
   }
 
   /**
    * Obtener espacios disponibles por capacidad mínima
    */
-  getAvailableByCapacity(capacidadMinima: number): Observable<any> {
-    return this.http.get(`${this.apiUrl}/espacios/disponibles`, {
+  getAvailableByCapacity(capacidadMinima: number): Observable<EspaciosListResponse> {
+    return this.http.get<EspaciosListResponse>(`${this.apiUrl}/espacios/disponibles`, {
       params: { capacidadMinima },
     });
   }

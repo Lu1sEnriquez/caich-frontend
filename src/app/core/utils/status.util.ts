@@ -7,7 +7,7 @@ import {
   UserRole,
   UserStatus,
   TicketStatus,
-  PaymentStatus,
+  FinancialStatus,
   SpaceType,
   ProductCategory,
   LoanStatus,
@@ -116,34 +116,40 @@ export function getUserStatusBadgeClass(status: UserStatus): string {
 /**
  * Obtiene el label amigable para un estado de ticket
  */
-export function getTicketStatusLabel(status: TicketStatus): string {
-  switch (status) {
+export function getTicketStatusLabel(status: TicketStatus | string): string {
+  const normalized = String(status).toUpperCase();
+  switch (normalized) {
+    case TicketStatus.BORRADOR:
+      return 'Borrador';
     case TicketStatus.AGENDADO:
       return 'Agendado';
+    case TicketStatus.EN_PROGRESO:
+      return 'En progreso';
     case TicketStatus.COMPLETADO:
       return 'Completado';
     case TicketStatus.CANCELADO:
       return 'Cancelado';
-    case TicketStatus.NO_ASISTIO:
-      return 'No Asistió';
     default:
-      return status;
+      return normalized || String(status);
   }
 }
 
 /**
  * Obtiene el color/badge para un estado de ticket
  */
-export function getTicketStatusBadgeClass(status: TicketStatus): string {
-  switch (status) {
+export function getTicketStatusBadgeClass(status: TicketStatus | string): string {
+  const normalized = String(status).toUpperCase();
+  switch (normalized) {
+    case TicketStatus.BORRADOR:
+      return 'badge-secondary';
     case TicketStatus.AGENDADO:
       return 'badge-warning';
+    case TicketStatus.EN_PROGRESO:
+      return 'badge-info';
     case TicketStatus.COMPLETADO:
       return 'badge-success';
     case TicketStatus.CANCELADO:
       return 'badge-danger';
-    case TicketStatus.NO_ASISTIO:
-      return 'badge-secondary';
     default:
       return 'badge-default';
   }
@@ -152,15 +158,18 @@ export function getTicketStatusBadgeClass(status: TicketStatus): string {
 /**
  * Obtiene el icono para un estado de ticket
  */
-export function getTicketStatusIcon(status: TicketStatus): string {
-  switch (status) {
+export function getTicketStatusIcon(status: TicketStatus | string): string {
+  const normalized = String(status).toUpperCase();
+  switch (normalized) {
+    case TicketStatus.BORRADOR:
+      return '';
     case TicketStatus.AGENDADO:
+      return '';
+    case TicketStatus.EN_PROGRESO:
       return '';
     case TicketStatus.COMPLETADO:
       return '';
     case TicketStatus.CANCELADO:
-      return '';
-    case TicketStatus.NO_ASISTIO:
       return '';
     default:
       return '';
@@ -174,33 +183,39 @@ export function getTicketStatusIcon(status: TicketStatus): string {
 /**
  * Obtiene el label amigable para un estado de pago
  */
-export function getPaymentStatusLabel(status: PaymentStatus): string {
-  switch (status) {
-    case PaymentStatus.PENDIENTE:
+export function getPaymentStatusLabel(status: FinancialStatus | string): string {
+  const normalized = String(status).toUpperCase();
+  switch (normalized) {
+    case FinancialStatus.PENDIENTE:
       return 'Pendiente';
-    case PaymentStatus.PAGADO:
+    case FinancialStatus.PAGO_PARCIAL:
+      return 'Pago parcial';
+    case FinancialStatus.EN_REVISION:
+      return 'En revision';
+    case FinancialStatus.PAGADO:
       return 'Pagado';
-    case PaymentStatus.VERIFICADO:
-      return 'Verificado';
-    case PaymentStatus.RECHAZADO:
-      return 'Rechazado';
+    case FinancialStatus.REEMBOLSADO:
+      return 'Reembolsado';
     default:
-      return status;
+      return String(status);
   }
 }
 
 /**
  * Obtiene el color/badge para un estado de pago
  */
-export function getPaymentStatusBadgeClass(status: PaymentStatus): string {
-  switch (status) {
-    case PaymentStatus.PENDIENTE:
+export function getPaymentStatusBadgeClass(status: FinancialStatus | string): string {
+  const normalized = String(status).toUpperCase();
+  switch (normalized) {
+    case FinancialStatus.PENDIENTE:
       return 'badge-warning';
-    case PaymentStatus.PAGADO:
-      return 'badge-success';
-    case PaymentStatus.VERIFICADO:
+    case FinancialStatus.PAGO_PARCIAL:
       return 'badge-info';
-    case PaymentStatus.RECHAZADO:
+    case FinancialStatus.EN_REVISION:
+      return 'badge-secondary';
+    case FinancialStatus.PAGADO:
+      return 'badge-success';
+    case FinancialStatus.REEMBOLSADO:
       return 'badge-danger';
     default:
       return 'badge-default';
@@ -210,15 +225,18 @@ export function getPaymentStatusBadgeClass(status: PaymentStatus): string {
 /**
  * Obtiene el icono para un estado de pago
  */
-export function getPaymentStatusIcon(status: PaymentStatus): string {
-  switch (status) {
-    case PaymentStatus.PENDIENTE:
+export function getPaymentStatusIcon(status: FinancialStatus | string): string {
+  const normalized = String(status).toUpperCase();
+  switch (normalized) {
+    case FinancialStatus.PENDIENTE:
       return '';
-    case PaymentStatus.PAGADO:
+    case FinancialStatus.PAGO_PARCIAL:
       return '';
-    case PaymentStatus.VERIFICADO:
+    case FinancialStatus.EN_REVISION:
       return '';
-    case PaymentStatus.RECHAZADO:
+    case FinancialStatus.PAGADO:
+      return '';
+    case FinancialStatus.REEMBOLSADO:
       return '';
     default:
       return '';

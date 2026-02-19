@@ -7,11 +7,11 @@ import {
   parseUserRole,
   parseUserStatus,
   parseTicketStatus,
-  parsePaymentStatus,
+  parseFinancialStatus,
   UserRole,
   UserStatus,
   TicketStatus,
-  PaymentStatus,
+  FinancialStatus,
   SpaceType,
   ProductCategory,
   LoanStatus,
@@ -22,7 +22,10 @@ import {
 import {
   User,
   Ticket,
-  TicketDetalle,
+  TicketVenta,
+  TicketCita,
+  TicketEspacio,
+  TicketPrestamo,
   Espacio,
   Producto,
   PrestamoMaterial,
@@ -34,9 +37,12 @@ import {
 
 import {
   UsuarioDTO,
-  TicketDTO,
-  TicketDetalleDTO,
-  TicketFiltroDTO,
+  TicketResponseDTO,
+  TicketFiltroResponseDTO,
+  TicketVentaDTO,
+  TicketCitaDTO,
+  TicketEspacioDTO,
+  TicketPrestamoDTO,
   PrestamoDTO,
   NotificacionDTO,
   LoginResponseDTO,
@@ -105,112 +111,95 @@ export function mapAuthResponseFromApi(dto: LoginResponseDTO): AuthResponse {
 // TICKET MAPPERS
 // ============================================
 
-export function mapTicketFromApi(dto: TicketDTO): Ticket {
+export function mapTicketFromApi(dto: TicketResponseDTO): Ticket {
   return {
     ticketId: dto.ticketId ?? 0,
     folio: dto.folio ?? '',
-    fecha: dto.fecha ? new Date(dto.fecha) : new Date(),
-    duracion: undefined,
-
-    // Relaciones
-    pacienteId: 0, // No viene en TicketDTO básico
-    pacienteNombre: dto.pacienteNombre ?? '',
-    pacienteEmail: undefined,
-
-    terapeutaId: 0, // No viene en TicketDTO básico
-    terapeutaNombre: dto.terapeutaNombre ?? '',
-    terapeutaEmail: undefined,
-
-    espacioId: undefined,
-    espacioNombre: dto.espacioNombre,
-
-    cuentaDestinoId: 0, // No viene en TicketDTO básico
-
-    // Información
-    materia: '',
-    conceptoIngreso: undefined,
-    conceptoTransferencia: undefined,
-    notas: undefined,
-
-    // Datos de pago
-    montoPagado: dto.costoTotal ?? 0,
-    celular: undefined,
-
-    // Costos
-    costoEspacio: 0,
-    costoMateriales: 0,
-    costoAdicional: 0,
-    costoTotal: dto.costoTotal ?? 0,
-
-    // Estados
-    estadoTicket: parseTicketStatus(dto.estadoTicket ?? 'Agendado'),
-    estadoPago: parsePaymentStatus(dto.estadoPago ?? 'Pendiente'),
-
-    // Auditoría
-    creadoPorId: undefined,
-    fechaCreacion: dto.fecha ? new Date(dto.fecha) : new Date(),
-    ultimaActualizacion: undefined,
-
-    // Detalles
-    detalles: dto.detalles?.map(mapTicketDetalleFromApi) ?? [],
+    creadoPorId: dto.creadoPorId,
+    creadoPorNombre: dto.creadoPorNombre,
+    estadoTicket: parseTicketStatus(dto.estadoTicket ?? 'BORRADOR'),
+    estadoFinanciero: parseFinancialStatus(dto.estadoFinanciero ?? 'PENDIENTE'),
+    ventas: dto.ventas?.map(mapTicketVentaFromApi) ?? [],
+    cita: dto.cita ? mapTicketCitaFromApi(dto.cita) : undefined,
+    espacios: dto.espacios?.map(mapTicketEspacioFromApi) ?? [],
+    prestamos: dto.prestamos?.map(mapTicketPrestamoFromApi) ?? [],
+    costoAdicional: dto.costoAdicional ?? 0,
+    motivoCostoAdicional: dto.motivoCostoAdicional,
+    montoTotal: dto.montoTotal ?? 0,
+    montoPagado: dto.montoPagado ?? 0,
+    saldoPendiente: dto.saldoPendiente ?? 0,
+    cantidadPagos: dto.cantidadPagos ?? 0,
+    fechaCreacion: dto.fechaCreacion ? new Date(dto.fechaCreacion) : undefined,
+    ultimaActualizacion: dto.ultimaActualizacion
+      ? new Date(dto.ultimaActualizacion)
+      : undefined,
   };
 }
 
-export function mapTicketFiltroFromApi(dto: TicketFiltroDTO): Ticket {
+export function mapTicketFiltroFromApi(dto: TicketFiltroResponseDTO): Ticket {
   return {
     ticketId: dto.ticketId ?? 0,
     folio: dto.folio ?? '',
-    fecha: dto.fecha ? new Date(dto.fecha) : new Date(),
-    duracion: undefined,
-
-    pacienteId: 0,
-    pacienteNombre: dto.pacienteNombre ?? '',
-    pacienteEmail: dto.pacienteEmail,
-
-    terapeutaId: 0,
-    terapeutaNombre: dto.terapeutaNombre ?? '',
-    terapeutaEmail: dto.terapeutaEmail,
-
-    espacioId: undefined,
-    espacioNombre: dto.espacioNombre,
-
-    cuentaDestinoId: 0,
-
-    materia: dto.materia ?? '',
-    conceptoIngreso: undefined,
-    conceptoTransferencia: undefined,
-    notas: undefined,
-
-    montoPagado: dto.costoTotal ?? 0,
-    celular: undefined,
-
-    costoEspacio: 0,
-    costoMateriales: 0,
-    costoAdicional: 0,
-    costoTotal: dto.costoTotal ?? 0,
-
-    estadoTicket: parseTicketStatus(dto.estadoTicket ?? 'Agendado'),
-    estadoPago: parsePaymentStatus(dto.estadoPago ?? 'Pendiente'),
-
-    creadoPorId: undefined,
-    fechaCreacion: dto.fechaCreacion ? new Date(dto.fechaCreacion) : new Date(),
-    ultimaActualizacion: undefined,
-
-    detalles: dto.detalles?.map(mapTicketDetalleFromApi) ?? [],
+    creadoPorNombre: dto.creadoPorNombre,
+    estadoTicket: parseTicketStatus(dto.estadoTicket ?? 'BORRADOR'),
+    estadoFinanciero: parseFinancialStatus(dto.estadoFinanciero ?? 'PENDIENTE'),
+    montoTotal: dto.montoTotal ?? 0,
+    montoPagado: dto.montoPagado ?? 0,
+    saldoPendiente: dto.saldoPendiente ?? 0,
+    fechaCreacion: dto.fechaCreacion ? new Date(dto.fechaCreacion) : undefined,
   };
 }
 
-export function mapTicketDetalleFromApi(dto: TicketDetalleDTO): TicketDetalle {
+export function mapTicketVentaFromApi(dto: TicketVentaDTO): TicketVenta {
   return {
-    detalleId: dto.detalleId ?? 0,
-    ticketId: 0, // Se establece en el contexto del ticket padre
+    ventaId: dto.ventaId ?? 0,
     productoId: dto.productoId ?? 0,
     productoNombre: dto.productoNombre ?? '',
     productoCodigo: dto.productoCodigo ?? '',
     cantidad: dto.cantidad ?? 0,
     precioUnitario: dto.precioUnitario ?? 0,
     subtotal: dto.subtotal ?? 0,
-    tipoUso: parseProductUsageType(dto.tipoUso ?? 'Uso'),
+  };
+}
+
+export function mapTicketCitaFromApi(dto: TicketCitaDTO): TicketCita {
+  return {
+    citaId: dto.citaId ?? 0,
+    pacienteId: dto.pacienteId ?? 0,
+    pacienteNombre: dto.pacienteNombre ?? '',
+    terapeutaId: dto.terapeutaId ?? 0,
+    terapeutaNombre: dto.terapeutaNombre ?? '',
+    fechaInicio: dto.fechaInicio ? new Date(dto.fechaInicio) : new Date(),
+    fechaFin: dto.fechaFin ? new Date(dto.fechaFin) : new Date(),
+    precioCobrado: dto.precioCobrado ?? 0,
+    notasTerapia: dto.notasTerapia,
+  };
+}
+
+export function mapTicketEspacioFromApi(dto: TicketEspacioDTO): TicketEspacio {
+  return {
+    espacioReservaId: dto.espacioReservaId ?? 0,
+    espacioId: dto.espacioId ?? 0,
+    espacioNombre: dto.espacioNombre ?? '',
+    horaInicioReserva: dto.horaInicioReserva ? new Date(dto.horaInicioReserva) : new Date(),
+    horaFinReserva: dto.horaFinReserva ? new Date(dto.horaFinReserva) : new Date(),
+    costoCobrado: dto.costoCobrado ?? 0,
+  };
+}
+
+export function mapTicketPrestamoFromApi(dto: TicketPrestamoDTO): TicketPrestamo {
+  return {
+    prestamoId: dto.prestamoId ?? 0,
+    productoId: dto.productoId ?? 0,
+    productoNombre: dto.productoNombre ?? '',
+    responsableId: dto.responsableId ?? 0,
+    responsableNombre: dto.responsableNombre ?? '',
+    fechaPrestamo: dto.fechaPrestamo ? new Date(dto.fechaPrestamo) : new Date(),
+    fechaDevolucionEstimada: dto.fechaDevolucionEstimada
+      ? new Date(dto.fechaDevolucionEstimada)
+      : new Date(),
+    fechaDevolucionReal: dto.fechaDevolucionReal ? new Date(dto.fechaDevolucionReal) : undefined,
+    estado: parseLoanStatus(dto.estado ?? 'Activo'),
   };
 }
 
@@ -344,7 +333,7 @@ export function mapTicketStatusToApi(status: TicketStatus): string {
   return status; // Los enums ya tienen el valor correcto
 }
 
-export function mapPaymentStatusToApi(status: PaymentStatus): string {
+export function mapFinancialStatusToApi(status: FinancialStatus): string {
   return status; // Los enums ya tienen el valor correcto
 }
 

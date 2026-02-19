@@ -12,7 +12,8 @@ import { InfoModalComponent, ModalAction } from '../../../shared/components/moda
 import { TicketsService } from '../../../core/services/tickets.service';
 import { CalendarService } from '../../../core/services/calendar.service';
 import { UsersService } from '../../../core/services/users.service';
-import { PaymentStatus } from '../../../core/models/enums';
+import { AuthService } from '../../../core/services/auth.service';
+import { FinancialStatus, UserRole } from '../../../core/models/enums';
 import { Router } from '@angular/router';
 
 @Component({
@@ -39,6 +40,7 @@ export class DashboardAdminComponent {
   private ticketsService = inject(TicketsService);
   private calendarService = inject(CalendarService);
   private usersService = inject(UsersService);
+  private authService = inject(AuthService);
   private router = inject(Router);
 
   private dashboardTrigger = signal(1);
@@ -72,7 +74,7 @@ export class DashboardAdminComponent {
     stream: ({ params }) => {
       if (params.trigger === 0) return of(null);
 
-      return this.ticketsService.getTickets({ estadoPago: PaymentStatus.PENDIENTE }).pipe(
+      return this.ticketsService.getTickets({ estadoFinanciero: FinancialStatus.PENDIENTE }).pipe(
         catchError((error) => {
           console.error('Error cargando pagos:', error);
           return of({
@@ -163,6 +165,8 @@ export class DashboardAdminComponent {
     };
   });
 
+  isAdmin = computed(() => this.authService.hasRole(UserRole.ADMINISTRADOR));
+
   // Pagos pendientes mapeados
   pendingPayments = computed(() => {
     const response = this.paymentsResource.value();
@@ -186,11 +190,15 @@ export class DashboardAdminComponent {
         id: ticket.ticketId,
         folio: ticket.folio,
         paciente: ticket.pacienteNombre,
-        monto: ticket.costoTotal || 0,
-        fecha: new Date(ticket.fecha),
-        status: ticket.estadoPago,
+        monto: ticket.montoTotal || 0,
+        fecha: new Date(ticket.fechaCreacion),
+        status: ticket.estadoFinanciero,
       }));
   });
+
+  goToEspacios(): void {
+    this.router.navigate(['/admin/espacios']);
+  }
 
   // Nuevos pacientes
   newPatients = computed(() => {
@@ -220,9 +228,9 @@ export class DashboardAdminComponent {
     const appointments = this.appointmentsThisMonth();
 
     return {
-      agendadas: appointments.filter((a: any) => a.estado === 'Agendado').length,
-      completadas: appointments.filter((a: any) => a.estado === 'Completado').length,
-      canceladas: appointments.filter((a: any) => a.estado === 'Cancelado').length,
+      agendadas: appointments.filter((a: any) => a.estado === 'AGENDADO').length,
+      completadas: appointments.filter((a: any) => a.estado === 'COMPLETADO').length,
+      canceladas: appointments.filter((a: any) => a.estado === 'CANCELADO').length,
     };
   });
 

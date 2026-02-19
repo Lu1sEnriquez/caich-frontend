@@ -1,0 +1,165 @@
+<div class="modal-overlay" [class.show]="modalOpen" (click)="close()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <h3><i class="pi pi-shopping-bag"></i> Buscar y Seleccionar Productos</h3>
+      <button type="button" class="btn-close" (click)="close()" title="Cerrar">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="modal-body">
+      <!-- Search Section -->
+      <div class="search-section">
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Buscar producto por nombre o tipo..."
+          [value]="searchTerm()"
+          (input)="onSearchChange($event.target.value)"
+        />
+      </div>
+
+      <!-- Loading or Empty State -->
+      <div *ngIf="productosResource.isLoading()" class="loading-state">
+        <i class="pi pi-spin pi-spinner"></i>
+        <p>Cargando productos...</p>
+      </div>
+
+      <div *ngIf="productosResource.error()" class="error-state">
+        <p>Error cargando productos: {{ productosResource.error() }}</p>
+      </div>
+
+      <!-- Products Table -->
+      <div *ngIf="!productosResource.isLoading() && productosFiltered().length > 0" class="products-table-container">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Nombre</th>
+              <th>Categoría</th>
+              <th>Precio</th>
+              <th>Stock</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let producto of productosFiltered()">
+              <td class="code-cell">{{ producto.codigo }}</td>
+              <td class="name-cell">
+                <strong>{{ producto.nombre }}</strong>
+              </td>
+              <td>
+                <span class="badge badge-category">
+                  {{ producto.categoria }}
+                </span>
+              </td>
+              <td class="price-cell">${{ producto.precio | number: '1.2-2' }}</td>
+              <td class="stock-cell">
+                <span class="stock-badge" [ngClass]="'stock-' + (producto.stock > 10 ? 'ok' : (producto.stock > 0 ? 'warning' : 'danger'))">
+                  {{ producto.stock }}
+                </span>
+              </td>
+              <td class="action-cell">
+                <div class="action-buttons">
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-success"
+                    (click)="selectProduct(producto, 'Venta')"
+                    *ngIf="producto.esVendible"
+                    title="Vender producto"
+                  >
+                    🛒 Vender
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-info"
+                    (click)="selectProduct(producto, 'Prestamo')"
+                    *ngIf="producto.esPrestable"
+                    title="Prestar producto"
+                  >
+                    📖 Prestar
+                  </button>
+                  <span 
+                    *ngIf="!producto.esVendible && !producto.esPrestable"
+                    class="text-muted"
+                  >
+                    No disponible
+                  </span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!productosResource.isLoading() && productosFiltered().length === 0" class="empty-state">
+        <p>{{ searchTerm() ? 'Sin resultados para tu búsqueda' : 'No hay productos disponibles' }}</p>
+      </div>
+
+      <!-- Selected Products Section -->
+      <div *ngIf="hasSelectedProducts" class="selected-section">
+        <h5>Productos Seleccionados ({{ getSelectedProductsCount() }})</h5>
+        <div class="selected-list">
+          <div *ngFor="let producto of selectedProducts(); let i = index" class="selected-item">
+            <div class="selected-info">
+              <span class="product-name">{{ producto.nombre }}</span>
+              <span class="product-cost">${{ producto.costoUnitario | number: '1.2-2' }}</span>
+            </div>
+            <button
+              type="button"
+              class="btn btn-sm btn-danger"
+              (click)="removeSelectedProduct(i)"
+            >
+              Remover
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="close()">
+        <i class="pi pi-times"></i> Cerrar
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        (click)="confirmSelection()"
+        [disabled]="!hasSelectedProducts"
+      >
+        <i class="pi pi-check"></i> Confirmar Selección ({{ getSelectedProductsCount() }})
+      </button>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="pagination-container" *ngIf="totalPages() > 1">
+      <div class="pagination-info">
+        <span class="page-count">Página {{ currentPage() + 1 }} de {{ totalPages() }} ({{ totalElements() }} productos)</span>
+      </div>
+      <div class="pagination-controls">
+        <button
+          type="button"
+          class="btn btn-sm btn-secondary"
+          (click)="previousPage()"
+          [disabled]="!canPreviousPage"
+          title="Página anterior"
+        >
+          <i class="pi pi-chevron-left"></i>
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm btn-secondary"
+          (click)="nextPage()"
+          [disabled]="!canNextPage"
+          title="Página siguiente"
+        >
+          <i class="pi pi-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

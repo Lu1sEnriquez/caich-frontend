@@ -1,0 +1,236 @@
+<div class="modal-overlay" [class.show]="isOpen()" (click)="close()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <h3>{{ mode() === 'edit' ? 'Editar Ticket' : 'Nuevo Ticket' }}</h3>
+      <button type="button" class="btn-close" (click)="close()">
+        <span>✕</span>
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="modal-body">
+      <form class="ticket-form">
+        <!-- Tipo de Ticket -->
+        <div class="form-group">
+          <label for="tipoTicket">Tipo de Ticket *</label>
+          <select 
+            id="tipoTicket"
+            [(ngModel)]="ticketForm().tipoTicket" 
+            name="tipoTicket"
+            class="form-control"
+          >
+            <option value="Cita">Cita</option>
+            <option value="Prestamo">Préstamo</option>
+            <option value="Venta">Venta</option>
+          </select>
+        </div>
+
+        <!-- Productos -->
+        <div class="section">
+          <div class="section-header">
+            <h4>📦 Productos</h4>
+            <span class="product-count">{{ ticketForm().productos.length }} items</span>
+          </div>
+
+          <div *ngIf="ticketForm().productos.length === 0" class="empty-products">
+            <p>No hay productos agregados</p>
+            <small>Usa el modal de búsqueda para agregar productos</small>
+          </div>
+
+          <div *ngIf="ticketForm().productos.length > 0" class="products-list">
+            <div *ngFor="let producto of ticketForm().productos; let i = index" class="product-item">
+              <div class="product-header">
+                <div class="product-info">
+                  <strong>{{ producto.nombre }}</strong>
+                  <span class="product-code">ID: {{ producto.productoId }}</span>
+                </div>
+                <button 
+                  type="button" 
+                  class="btn-remove"
+                  (click)="removeProducto(i)"
+                  title="Remover producto"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div class="product-details">
+                <div class="detail-row">
+                  <div class="detail-field">
+                    <label>Cantidad</label>
+                    <input 
+                      type="number" 
+                      [(ngModel)]="producto.cantidad"
+                      (change)="updateProductoSubtotal(producto)"
+                      name="cantidad_{{ i }}"
+                      min="1"
+                      class="form-control-sm"
+                    />
+                  </div>
+
+                  <div class="detail-field">
+                    <label>Precio</label>
+                    <input 
+                      type="number" 
+                      [(ngModel)]="producto.precio"
+                      (change)="updateProductoSubtotal(producto)"
+                      name="precio_{{ i }}"
+                      step="0.01"
+                      min="0"
+                      class="form-control-sm"
+                    />
+                  </div>
+
+                  <div class="detail-field">
+                    <label>Tipo Uso</label>
+                    <select 
+                      [(ngModel)]="producto.tipoUso"
+                      name="tipoUso_{{ i }}"
+                      class="form-control-sm"
+                    >
+                      <option value="Venta">Venta</option>
+                      <option value="Prestamo">Préstamo</option>
+                    </select>
+                  </div>
+
+                  <div class="detail-field">
+                    <label>Subtotal</label>
+                    <div class="subtotal-display">{{ formatCurrency(producto.subtotal) }}</div>
+                  </div>
+                </div>
+
+                <!-- Fecha devolución para préstamos -->
+                <div *ngIf="producto.tipoUso === 'Prestamo'" class="detail-row">
+                  <div class="detail-field full-width">
+                    <label>Fecha Devolución Estimada</label>
+                    <input 
+                      type="date" 
+                      [(ngModel)]="producto.fechaDevolucionEstimada"
+                      name="fechaDev_{{ i }}"
+                      class="form-control-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Costos -->
+        <div class="section">
+          <div class="section-header">
+            <h4>💰 Costos</h4>
+          </div>
+
+          <div class="cost-fields">
+            <div class="cost-field">
+              <label for="costoAdicional">Costo Adicional</label>
+              <input 
+                id="costoAdicional"
+                type="number" 
+                [(ngModel)]="ticketForm().costoAdicional"
+                name="costoAdicional"
+                step="0.01"
+                min="0"
+                class="form-control"
+              />
+            </div>
+
+            <div class="cost-field">
+              <label for="montoPagado">Monto Pagado</label>
+              <input 
+                id="montoPagado"
+                type="number" 
+                [(ngModel)]="ticketForm().montoPagado"
+                name="montoPagado"
+                step="0.01"
+                min="0"
+                class="form-control"
+              />
+            </div>
+          </div>
+
+          <!-- Resumen de costos -->
+          <div class="cost-summary">
+            <div class="cost-row">
+              <span>Subtotal Productos:</span>
+              <strong>{{ formatCurrency(totalProductos()) }}</strong>
+            </div>
+            <div class="cost-row">
+              <span>Costo Adicional:</span>
+              <strong>{{ formatCurrency(ticketForm().costoAdicional) }}</strong>
+            </div>
+            <div class="cost-row total">
+              <span>Total:</span>
+              <strong>{{ formatCurrency(totalGeneral()) }}</strong>
+            </div>
+            <div class="cost-row">
+              <span>Monto Pagado:</span>
+              <strong class="paid-amount">{{ formatCurrency(ticketForm().montoPagado) }}</strong>
+            </div>
+            <div class="cost-row" [ngClass]="getPaymentStatusClass()">
+              <span>Faltante:</span>
+              <strong>{{ formatCurrency(montoFaltante()) }}</strong>
+            </div>
+
+            <!-- Barra de progreso de pago -->
+            <div class="payment-progress">
+              <div class="progress-bar">
+                <div 
+                  class="progress-fill" 
+                  [style.width.%]="porcentajePago()"
+                  [ngClass]="getPaymentStatusClass()"
+                ></div>
+              </div>
+              <span class="progress-text">{{ getPaymentStatusText() }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Estado y Notas -->
+        <div class="section">
+          <div class="section-header">
+            <h4>📋 Detalles</h4>
+          </div>
+
+          <div class="form-group">
+            <label for="estado">Estado *</label>
+            <select 
+              id="estado"
+              [(ngModel)]="ticketForm().estado" 
+              name="estado"
+              class="form-control"
+            >
+              <option value="Pendiente">Pendiente</option>
+              <option value="Pagado">Pagado</option>
+              <option value="Cancelado">Cancelado</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="notas">Notas</label>
+            <textarea 
+              id="notas"
+              [(ngModel)]="ticketForm().notas" 
+              name="notas"
+              rows="3"
+              placeholder="Notas adicionales..."
+              class="form-control"
+            ></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="close()">
+        Cancelar
+      </button>
+      <button type="button" class="btn btn-primary" (click)="save()">
+        {{ mode() === 'edit' ? 'Actualizar' : 'Crear' }} Ticket
+      </button>
+    </div>
+  </div>
+</div>

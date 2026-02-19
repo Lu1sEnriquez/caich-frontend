@@ -8,6 +8,11 @@
         </div>
         <div class="header-actions">
           <app-button variant="outline" size="sm" (click)="toggleFilters()"> Filtros </app-button>
+          @if (isAdmin()) {
+          <app-button variant="outline" size="sm" (click)="goToEspacios()">
+            🧩 Cubículos
+          </app-button>
+          }
           <app-button variant="outline" size="sm" (click)="openScheduleConfig()">
             ⚙️ Configurar horario
           </app-button>

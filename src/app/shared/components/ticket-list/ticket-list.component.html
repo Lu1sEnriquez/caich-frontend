@@ -1,0 +1,102 @@
+<div class="ticket-list-container">
+  <!-- Header -->
+  <div class="list-header">
+    <h3>Tickets de la Cita</h3>
+    <button class="btn btn-primary" (click)="openNewTicket()">
+      ➕ Nuevo Ticket
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="ticketsResource.isLoading()" class="loading-state">
+    <p>Cargando tickets...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="ticketsResource.error()" class="error-state">
+    <p>Error cargando tickets</p>
+  </div>
+
+  <!-- Stats -->
+  <div *ngIf="!ticketsResource.isLoading() && totalTickets() > 0" class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-label">Total Tickets</span>
+      <span class="stat-value">{{ totalTickets() }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Ventas</span>
+      <span class="stat-value">{{ totalVentas() | currency: 'USD':true:'1.2-2' }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Préstamos</span>
+      <span class="stat-value">{{ totalPrestamos() }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Cobrado</span>
+      <span class="stat-value">{{ totalCobrado() | currency: 'USD':true:'1.2-2' }}</span>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!ticketsResource.isLoading() && totalTickets() === 0" class="empty-state">
+    <p>No hay tickets creados</p>
+    <button class="btn btn-primary" (click)="openNewTicket()">
+      Crear primer ticket
+    </button>
+  </div>
+
+  <!-- Tickets Table -->
+  <div *ngIf="!ticketsResource.isLoading() && totalTickets() > 0" class="tickets-table-container">
+    <table class="tickets-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Tipo</th>
+          <th>Productos</th>
+          <th>Total</th>
+          <th>Pagado</th>
+          <th>Faltante</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let ticket of tickets()" class="ticket-row">
+          <td class="ticket-id">{{ ticket.id }}</td>
+          <td class="ticket-type">
+            <span class="type-badge">
+              {{ getTipoTicketIcon(ticket.tipoTicket) }} {{ ticket.tipoTicket }}
+            </span>
+          </td>
+          <td class="product-count">{{ ticket.productos?.length || 0 }} items</td>
+          <td class="amount">{{ formatCurrency(calcularTotal(ticket)) }}</td>
+          <td class="paid-amount">{{ formatCurrency(ticket.montoPagado || 0) }}</td>
+          <td class="pending-amount">
+            {{ formatCurrency((calcularTotal(ticket) - (ticket.montoPagado || 0))) }}
+          </td>
+          <td class="estado">
+            <span class="estado-badge" [ngClass]="getEstadoClass(ticket.estado || 'Pendiente')">
+              {{ ticket.estado || 'Pendiente' }}
+            </span>
+          </td>
+          <td class="actions">
+            <button class="btn-action edit" (click)="editTicket(ticket)" title="Editar">
+              ✏️
+            </button>
+            <button class="btn-action delete" (click)="deleteTicket(ticket)" title="Eliminar">
+              🗑️
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Ticket Manager Modal -->
+  <app-ticket-manager-modal
+    [isOpen]="showTicketModal()"
+    [ticket]="editingTicket()"
+    (onClose)="closeTicketModal()"
+    (onSave)="onTicketSave($event)">
+  </app-ticket-manager-modal>
+</div>

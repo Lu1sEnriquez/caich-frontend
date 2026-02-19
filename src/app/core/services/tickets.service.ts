@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError, tap, map } from 'rxjs/operators';
 
 import { API_BASE } from './api.config';
 
@@ -9,37 +9,14 @@ import {
   DataResponseDTO,
   BaseResponseDTO,
   Pagination,
-  TicketDTO,
-  TicketFiltroDTO,
+  TicketResponseDTO,
+  TicketFiltroResponseDTO,
+  TicketRequestDTO,
 } from '../models/api-models';
 import { TicketFilters } from '../models/models';
-import { mapTicketStatusToApi, mapPaymentStatusToApi } from '../mappers/mappers';
-import { TicketStatus, PaymentStatus } from '../models/enums';
+import { mapTicketStatusToApi, mapFinancialStatusToApi } from '../mappers/mappers';
+import { TicketStatus } from '../models/enums';
 import { ErrorHandlerService } from './errorHandler.service';
-
-export interface CrearTicketRequest {
-  pacienteId: number;
-  terapeutaId: number;
-  espacioId?: number;
-  cuentaDestinoId: number;
-  fecha: string; // ISO format
-  duracion?: number;
-  materia: string;
-  conceptoIngreso?: string;
-  conceptoTransferencia?: string;
-  montoPagado: number;
-  celular?: string;
-  costoEspacio?: number;
-  costoAdicional?: number;
-  productos: ProductoTicketRequest[];
-}
-
-export interface ProductoTicketRequest {
-  productoId: number;
-  cantidad: number;
-  precioUnitario: number;
-  tipoUso: 'Venta' | 'Prestamo' | 'Uso';
-}
 
 @Injectable({
   providedIn: 'root',
@@ -49,9 +26,34 @@ export class TicketsService {
   private errorHandler = inject(ErrorHandlerService);
 
   /**
+   * Obtener tickets con filtros simples (para tabla)
+   */
+  obtenerTickets(filtro?: TicketFiltroResponseDTO): Observable<TicketFiltroResponseDTO[]> {
+    let params = new HttpParams();
+
+    if (filtro?.estadoTicket) params = params.set('estadoTicket', filtro.estadoTicket);
+    if (filtro?.estadoFinanciero) params = params.set('estadoFinanciero', filtro.estadoFinanciero);
+
+    return this.http
+      .get<DataResponseDTO<TicketFiltroResponseDTO[]>>(`${API_BASE}/tickets`, { params })
+      .pipe(
+        map((response) => response.data || []),
+        tap((data) => {
+          console.log('Tickets obtenidos:', data?.length || 0, 'registros');
+        }),
+        catchError((error) => {
+          this.errorHandler.handleHttpError(error, 'Obtener tickets');
+          return throwError(() => error);
+        })
+      );
+  }
+
+  /**
    * Obtener tickets con filtros avanzados
    */
-  getTickets(filters?: TicketFilters): Observable<DataResponseDTO<Pagination<TicketFiltroDTO[]>>> {
+  getTickets(
+    filters?: TicketFilters
+  ): Observable<DataResponseDTO<Pagination<TicketFiltroResponseDTO[]>>> {
     let params = new HttpParams();
 
     if (filters) {
@@ -59,8 +61,8 @@ export class TicketsService {
       if (filters.terapeutaId) params = params.set('terapeutaId', String(filters.terapeutaId));
       if (filters.estadoTicket)
         params = params.set('estadoTicket', mapTicketStatusToApi(filters.estadoTicket));
-      if (filters.estadoPago)
-        params = params.set('estadoPago', mapPaymentStatusToApi(filters.estadoPago));
+      if (filters.estadoFinanciero)
+        params = params.set('estadoFinanciero', mapFinancialStatusToApi(filters.estadoFinanciero));
       if (filters.fechaInicio) params = params.set('fechaInicio', filters.fechaInicio);
       if (filters.fechaFin) params = params.set('fechaFin', filters.fechaFin);
       if (filters.page !== undefined) params = params.set('page', String(filters.page));
@@ -70,7 +72,9 @@ export class TicketsService {
     }
 
     return this.http
-      .get<DataResponseDTO<Pagination<TicketFiltroDTO[]>>>(`${API_BASE}/tickets`, { params })
+      .get<DataResponseDTO<Pagination<TicketFiltroResponseDTO[]>>>(`${API_BASE}/tickets`, {
+        params,
+      })
       .pipe(
         tap((response) =>
           console.log('Tickets obtenidos:', response.data.content.length, 'registros')
@@ -85,8 +89,10 @@ export class TicketsService {
   /**
    * Obtener ticket por ID
    */
-  getTicketById(ticketId: number | string): Observable<DataResponseDTO<TicketDTO>> {
-    return this.http.get<DataResponseDTO<TicketDTO>>(`${API_BASE}/tickets/${ticketId}`).pipe(
+  getTicketById(ticketId: number | string): Observable<DataResponseDTO<TicketResponseDTO>> {
+    return this.http
+      .get<DataResponseDTO<TicketResponseDTO>>(`${API_BASE}/tickets/${ticketId}`)
+      .pipe(
       tap((response) => console.log('Ticket obtenido:', response.data.folio)),
       catchError((error) => {
         this.errorHandler.handleHttpError(error, 'Obtener ticket');
@@ -98,8 +104,29 @@ export class TicketsService {
   /**
    * Crear nuevo ticket/cita
    */
-  createTicket(ticketData: CrearTicketRequest): Observable<DataResponseDTO<TicketDTO>> {
-    return this.http.post<DataResponseDTO<TicketDTO>>(`${API_BASE}/tickets`, ticketData).pipe(
+  crearTicket(ticketData: TicketRequestDTO): Observable<TicketResponseDTO> {
+    return this.http
+      .post<DataResponseDTO<TicketResponseDTO>>(`${API_BASE}/tickets`, ticketData)
+      .pipe(
+      map((response) => response.data),
+      tap((ticket) => {
+        console.log('Ticket creado:', ticket.folio);
+        this.errorHandler.showSuccess('Cita creada', 'La cita se registro exitosamente');
+      }),
+      catchError((error) => {
+        this.errorHandler.handleHttpError(error, 'Crear cita');
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Crear nuevo ticket (alias)
+   */
+  createTicket(ticketData: TicketRequestDTO): Observable<DataResponseDTO<TicketResponseDTO>> {
+    return this.http
+      .post<DataResponseDTO<TicketResponseDTO>>(`${API_BASE}/tickets`, ticketData)
+      .pipe(
       tap((response) => {
         console.log('Ticket creado:', response.data.folio);
         this.errorHandler.showSuccess('Cita creada', 'La cita se registro exitosamente');
@@ -112,22 +139,60 @@ export class TicketsService {
   }
 
   /**
+   * Actualizar ticket
+   */
+  actualizarTicket(ticketData: any): Observable<TicketResponseDTO> {
+    return this.http
+      .put<DataResponseDTO<TicketResponseDTO>>(
+        `${API_BASE}/tickets/${ticketData.ticketId}`,
+        ticketData
+      )
+      .pipe(
+      map((response) => response.data),
+      tap((ticket) => {
+        console.log('Ticket actualizado:', ticket.folio);
+        this.errorHandler.showSuccess('Cita actualizada', 'Los cambios se guardaron correctamente');
+      }),
+      catchError((error) => {
+        this.errorHandler.handleHttpError(error, 'Actualizar cita');
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Eliminar ticket
+   */
+  eliminarTicket(ticketId: number): Observable<BaseResponseDTO> {
+    return this.http.delete<BaseResponseDTO>(`${API_BASE}/tickets/${ticketId}`).pipe(
+      tap(() => {
+        console.log('Ticket eliminado');
+        this.errorHandler.showSuccess('Ticket eliminado', 'El ticket se eliminó correctamente');
+      }),
+      catchError((error) => {
+        this.errorHandler.handleHttpError(error, 'Eliminar ticket');
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
    * Actualizar estado de ticket
    */
   updateTicketStatus(
     ticketId: number | string,
     estadoTicket?: TicketStatus,
-    estadoPago?: PaymentStatus,
     notas?: string
-  ): Observable<DataResponseDTO<TicketDTO>> {
+  ): Observable<DataResponseDTO<TicketResponseDTO>> {
     let params = new HttpParams();
 
     if (estadoTicket) params = params.set('estadoTicket', mapTicketStatusToApi(estadoTicket));
-    if (estadoPago) params = params.set('estadoPago', mapPaymentStatusToApi(estadoPago));
     if (notas) params = params.set('notas', notas);
 
     return this.http
-      .put<DataResponseDTO<TicketDTO>>(`${API_BASE}/tickets/${ticketId}/estado`, null, { params })
+      .put<DataResponseDTO<TicketResponseDTO>>(`${API_BASE}/tickets/${ticketId}/estado`, null, {
+        params,
+      })
       .pipe(
         tap(() => {
           console.log('Estado de ticket actualizado');

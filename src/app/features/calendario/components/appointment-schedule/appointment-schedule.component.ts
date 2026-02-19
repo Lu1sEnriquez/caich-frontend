@@ -14,6 +14,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonComponent } from '../../../../shared/components/ui/button/button.component';
 import { CardComponent } from '../../../../shared/components/ui/card/card.component';
+import { ProductSelectorModalComponent } from '../../../../shared/components/product-selector-modal/product-selector-modal.component';
+import { TicketManagerModalComponent } from '../../../../shared/components/ticket-manager-modal/ticket-manager-modal.component';
 import { AppointmentSlot, Cubiculo, DayScheduleConfig } from '../../../../core/models/models';
 import {
   CalendarService,
@@ -27,6 +29,8 @@ import { formatDisplayDate, formatDateForInput } from '../../../../core/utils';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
 import { UsersService } from '../../../../core/services/users.service';
+import { InventoryService } from '../../../../core/services/inventory.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-appointment-schedule',
@@ -42,6 +46,8 @@ export class AppointmentScheduleComponent implements AfterViewInit {
   private authService = inject(AuthService);
   private dateUtilService = inject(DateUtilService);
   private usersService = inject(UsersService);
+  private inventarioService = inject(InventoryService);
+  private router = inject(Router);
 
   // Inputs y Outputs
   selectedDate = input.required<Date>();
@@ -59,6 +65,8 @@ export class AppointmentScheduleComponent implements AfterViewInit {
   // Estado
   configMode = signal(false);
   showAppointmentDialog = signal(false);
+  showProductSelectorModal = signal(false);
+  showTicketModal = signal(false);
   editingAppointment = signal<AppointmentSlot | null>(null);
   validationMessage = signal('');
   selectedEspacioId = signal<number | null>(null);
@@ -80,8 +88,14 @@ export class AppointmentScheduleComponent implements AfterViewInit {
     materia: '',
     modalidad: 'Presencial' as 'Presencial' | 'Online',
     estado: 'Agendado' as 'Agendado' | 'Completado' | 'Cancelado' | 'NoAsistio',
+    tipoTicket: 'Cita' as 'Cita' | 'Prestamo' | 'Venta',
+    costoAdicional: 0,
+    montoPagado: 0,
     notas: '',
   });
+
+  // Products management
+  appointmentProducts = signal<any[]>([]);
 
   // RXResources
   espaciosResource = rxResource({
@@ -100,6 +114,7 @@ export class AppointmentScheduleComponent implements AfterViewInit {
     stream: ({ params }) => {
       if (params.trigger === 0) return of(null);
       const fechaStr = params.fecha.toISOString().split('T')[0];
+      // Enviar rango completo del día (00:00 a 23:59) para obtener todas las citas
       return this.calendarService.getCitas({
         fechaInicio: fechaStr,
         fechaFin: fechaStr,
@@ -131,8 +146,23 @@ export class AppointmentScheduleComponent implements AfterViewInit {
 
   appointments = computed(() => {
     const response = this.citasResource.value();
-    if (!response?.data) return [];
-    return response.data.map((dto) => this.calendarService.mapToAppointmentSlot(dto));
+    if (!response?.data) {
+      console.log('No hay respuesta de citas');
+      return [];
+    }
+    console.log('CitasResource data recibida:', response.data);
+    const slots = response.data.map((dto) => this.calendarService.mapToAppointmentSlot(dto));
+    console.log('AppointmentSlots generados:', slots);
+    return slots;
+  });
+
+  // ✨ NUEVOS: Separar citas por modalidad
+  appointmentsPresenciales = computed(() => {
+    return this.appointments().filter((apt) => apt.modalidad !== 'Online');
+  });
+
+  appointmentsOnline = computed(() => {
+    return this.appointments().filter((apt) => apt.modalidad === 'Online');
   });
 
   // --- CAMBIO 1: Configuración siempre forzada a intervalo de 30 ---
@@ -185,6 +215,18 @@ export class AppointmentScheduleComponent implements AfterViewInit {
   availableHours = computed(() => {
     return this.hours().filter((h) => !this.isHourDisabled(h));
   });
+
+  cubiculosMap = computed(() => {
+    const map = new Map<string, string>();
+    this.cubiculos().forEach((c) => {
+      map.set(c.id, c.nombre);
+    });
+    return map;
+  });
+
+  getCubiculoName(cubiculoId: string): string {
+    return this.cubiculosMap().get(cubiculoId) || 'Sin cubículo';
+  }
 
   currentTime = computed(() => {
     const now = new Date();
@@ -376,6 +418,16 @@ export class AppointmentScheduleComponent implements AfterViewInit {
     const terapeutaId = Number(form.terapeutaId) || 1;
     const cuentaDestinoId = 1;
 
+    // ✨ Procesar productos para enviar al backend
+    const productos = this.appointmentProducts()
+      .filter(p => p.productoId && p.productoId !== '')
+      .map(p => ({
+        productoId: p.productoId,
+        cantidad: p.cantidad || 1,
+        tipoUso: p.tipoUso || 'Venta',
+        fechaDevolucionEstimada: p.tipoUso === 'Prestamo' ? p.fechaDevolucionEstimada : null,
+      }));
+
     const citaData: CrearCitaDTO = {
       espacioId: Number(form.cubiculoId),
       fecha: this.dateUtilService.toLocalISOString(fechaCompleta),
@@ -385,23 +437,23 @@ export class AppointmentScheduleComponent implements AfterViewInit {
       materia: form.materia,
       modalidad: form.modalidad,
       notas: form.notas,
-      montoPagado: 0,
+      montoPagado: form.montoPagado || 0,
+      costoAdicional: form.costoAdicional || 0,
       cuentaDestinoId: cuentaDestinoId,
+      productos: productos,
     };
 
     this.calendarService.crearCita(citaData).subscribe({
       next: (response) => {
         const newAppointment = this.calendarService.mapToAppointmentSlot(response.data);
         console.log('✅ Nueva cita creada:', newAppointment);
-        console.log('📝 Backend creó pago pendiente automáticamente');
+        console.log('📦 Productos procesados:', productos);
 
         this.citasTrigger.update((v) => v + 1);
         this.appointmentSaved.emit(newAppointment);
         this.closeDialog();
-        // alert('✅ Cita agendada. Pago pendiente creado automáticamente.');
       },
       error: (error: unknown) => {
-        // El HttpErrorInterceptor ya maneja el error y muestra mensajes
         console.error('❌ Error al crear cita:', error);
       },
     });
@@ -410,6 +462,16 @@ export class AppointmentScheduleComponent implements AfterViewInit {
   private performUpdateAppointment(editing: AppointmentSlot, form: any, duracion: number, fechaCompleta: Date): void {
     const pacienteId = Number(form.pacienteId) || 1;
     const terapeutaId = Number(form.terapeutaId) || 1;
+
+    // ✨ Procesar productos para enviar al backend
+    const productos = this.appointmentProducts()
+      .filter(p => p.productoId && p.productoId !== '')
+      .map(p => ({
+        productoId: p.productoId,
+        cantidad: p.cantidad || 1,
+        tipoUso: p.tipoUso || 'Venta',
+        fechaDevolucionEstimada: p.tipoUso === 'Prestamo' ? p.fechaDevolucionEstimada : null,
+      }));
 
     const updateData: ActualizarCitaDTO = {
       espacioId: Number(form.cubiculoId),
@@ -421,12 +483,15 @@ export class AppointmentScheduleComponent implements AfterViewInit {
       modalidad: form.modalidad,
       estadoTicket: this.mapEstadoToAPI(form.estado),
       notas: form.notas,
+      costoAdicional: form.costoAdicional || 0,
+      productos: productos,
     };
 
     this.calendarService.actualizarCita(Number(editing.id), updateData).subscribe({
       next: (response) => {
         const updatedAppointment = this.calendarService.mapToAppointmentSlot(response.data);
         console.log('✅ Cita actualizada:', updatedAppointment);
+        console.log('📦 Productos procesados:', productos);
 
         this.citasTrigger.update((v) => v + 1);
         this.appointmentSaved.emit(updatedAppointment);
@@ -434,7 +499,6 @@ export class AppointmentScheduleComponent implements AfterViewInit {
         alert('Cita actualizada correctamente.');
       },
       error: (error: unknown) => {
-        // El HttpErrorInterceptor ya maneja el error y muestra mensajes
         console.error('❌ Error al actualizar cita:', error);
       },
     });
@@ -460,49 +524,28 @@ export class AppointmentScheduleComponent implements AfterViewInit {
   }
 
   openNewAppointment(): void {
-    this.editingAppointment.set(null);
     const currentUser = this.authService.currentUser();
     const pacienteIdDefault = currentUser?.rol === UserRole.ADMINISTRADOR ? '' : currentUser?.id || '';
 
-    this.appointmentForm.set({
-      cubiculoId: '',
-      fecha: this.formatDateForInput(this.selectedDate()),
-      horaInicio: '07:00',
-      horaFin: '08:00',
-      pacienteId: pacienteIdDefault,
-      pacienteNombre: '',
-      terapeutaId: '',
-      terapeutaNombre: '',
-      materia: '',
-      modalidad: 'Presencial',
-      estado: 'Agendado',
-      notas: '',
+    this.router.navigate(['/tickets/nuevo'], {
+      queryParams: {
+        fecha: this.formatDateForInput(this.selectedDate()),
+        horaInicio: '07:00',
+        horaFin: '08:00',
+        pacienteId: pacienteIdDefault || undefined,
+      },
     });
-    this.validationMessage.set('');
-    this.showAppointmentDialog.set(true);
   }
 
   editAppointment(appointment: AppointmentSlot): void {
-    this.editingAppointment.set(appointment);
-    this.appointmentForm.set({
-      cubiculoId: appointment.cubiculoId,
-      fecha: this.formatDateForInput(appointment.fecha),
-      horaInicio: appointment.horaInicio,
-      horaFin: appointment.horaFin,
-      
-      // ✅ CORRECCIÓN: Precargar IDs reales (convertidos a string para el select)
-      // Asegúrate de que AppointmentSlot tenga estas propiedades
-      pacienteId: appointment.pacienteId?.toString() || '',
-      pacienteNombre: appointment.pacienteNombre,
-      terapeutaId: appointment.terapeutaId?.toString() || '',
-      terapeutaNombre: appointment.terapeutaNombre,
-      materia: appointment.materia || '',
-      modalidad: appointment.modalidad || 'Presencial',
-      estado: appointment.estado,
-      notas: appointment.notas || '',
+    this.router.navigate(['/tickets/nuevo'], {
+      queryParams: {
+        fecha: this.formatDateForInput(appointment.fecha),
+        horaInicio: appointment.horaInicio,
+        horaFin: appointment.horaFin,
+        pacienteId: appointment.pacienteId?.toString() || undefined,
+      },
     });
-    this.validationMessage.set('');
-    this.showAppointmentDialog.set(true);
   }
 
   closeDialog(): void {
@@ -539,7 +582,7 @@ export class AppointmentScheduleComponent implements AfterViewInit {
         (apt) =>
           apt.cubiculoId === cubiculoId &&
           apt.horaInicio === hour &&
-          this.isSameDay(apt.fecha, date),
+          this.isSameDay(apt.fecha, date)
       ) || null
     );
   }
@@ -564,21 +607,15 @@ export class AppointmentScheduleComponent implements AfterViewInit {
     const currentUser = this.authService.currentUser();
     const pacienteIdDefault = currentUser?.rol === UserRole.ADMINISTRADOR ? '' : currentUser?.id || '';
 
-    this.appointmentForm.set({
-      cubiculoId,
-      fecha: this.formatDateForInput(this.selectedDate()),
-      horaInicio: hour,
-      horaFin: this.getNextSlot(hour),
-      pacienteId: pacienteIdDefault,
-      pacienteNombre: '',
-      terapeutaId: '',
-      terapeutaNombre: '',
-      materia: '',
-      modalidad: 'Presencial',
-      estado: 'Agendado',
-      notas: '',
+    this.router.navigate(['/tickets/nuevo'], {
+      queryParams: {
+        fecha: this.formatDateForInput(this.selectedDate()),
+        horaInicio: hour,
+        horaFin: this.getNextSlot(hour),
+        espacioId: cubiculoId,
+        pacienteId: pacienteIdDefault || undefined,
+      },
     });
-    this.showAppointmentDialog.set(true);
   }
 
   // ============================================
@@ -633,6 +670,16 @@ export class AppointmentScheduleComponent implements AfterViewInit {
     },
   });
 
+  // Productos resource
+  // productosResource = rxResource({
+  //   stream: () => this.inventarioService.getAllProductsPaginable(),
+  // });
+
+  // productosDisponibles = computed(() => {
+  //   const response = this.productosResource.value();
+  //   return response?.data || [];
+  // });
+
   // ... resto del código
 
   // ✨ Helper para actualizar nombre cuando seleccionan un ID en el dropdown
@@ -664,5 +711,90 @@ export class AppointmentScheduleComponent implements AfterViewInit {
 
   onEspacioSelected(id: number | null) {
     this.selectedEspacioId.set(id);
+  }
+
+  // ============================================
+  // MÉTODOS PARA GESTIÓN DE PRODUCTOS
+  // ============================================
+
+  addProductRow(): void {
+    this.appointmentProducts.update((products) => [
+      ...products,
+      {
+        productoId: '',
+        cantidad: 1,
+        tipoUso: 'Venta',
+        fechaDevolucionEstimada: '',
+        subtotal: 0,
+        precio: 0,
+      },
+    ]);
+  }
+
+  removeProductRow(index: number): void {
+    this.appointmentProducts.update((products) =>
+      products.filter((_, i) => i !== index)
+    );
+  }
+
+  // onProductoChange(row: any): void {
+  //   const productos = this.productosDisponibles();
+  //   const index = parseInt(row.productoId, 10);
+  //   const producto = productos[index];
+
+  //   if (producto) {
+  //     row.precio = producto.costoUnitario || 0;
+  //     this.calculateRowSubtotal(row);
+  //   }
+  // }
+
+  calculateRowSubtotal(row: any): void {
+    row.subtotal = (row.cantidad || 0) * (row.precio || 0);
+  }
+
+  // ============================================
+  // MÉTODOS PARA MODAL DE SELECCIÓN DE PRODUCTOS
+  // ============================================
+
+  openProductSelectorModal(): void {
+    this.showProductSelectorModal.set(true);
+  }
+
+  closeProductSelectorModal(): void {
+    this.showProductSelectorModal.set(false);
+  }
+
+  onProductoSeleccionadoDelModal(producto: any): void {
+    // Agregar producto a la lista con estructura requerida
+    const newProduct = {
+      productoId: producto.id,
+      cantidad: 1,
+      tipoUso: producto.tipoAccion || 'Venta',
+      fechaDevolucionEstimada: '',
+      subtotal: producto.costoUnitario || 0,
+      precio: producto.costoUnitario || 0,
+      nombre: producto.nombre,
+    };
+
+    this.appointmentProducts.update((products) => [...products, newProduct]);
+  }
+
+  // ============================================
+  // MÉTODOS PARA MODAL DE TICKETS
+  // ============================================
+
+  openTicketModal(): void {
+    this.showTicketModal.set(true);
+  }
+
+  closeTicketModal(): void {
+    this.showTicketModal.set(false);
+  }
+
+  onTicketSave(ticket: any): void {
+    console.log('Ticket guardado:', ticket);
+    // Aquí se guardaría el ticket en el backend
+    // this.calendarService.saveTicket(ticket).subscribe(...);
+    this.showTicketModal.set(false);
   }
 }

@@ -7,7 +7,9 @@ import {
   UserRole,
   UserStatus,
   TicketStatus,
-  PaymentStatus,
+  FinancialStatus,
+  TransactionStatus,
+  PaymentMethod,
   SpaceType,
   ProductCategory,
   LoanStatus,
@@ -72,79 +74,89 @@ export interface AuthResponse {
 // ============================================
 
 export interface Payment {
-  id: string;
-  nombre: string;
-  email?: string;
-  folio: string;
-  banco?: string;
-  concepto?: string;
+  id?: string;
+  nombre?: string;
+  folio?: string;
+  paciente?: string;
+  terapeuta?: string;
+  fecha?: Date;
+  pagoId: number;
+  ticketId: number;
+  ticketFolio: string;
   monto: number;
-  status: PaymentStatus;
-  fechaPago: Date;
-  fechaRegistro: Date;
-  comprobante?: string;
-  citaFecha?: Date;
+  metodoPago: PaymentMethod;
+  comprobanteUrl?: string;
+  referencia?: string;
+  estado: TransactionStatus;
+  status?: TransactionStatus | string;
+  motivoRechazo?: string;
+  verificadoPorNombre?: string;
+  fechaPago?: Date;
+  fechaCreacion?: Date;
 }
 
 export interface Ticket {
   ticketId: number;
   folio: string;
-  fecha: Date;
-  duracion?: number;
-
-  // Relaciones
-  pacienteId: number;
-  pacienteNombre: string;
-  pacienteEmail?: string;
-
-  terapeutaId: number;
-  terapeutaNombre: string;
-  terapeutaEmail?: string;
-
-  espacioId?: number;
-  espacioNombre?: string;
-
-  cuentaDestinoId: number;
-
-  // Información
-  materia: string;
-  conceptoIngreso?: string;
-  conceptoTransferencia?: string;
-  notas?: string;
-
-  // Datos de pago
-  montoPagado: number;
-  celular?: string;
-
-  // Costos
-  costoEspacio: number;
-  costoMateriales: number;
-  costoAdicional: number;
-  costoTotal: number;
-
-  // Estados
-  estadoTicket: TicketStatus;
-  estadoPago: PaymentStatus;
-
-  // Auditoría
   creadoPorId?: number;
-  fechaCreacion: Date;
+  creadoPorNombre?: string;
+  estadoTicket: TicketStatus;
+  estadoFinanciero: FinancialStatus;
+  ventas?: TicketVenta[];
+  cita?: TicketCita;
+  espacios?: TicketEspacio[];
+  prestamos?: TicketPrestamo[];
+  costoAdicional?: number;
+  motivoCostoAdicional?: string;
+  montoTotal?: number;
+  montoPagado?: number;
+  saldoPendiente?: number;
+  cantidadPagos?: number;
+  fechaCreacion?: Date;
   ultimaActualizacion?: Date;
-
-  // Detalles de productos
-  detalles?: TicketDetalle[];
 }
 
-export interface TicketDetalle {
-  detalleId: number;
-  ticketId: number;
+export interface TicketVenta {
+  ventaId: number;
   productoId: number;
   productoNombre: string;
   productoCodigo: string;
   cantidad: number;
   precioUnitario: number;
   subtotal: number;
-  tipoUso: ProductUsageType;
+}
+
+export interface TicketCita {
+  citaId: number;
+  pacienteId: number;
+  pacienteNombre: string;
+  terapeutaId: number;
+  terapeutaNombre: string;
+  fechaInicio: Date;
+  fechaFin: Date;
+  precioCobrado: number;
+  notasTerapia?: string;
+}
+
+export interface TicketEspacio {
+  espacioReservaId: number;
+  espacioId: number;
+  espacioNombre: string;
+  horaInicioReserva: Date;
+  horaFinReserva: Date;
+  costoCobrado: number;
+}
+
+export interface TicketPrestamo {
+  prestamoId: number;
+  productoId: number;
+  productoNombre: string;
+  responsableId: number;
+  responsableNombre: string;
+  fechaPrestamo: Date;
+  fechaDevolucionEstimada: Date;
+  fechaDevolucionReal?: Date;
+  estado: LoanStatus;
 }
 
 // ============================================
@@ -338,7 +350,7 @@ export interface TicketReporte {
   materia: string;
   costoTotal: number;
   estadoTicket: TicketStatus;
-  estadoPago: PaymentStatus;
+  estadoFinanciero: FinancialStatus;
 }
 
 export interface PaymentSummary {
@@ -397,6 +409,7 @@ export interface TimeSlot {
 
 export interface AppointmentSlot {
   id: string;
+  citaId?: number;
   fecha: Date;
   horaInicio: string;
   horaFin: string;
@@ -406,7 +419,7 @@ export interface AppointmentSlot {
   pacienteNombre: string;
   terapeutaId: number; // nuevo
   terapeutaNombre: string;
-  estado: 'Agendado' | 'Completado' | 'Cancelado' | 'NoAsistio';
+  estado: TicketStatus;
   notas?: string;
   modalidad?: 'Presencial' | 'Online';
   materia?: string;
@@ -415,7 +428,6 @@ export interface AppointmentSlot {
 export interface Cubiculo {
   id: string;
   nombre: string;
-  tipo: string;
   disponible: boolean;
   costoPorHora?: number;
 }
@@ -464,7 +476,7 @@ export interface TicketFilters {
   pacienteId?: number;
   terapeutaId?: number;
   estadoTicket?: TicketStatus;
-  estadoPago?: PaymentStatus;
+  estadoFinanciero?: FinancialStatus;
   fechaInicio?: string;
   fechaFin?: string;
   page?: number;

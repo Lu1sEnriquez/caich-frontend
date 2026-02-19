@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
-import { SpacesService, CrearEspacioDTO } from '../../../../core/services/spaces.service';
+import { SpacesService, CrearEspacioDTO, EspacioDTO, EspaciosListResponse, EspacioResponse } from '../../../../core/services/spaces.service';
 import { CardComponent } from '../../../../shared/components/ui/card';
 import { BadgeComponent } from '../../../../shared/components/ui/badge/badge.component';
 import { formatDisplayDate } from '../../../../core/utils';
@@ -26,7 +26,6 @@ export class SpacesManagementComponent {
   private fb = inject(FormBuilder);
 
   private spacesTrigger = signal(1);
-  private spaceTypesTrigger = signal(1);
 
   // Modal
   showModal = signal(false);
@@ -36,7 +35,6 @@ export class SpacesManagementComponent {
   // Form
   form = this.fb.group({
     nombre: ['', [Validators.required, Validators.minLength(2)]],
-    tipo: ['', Validators.required],
     descripcion: [''],
     capacidad: [1, [Validators.required, Validators.min(1)]],
     costoPorHora: [0, [Validators.required, Validators.min(0)]],
@@ -57,26 +55,8 @@ export class SpacesManagementComponent {
     },
   });
 
-  // Obtener tipos de espacios
-  typesResource = rxResource({
-    params: () => ({ trigger: this.spaceTypesTrigger() }),
-    stream: ({ params }) => {
-      if (params.trigger === 0) return of(null);
-      return this.spacesService.getTypes().pipe(
-        catchError((error) => {
-          console.error('Error cargando tipos:', error);
-          return of(null);
-        })
-      );
-    },
-  });
-
   // Computed
-  spaces = computed(() => this.spacesResource.value()?.data || []);
-  spaceTypes = computed(() => {
-    const value = this.typesResource.value() as any;
-    return value?.data || [];
-  });
+  spaces = computed<EspacioDTO[]>(() => this.spacesResource.value()?.data || []);
 
   openModal() {
     this.showModal.set(true);
@@ -90,9 +70,9 @@ export class SpacesManagementComponent {
     this.form.reset();
   }
 
-  editSpace(space: any) {
+  editSpace(space: EspacioDTO) {
     this.isEditing.set(true);
-    this.currentEditId.set(space.espacioId);
+    this.currentEditId.set(space.espacioId!);
     this.form.patchValue(space);
     this.showModal.set(true);
   }
@@ -106,7 +86,6 @@ export class SpacesManagementComponent {
     const formValue = this.form.value;
     const dto: CrearEspacioDTO = {
       nombre: formValue.nombre!,
-      tipo: formValue.tipo!,
       descripcion: formValue.descripcion || '',
       capacidad: formValue.capacidad!,
       costoPorHora: formValue.costoPorHora!,
@@ -132,13 +111,13 @@ export class SpacesManagementComponent {
     });
   }
 
-  deleteSpace(space: any) {
+  deleteSpace(space: EspacioDTO) {
     const confirm = window.confirm(
       `¿Estás seguro de que deseas eliminar el espacio "${space.nombre}"?`
     );
     if (!confirm) return;
 
-    this.spacesService.delete(space.espacioId).subscribe({
+    this.spacesService.delete(space.espacioId!).subscribe({
       next: () => {
         alert('Espacio eliminado exitosamente');
         this.spacesTrigger.update((v) => v + 1);
@@ -150,9 +129,9 @@ export class SpacesManagementComponent {
     });
   }
 
-  toggleStatus(space: any) {
+  toggleStatus(space: EspacioDTO) {
     const newStatus = !space.estaActivo;
-    this.spacesService.changeStatus(space.espacioId, newStatus).subscribe({
+    this.spacesService.changeStatus(space.espacioId!, newStatus).subscribe({
       next: () => {
         alert(`Estado actualizado a ${newStatus ? 'Activo' : 'Inactivo'}`);
         this.spacesTrigger.update((v) => v + 1);
@@ -164,7 +143,7 @@ export class SpacesManagementComponent {
     });
   }
 
-  getStatusBadgeClass(space: any): string {
+  getStatusBadgeClass(space: EspacioDTO): string {
     return space.estaActivo
       ? 'px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm'
       : 'px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm';

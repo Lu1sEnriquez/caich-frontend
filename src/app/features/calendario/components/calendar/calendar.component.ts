@@ -15,6 +15,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { formatDisplayDate } from '../../../../core/utils';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
+import { TicketStatus, UserRole } from '../../../../core/models/enums';
 
 @Component({
   selector: 'app-calendar',
@@ -98,6 +99,8 @@ export class CalendarComponent {
     return `${day} ${month} ${year}`;
   });
 
+  isAdmin = computed(() => this.authService.hasRole(UserRole.ADMINISTRADOR));
+
   // RXResource para obtener citas del mes
   appointmentsResource = rxResource({
     params: () => ({
@@ -140,6 +143,10 @@ export class CalendarComponent {
 
     return response.data.map((dto) => this.calendarService.mapToAppointmentSlot(dto));
   });
+
+  goToEspacios(): void {
+    this.router.navigate(['/admin/espacios']);
+  }
 
   // Computed: Próximas citas (próximas 2 semanas)
   upcomingAppointments = computed(() => {
@@ -239,7 +246,7 @@ export class CalendarComponent {
       return total + (end - start) / 60;
     }, 0);
 
-    const pagosPendientes = monthAppointments.filter((apt) => apt.estado === 'Agendado').length;
+    const pagosPendientes = monthAppointments.filter((apt) => apt.estado === TicketStatus.AGENDADO).length;
 
     return {
       citasEsteMes: monthAppointments.length,

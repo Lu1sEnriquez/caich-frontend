@@ -7,19 +7,11 @@ import { API_BASE } from './api.config';
 
 import {
   DataResponseDTO,
-  BaseResponseDTO,
-  TicketDTO,
+  PagoRequestDTO,
+  PagoResponseDTO,
 } from '../models/api-models';
 import { CuentaBancaria } from '../models/models';
 import { ErrorHandlerService } from './errorHandler.service';
-
-export interface RegistrarPagoDTO {
-  ticketId: number;
-  monto: number;
-  metodoPago: string;
-  fechaPago: string;
-  notas?: string;
-}
 
 @Injectable({
   providedIn: 'root',
@@ -29,112 +21,106 @@ export class PaymentsService {
   private errorHandler = inject(ErrorHandlerService);
 
   /**
-   * Registrar pago propio (como paciente)
+   * Registrar pago
    */
-  registerOwnPayment(paymentData: RegistrarPagoDTO): Observable<DataResponseDTO<TicketDTO>> {
-    return this.http
-      .post<DataResponseDTO<TicketDTO>>(`${API_BASE}/pagos/registrar-propio`, paymentData)
-      .pipe(
-        tap(() => {
-          console.log('Pago registrado');
-          this.errorHandler.showSuccess('Pago registrado', 'Tu pago se registro correctamente');
-        }),
-        catchError((error) => {
-          this.errorHandler.handleHttpError(error, 'Registrar pago');
-          return throwError(() => error);
-        })
-      );
-  }
-
-  /**
-   * Actualizar estado de pago
-   */
-  updatePaymentStatus(
-    ticketId: number | string,
-    estadoPago: string,
-    notas?: string,
-    comprobante?: File,
-    concepto?: string
-  ): Observable<DataResponseDTO<TicketDTO>> {
-    let params = new HttpParams().set('estadoPago', estadoPago);
-    if (notas) params = params.set('notas', notas);
-    if (concepto) params = params.set('concepto', concepto);
-
-    // Si hay comprobante, usamos FormData para multipart
-    if (comprobante) {
-      const formData = new FormData();
-      formData.append('comprobante', comprobante);
-      if (notas) formData.append('notas', notas);
-      if (concepto) formData.append('concepto', concepto);
-
-      return this.http
-        .put<DataResponseDTO<TicketDTO>>(
-          `${API_BASE}/tickets/${ticketId}/estado`,
-          formData,
-          { params }
-        )
-        .pipe(
-          tap(() => {
-            console.log('Estado actualizado con comprobante:', ticketId);
-            this.errorHandler.showSuccess('Estado actualizado', 'El cambio se guardo correctamente');
-          }),
-          catchError((error) => {
-            this.errorHandler.handleHttpError(error, 'Actualizar estado');
-            return throwError(() => error);
-          })
-        );
-    }
-
-    return this.http
-      .put<DataResponseDTO<TicketDTO>>(`${API_BASE}/tickets/${ticketId}/estado`, null, { params })
-      .pipe(
-        tap(() => {
-          console.log('Estado actualizado:', ticketId);
-          this.errorHandler.showSuccess('Estado actualizado', 'El cambio se guardo correctamente');
-        }),
-        catchError((error) => {
-          this.errorHandler.handleHttpError(error, 'Actualizar estado');
-          return throwError(() => error);
-        })
-      );
-  }
-
-  /**
-   * Subir comprobante de pago
-   */
-  uploadComprobante(ticketId: number | string, file: File): Observable<BaseResponseDTO> {
-    const formData = new FormData();
-    formData.append('comprobante', file);
-
-    return this.http
-      .post<BaseResponseDTO>(`${API_BASE}/tickets/${ticketId}/comprobante`, formData)
-      .pipe(
-        tap(() => {
-          console.log('Comprobante subido');
-          this.errorHandler.showSuccess(
-            'Comprobante subido',
-            'El comprobante se subio correctamente'
-          );
-        }),
-        catchError((error) => {
-          this.errorHandler.handleHttpError(error, 'Subir comprobante');
-          return throwError(() => error);
-        })
-      );
-  }
-
-  viewComprobante(ticketId: number | string): Observable<Blob> {
-    return this.http
-      .get(`${API_BASE}/tickets/${ticketId}/comprobante`, {
-        responseType: 'blob',
+  registerPayment(paymentData: PagoRequestDTO): Observable<DataResponseDTO<PagoResponseDTO>> {
+    return this.http.post<DataResponseDTO<PagoResponseDTO>>(`${API_BASE}/pagos`, paymentData).pipe(
+      tap(() => {
+        console.log('Pago registrado');
+        this.errorHandler.showSuccess('Pago registrado', 'El pago se registro correctamente');
+      }),
+      catchError((error) => {
+        this.errorHandler.handleHttpError(error, 'Registrar pago');
+        return throwError(() => error);
       })
+    );
+  }
+
+  /**
+   * Aprobar pago
+   */
+  approvePayment(pagoId: number | string): Observable<DataResponseDTO<PagoResponseDTO>> {
+    return this.http.put<DataResponseDTO<PagoResponseDTO>>(`${API_BASE}/pagos/${pagoId}/aprobar`, null).pipe(
+      tap(() => {
+        console.log('Pago aprobado');
+        this.errorHandler.showSuccess('Pago aprobado', 'El pago fue aprobado');
+      }),
+      catchError((error) => {
+        this.errorHandler.handleHttpError(error, 'Aprobar pago');
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Rechazar pago
+   */
+  rejectPayment(pagoId: number | string, motivo: string): Observable<DataResponseDTO<PagoResponseDTO>> {
+    const params = new HttpParams().set('motivo', motivo);
+    return this.http
+      .put<DataResponseDTO<PagoResponseDTO>>(`${API_BASE}/pagos/${pagoId}/rechazar`, null, { params })
       .pipe(
-        tap(() => console.log('Comprobante obtenido')),
+        tap(() => {
+          console.log('Pago rechazado');
+          this.errorHandler.showWarning('Pago rechazado', 'El pago fue rechazado');
+        }),
         catchError((error) => {
-          this.errorHandler.handleHttpError(error, 'Obtener comprobante');
+          this.errorHandler.handleHttpError(error, 'Rechazar pago');
           return throwError(() => error);
         })
       );
+  }
+
+  /**
+   * Obtener pagos por ticket
+   */
+  getPaymentsByTicket(ticketId: number | string): Observable<DataResponseDTO<PagoResponseDTO[]>> {
+    return this.http.get<DataResponseDTO<PagoResponseDTO[]>>(`${API_BASE}/pagos/ticket/${ticketId}`).pipe(
+      tap(() => console.log('Pagos del ticket obtenidos')),
+      catchError((error) => {
+        this.errorHandler.handleHttpError(error, 'Obtener pagos del ticket');
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Obtener pagos
+   */
+  getPayments(filters?: {
+    estado?: string;
+    page?: number;
+    size?: number;
+    sortBy?: string;
+    direction?: 'asc' | 'desc';
+  }): Observable<DataResponseDTO<any>> {
+    let params = new HttpParams();
+    if (filters?.estado) params = params.set('estado', filters.estado);
+    if (filters?.page !== undefined) params = params.set('page', String(filters.page));
+    if (filters?.size !== undefined) params = params.set('size', String(filters.size));
+    if (filters?.sortBy) params = params.set('sortBy', filters.sortBy);
+    if (filters?.direction) params = params.set('direction', filters.direction);
+
+    return this.http.get<DataResponseDTO<any>>(`${API_BASE}/pagos`, { params }).pipe(
+      tap(() => console.log('Pagos obtenidos')),
+      catchError((error) => {
+        this.errorHandler.handleHttpError(error, 'Obtener pagos');
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Obtener pago por ID
+   */
+  getPaymentById(pagoId: number | string): Observable<DataResponseDTO<PagoResponseDTO>> {
+    return this.http.get<DataResponseDTO<PagoResponseDTO>>(`${API_BASE}/pagos/${pagoId}`).pipe(
+      tap(() => console.log('Pago obtenido')),
+      catchError((error) => {
+        this.errorHandler.handleHttpError(error, 'Obtener pago');
+        return throwError(() => error);
+      })
+    );
   }
 
   getBankAccounts(): Observable<DataResponseDTO<CuentaBancaria[]>> {
